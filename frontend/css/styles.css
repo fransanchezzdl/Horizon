@@ -1,0 +1,29 @@
+/* 1. Importamos la fuente Geist (Variable: permite todos los grosores) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+:root {
+    /* Fuente principal */
+    --font-sans: 'Inter', system-ui, sans-serif;
+
+    /* Variables de color */
+    --color-primary: #2563EB;   /* azul eléctrico */
+    --color-secondary: #0B3D91; /* azul oscuro */
+    --color-tertiary: #777777;  /* gris claro */
+}
+
+body {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+}
+
+h1 {
+    font-weight: 800;
+    font-family: var(--font-sans);
+}
+
+/* Aplicar color terciario a párrafos para pruebas */
+p {
+    font-weight: 500;
+    color: var(--color-tertiary);
+}
+
+
