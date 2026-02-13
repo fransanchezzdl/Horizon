@@ -1,56 +1,102 @@
-# Horizon - Guía de Trabajo
-🚀 Flujo de Trabajo para el Equipo
-Para mantener el repositorio limpio, todos debemos seguir estos pasos:
+# Horizon: Manual del Desarrollador
 
-## 1. Al empezar el día (Sincronización)
-Antes de escribir una sola línea de código, descarga los cambios de tus compañeros:
+Bienvenido al repositorio de **Horizon**. Síguelo para evitar conflictos en Git y mantener el código limpio.
 
-git fetch --all: Actualiza la información de las ramas remotas.
+---
 
-git pull origin developer: Trae los últimos cambios a tu local.
+## 🛠️ 1. Configuración Inicial (Primeros pasos)
 
-## 2. Procedimiento GitFlow
-Rama main: Solo para código estable y en producción. No se toca directamente.
+Si eres nuevo en el equipo o estás configurando tu ordenador desde cero, sigue **una** de estas dos opciones:
 
-Rama developer: Rama principal de desarrollo. Aquí se integran las nuevas funcionalidades.
+### Opción A: Aún no tienes la carpeta en tu PC (Recomendado)
+Abre tu terminal en la carpeta donde guardas tus proyectos y ejecuta:
 
-Ramas feature/: Para cada tarea nueva, crea una rama desde developer:
+```bash
+git clone [https://github.com/fransanchezzdl/Horizon.git](https://github.com/fransanchezzdl/Horizon.git)
+cd Horizon
+# Automáticamente estarás en la rama 'developer' o 'master'. 
+# Asegúrate de descargar todas las referencias:
+git fetch --all
+```
 
-Ejemplo: git checkout -b feature/nombre-tarea
+### Opción B: Ya tienes el código pero no está conectado a Git
+Si ya tienes la carpeta Horizon con archivos en tu disco duro:
 
-Pull Requests (PR): Una vez terminada tu tarea, sube tu rama y abre un PR hacia developer para que alguien revise el código.
+```bash
+cd "D:\Visual Studio\Proyectos\Horizon"
+git init
+git branch -M master
+git remote add origin [https://github.com/fransanchezzdl/Horizon.git](https://github.com/fransanchezzdl/Horizon.git)
 
-Ramas release/: Cuando tengamos varias funciones listas para subir a producción, se crea una rama de preparación antes de pasar a main.
+# Bajamos la información del servidor sin borrar tus archivos locales
+git fetch --all
 
-Guarda y haz el primer commit:
+# Conectamos tu rama local con la del servidor
+git branch --set-upstream-to=origin/master master
+```
+## 🔄 2. Rutina Diaria (Antes de trabajar)
+⚠️ REGLA DE ORO: Nunca empieces a escribir código sin actualizar tu repositorio. Si no lo haces, crearás conflictos difíciles de arreglar.
 
-Bash
-git add README.md
-git commit -m "Initial commit: Add README with workflow instructions"
+Actualizar referencias:
+```bash
+git fetch --all
+Descargar cambios en tu rama:
+Sitúate en la rama de desarrollo e integra lo nuevo:
+```
+```bash
+git checkout developer
+git pull origin developer
+```
 
-## 3. Crear rama developer y sincronizar
-Ahora vamos a crear el entorno de desarrollo donde realmente sucederá la magia.
+## 🌊 3. Metodología GitFlow (Nuestras Ramas)
+Para mantener el orden, usamos una estructura estricta de ramas. ¡No trabajes directamente en master!
 
-Crea la rama developer a partir de main:
+📌 Mapa de Ramas
+Rama        Descripción                         Permisos
+master      Código de Producción                Estable y probado.,SOLO LECTURA. Nadie hace push aquí.
+developer   Rama de Integración.                Aquí se une todo el trabajo.,Se aceptan Pull Requests (PR).
+feature/    Ramas temporales para tus tareas.   Aquí es donde tú trabajas.
 
-Bash
-git checkout -b developer
-Mergear main (aunque en este momento son idénticas, este es el comando que usarás en el futuro):
+## 🔨 Flujo de Trabajo (Paso a Paso)
+Cada vez que tengas una tarea nueva (ej: "Crear pantalla de Login"), sigue este ciclo:
 
-Bash
-git merge main
+### 1. Crear la rama (Feature)
+Siempre nace desde developer:
 
-## 4. Empezar a usar developer
-¡Ya estás ahí! Para asegurarte de que estás trabajando en el lugar correcto, verifica tu rama actual:
+```bash
+git checkout developer
+git pull origin developer  # Asegúrate de estar actualizado
+git checkout -b feature/login-pantalla
+```
 
-Comprobar rama:
+### 2. Programar y Guardar (Commit)
+Haz cambios pequeños y frecuentes. Usa mensajes claros:
+```bash
+git add .
+git commit -m "feat: diseño inicial del formulario de login"
+Tipos de commit: feat: (nueva función), fix: (corrección), docs: (documentación).
+```
 
-Bash
-git branch
-(Debería aparecer un asterisco en developer).
+### 3. Subir cambios (Push)
+Sube tu rama al servidor para guardarla:
+```bash
+git push -u origin feature/login-pantalla
+```
+### 4. Integrar (Pull Request)
+Ve a GitHub.
 
-A partir de ahora, todo lo que hagas será sobre developer. Cuando quieras subirlo a la nube (GitHub/GitLab), recuerda conectar el remoto:
+Abre un Pull Request (PR) comparando tu rama feature/... contra developer.
 
-Bash
-git remote add origin https://github.com/tu-usuario/Horizon.git
-git push -u origin developer
+Avisa al equipo para que revisen tu código.
+
+Una vez aprobado, se hace el Merge en GitHub.
+
+### 5. Limpieza
+Cuando tu código ya esté en developer, borra tu rama local:
+```bash
+git checkout developer
+git pull origin developer
+git branch -d feature/login-pantalla
+``` 
+---
+Horizon Project - Guía interna 2026
