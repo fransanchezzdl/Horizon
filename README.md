@@ -52,10 +52,11 @@ git pull origin developer
 Para mantener el orden, usamos una estructura estricta de ramas. ¡No trabajes directamente en master!
 
 📌 Mapa de Ramas
-Rama        Descripción                         Permisos
-master      Código de Producción                Estable y probado.,SOLO LECTURA. Nadie hace push aquí.
-developer   Rama de Integración.                Aquí se une todo el trabajo.,Se aceptan Pull Requests (PR).
-feature/    Ramas temporales para tus tareas.   Aquí es donde tú trabajas.
+| Rama | Descripción | Reglas y Permisos |
+| :--- | :--- | :--- |
+| **master** | Código de Producción. Versión final, estable y probada. | 🔒 **SOLO LECTURA.** Nadie hace push directo aquí. |
+| **developer** | Rama de Integración. Aquí se une todo el trabajo del equipo. | ✅ Se aceptan **Pull Requests (PR)**. |
+| **feature/** | Ramas Temporales. Una por cada tarea o funcionalidad nueva. | 🛠️ **Tu zona de trabajo.** Aquí es donde desarrollas. |
 
 ## 🔨 Flujo de Trabajo (Paso a Paso)
 Cada vez que tengas una tarea nueva (ej: "Crear pantalla de Login"), sigue este ciclo:
