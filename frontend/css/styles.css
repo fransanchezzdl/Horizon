@@ -29,7 +29,6 @@ h1 {
     font-size: 32px;
 }
 
-/* Aplicar color terciario a párrafos para pruebas */
 p {
     font-weight: 500;
     color: var(--color-tertiary);
@@ -67,13 +66,40 @@ p {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    gap: 16px;
 }
 .card:hover{
     transform: translateY(-4px);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
+.card:hover .card-icon svg{
+    color: var(--color-primary);
+}
+.card-icon{
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(11, 61, 145, 0.1) 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.card-icon svg{
+    width: 24px;
+    height: 24px;
+    color: #d1d5db;
+    transition: color 0.3s ease;
+}
 .card .opt-title{margin:0 0 8px 0; font-size:18px; font-weight: 600;}
 .card .opt-info{margin:0; font-size:14px; color:var(--color-tertiary); line-height: 1.5;}
+.card-link{
+    font-size: 14px;
+    color: var(--color-primary);
+    font-weight: 600;
+    transition: color 0.3s ease;
+    margin-top: auto;
+}
 
 .reflexion-card{
     grid-column: span 2;
