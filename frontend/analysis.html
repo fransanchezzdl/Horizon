@@ -9,13 +9,33 @@
 </head>
 <body>
     <script src="js/layout.js"></script>
+    <script src="js/search.js"></script>
     <div id="dashboard-contenido">
         <section class="bienvenida-section">
-            <h1>Análisis de Ticker</h1>
         </section>
 
-        <!-- Contenido de la página aquí -->
-         <h1>Contenido de la página</h1> 
+        <!-- Buscador de Tickers -->
+        <section class="search-section card">
+            <label class="reflexion-label">Explorar Activos</label>
+            <div class="search-container">
+                <div class="search-input-wrap">
+                    <span class="search-icon" aria-hidden="true">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </span>
+                    <input id="tickerSearch" class="search-input" type="text" placeholder="Escriba el nombre o ticker del activo (ej. NVDA, BTC, SAN)..." autocomplete="off">
+                    <button id="searchBtn" class="reflexion-button primary">Analizar Activo</button>
+                    <ul id="suggestions" class="suggestions" hidden></ul>
+                </div>
+                <div class="recent-block">
+                    <h3 class="opt-title">Búsquedas recientes</h3>
+                    <ul id="recentList" class="recent-list">
+                        <li class="recent-item">AAPL</li>
+                        <li class="recent-item">TSLA</li>
+                        <li class="recent-item">GOOGL</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
 
     </div>
 </body>
