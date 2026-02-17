@@ -3,18 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portafolio | Horizon</title>
-    <!-- Estilos -->
+    <title>Portfolio | Horizon</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <script src="js/layout.js"></script>
-    <div id="dashboard-contenido">
-        <section class="bienvenida-section">
-            <h1>Portafolio</h1>
+
+    <div id="portfolio-contenido">
+        
+        <header class="page-header">
+            <div class="header-titles">
+                <h1>Mi Portafolio</h1>
+                <div class="balance-info">
+                    <span class="balance-label">Balance Total:</span>
+                    <span class="balance-amount">$124,500.00</span>
+                    <span class="badge badge-success-light">(+11% histórico)</span>
+                </div>
+            </div>
+            <button class="btn-primary">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                Añadir Inversión
+            </button>
+        </header>
+
+        <section class="metrics-grid">
+            <div class="card metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Ganancia Total</span>
+                    <svg class="icon-trend-up" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value">+$12,400</span>
+                    <span class="metric-sub text-success">+11% retorno</span>
+                </div>
+            </div>
+
+            <div class="card metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Cambio Diario</span>
+                    <svg class="icon-trend-up" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+                        <polyline points="17 6 23 6 23 12"></polyline>
+                    </svg>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value">+$350</span>
+                    <span class="metric-sub text-success">+0.8% hoy</span>
+                </div>
+            </div>
+
+            <div class="card metric-card">
+                <div class="metric-header">
+                    <span class="metric-title">Salud del Portfolio</span>
+                    <svg class="icon-shield" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                    </svg>
+                </div>
+                <div class="metric-body">
+                    <span class="metric-value">Excelente</span>
+                    <span class="metric-sub text-muted">Bajo riesgo</span>
+                </div>
+            </div>
         </section>
 
-        <!-- Contenido de la página aquí -->
+        <section class="card table-section">
+            <div class="table-toolbar">
+                <h2>Activos en Cartera</h2>
+                <button class="btn-outline">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    Filtrar
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Activo</th>
+                            <th class="text-left">Precio Actual</th>
+                            <th class="text-left">Estabilidad</th>
+                            <th class="text-left">Tamaño</th>
+                            <th class="text-left">Estrategia</th>
+                            <th class="text-right">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="asset-item">
+                                    <div class="asset-icon">
+                                        <svg viewBox="0 0 24 24" fill="#000" width="24" height="24"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.8-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.5 1.3 0 2.52.87 3.29.87.76 0 2.21-1.09 3.71-1.09a5.45 5.45 0 0 1 4.53 2.76c-.05.02-2.73 1.57-2.73 4.67 0 3.72 3.26 4.96 3.29 5.01-.03.07-.5 1.76-1.2 2.79zM13 3.5c.57-1.47 2.4-2.5 2.4-2.5s.26 2.06-1.28 3.87c-.82.96-2.18 1.6-2.18 1.6S11.45 4.98 13 3.5z"/></svg>
+                                    </div>
+                                    <div class="asset-info">
+                                        <span class="asset-symbol">AAPL</span>
+                                        <span class="asset-name">Apple Inc.</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-cell">
+                                    <span class="price-val">$175.00</span>
+                                    <span class="price-change text-success">+1.2%</span>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-green">Muy Estable</span></td>
+                            <td class="text-muted">Gigante</td>
+                            <td><span class="badge badge-blue-soft">Largo Plazo</span></td>
+                            <td class="text-right">
+                                <button class="btn-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div class="asset-item">
+                                    <div class="asset-icon" style="background:#f3f4f6">
+                                        <svg viewBox="0 0 24 24" fill="#00a4ef" width="20" height="20"><path d="M0 0h11.377v11.372H0zM12.623 0H24v11.372H12.623zM0 12.623h11.377V24H0zM12.623 12.623H24V24H12.623z"/></svg>
+                                    </div>
+                                    <div class="asset-info">
+                                        <span class="asset-symbol">MSFT</span>
+                                        <span class="asset-name">Microsoft</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-cell">
+                                    <span class="price-val">$320.00</span>
+                                    <span class="price-change text-success">+0.5%</span>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-blue">Estable</span></td>
+                            <td class="text-muted">Gigante</td>
+                            <td><span class="badge badge-purple-soft">Comprar Más</span></td>
+                            <td class="text-right">
+                                <button class="btn-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div class="asset-item">
+                                    <div class="asset-icon">
+                                        <svg viewBox="0 0 24 24" fill="#000" width="20" height="20"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/></svg>
+                                    </div>
+                                    <div class="asset-info">
+                                        <span class="asset-symbol">TSLA</span>
+                                        <span class="asset-name">Tesla</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-cell">
+                                    <span class="price-val">$240.00</span>
+                                    <span class="price-change text-danger">-1.4%</span>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-orange">Volátil</span></td>
+                            <td class="text-muted">Grande</td>
+                            <td><span class="badge badge-gray-soft">Mantener</span></td>
+                            <td class="text-right">
+                                <button class="btn-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <div class="asset-item">
+                                    <div class="asset-icon">
+                                        <span style="font-weight:bold; font-size:10px;">JNJ</span>
+                                    </div>
+                                    <div class="asset-info">
+                                        <span class="asset-symbol">JNJ</span>
+                                        <span class="asset-name">Johnson & Johnson</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="price-cell">
+                                    <span class="price-val">$160.00</span>
+                                    <span class="price-change text-success">+0.1%</span>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-green">Muy Estable</span></td>
+                            <td class="text-muted">Grande</td>
+                            <td><span class="badge badge-teal-soft">Dividendos</span></td>
+                            <td class="text-right">
+                                <button class="btn-icon">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+                                </button>
+                            </td>
+                        </tr>
+
+                    </tbody>
+                </table>
+            </div>
+        </section>
 
     </div>
 </body>

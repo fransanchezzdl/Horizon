@@ -458,3 +458,307 @@ body > section {
 /* #endregion ==================== CONTENIDO LAYOUT.JS ==================== */
 
 
+/* ==================== ESTILOS PORTFOLIO ==================== */
+
+/* --- Cabecera de Página --- */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.header-titles h1 {
+    margin-bottom: 8px;
+    font-size: 28px;
+    color: #111827; /* Negro suave */
+}
+
+.balance-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--color-tertiary);
+    font-size: 15px;
+}
+
+.balance-amount {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 18px;
+}
+
+/* --- Botones --- */
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.3s ease;
+    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+}
+
+.btn-primary:hover {
+    background-color: var(--color-secondary);
+}
+
+.btn-outline {
+    background: white;
+    border: 1px solid #e5e7eb;
+    color: #374151;
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.btn-outline:hover {
+    background-color: #f9fafb;
+    border-color: #d1d5db;
+}
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+}
+.btn-icon:hover {
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+/* --- Métricas (Top Cards) --- */
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.metric-card {
+    min-height: auto; /* Sobreescribe la altura mínima global */
+    padding: 24px;
+    border: 1px solid #f3f4f6;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.metric-title {
+    font-size: 14px;
+    color: var(--color-tertiary);
+    font-weight: 500;
+}
+
+.metric-value {
+    display: block;
+    font-size: 28px;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 4px;
+}
+
+.metric-sub {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Iconos y Colores de Texto */
+.text-success { color: #10b981; }
+.text-danger { color: #ef4444; }
+.text-muted { color: var(--color-tertiary); }
+.text-right { text-align: right; }
+.text-left { text-align: left; }
+
+.icon-trend-up { color: #10b981; }
+.icon-shield { color: var(--color-primary); }
+
+/* --- Tabla de Activos --- */
+.table-section {
+    padding: 0; /* Quitamos padding del card para que la tabla llene todo */
+    overflow: hidden; /* Para las esquinas redondeadas */
+}
+
+.table-toolbar {
+    padding: 20px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.table-toolbar h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.table-responsive {
+    overflow-x: auto;
+}
+
+.custom-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 800px;
+}
+
+.custom-table th {
+    background: #f9fafb;
+    padding: 12px 24px;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #6b7280;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.custom-table td {
+    padding: 16px 24px;
+    border-bottom: 1px solid #f3f4f6;
+    vertical-align: middle;
+}
+
+.custom-table tr:last-child td {
+    border-bottom: none;
+}
+
+.custom-table tr:hover {
+    background-color: #fcfcfc;
+}
+
+/* Elementos dentro de la tabla */
+.asset-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.asset-icon {
+    width: 40px;
+    height: 40px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.asset-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.asset-symbol {
+    font-weight: 700;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.asset-name {
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.price-cell {
+    display: flex;
+    flex-direction: column;
+}
+
+.price-val {
+    font-weight: 600;
+    color: #1f2937;
+    font-size: 14px;
+}
+
+.price-change {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* --- Badges (Etiquetas de color) --- */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.badge-success-light {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+
+.badge-green {
+    background-color: #ecfdf5;
+    color: #047857;
+    border: 1px solid #d1fae5;
+}
+
+.badge-blue {
+    background-color: #eff6ff;
+    color: #1d4ed8;
+    border: 1px solid #dbeafe;
+}
+
+.badge-blue-soft {
+    background-color: #eff6ff;
+    color: var(--color-primary);
+}
+
+.badge-orange {
+    background-color: #fff7ed;
+    color: #c2410c;
+    border: 1px solid #ffedd5;
+}
+
+.badge-purple-soft {
+    background-color: #f3e8ff;
+    color: #7e22ce;
+}
+
+.badge-gray-soft {
+    background-color: #f3f4f6;
+    color: #4b5563;
+}
+
+.badge-teal-soft {
+    background-color: #ccfbf1;
+    color: #0f766e;
+}
+
+/* Responsive para esta página */
+@media (max-width: 1000px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* #endregion ==================== CONTENIDO PORTFOLIO ==================== */
