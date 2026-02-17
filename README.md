@@ -56,7 +56,6 @@ Para mantener el orden, usamos una estructura estricta de ramas. ¡No trabajes d
 | :--- | :--- | :--- |
 | **master** | Código de Producción. Versión final, estable y probada. | 🔒 **SOLO LECTURA.** Nadie hace push directo aquí. |
 | **developer** | Rama de Integración. Aquí se une todo el trabajo del equipo. | ✅ Se aceptan **Pull Requests (PR)**. |
-| **feature/** | Ramas Temporales. Una por cada tarea o funcionalidad nueva. | 🛠️ **Tu zona de trabajo.** Aquí es donde desarrollas. |
 
 ## 🔨 Flujo de Trabajo (Paso a Paso)
 Cada vez que tengas una tarea nueva (ej: "Crear pantalla de Login"), sigue este ciclo:
@@ -67,37 +66,21 @@ Siempre nace desde developer:
 ```bash
 git checkout developer
 git pull origin developer  # Asegúrate de estar actualizado
-git checkout -b feature/login-pantalla
 ```
 
 ### 2. Programar y Guardar (Commit)
 Haz cambios pequeños y frecuentes. Usa mensajes claros:
 ```bash
 git add .
-git commit -m "feat: diseño inicial del formulario de login"
-Tipos de commit: feat: (nueva función), fix: (corrección), docs: (documentación).
+git commit -m "x.x.x - <mensaje commit>"
+Tipos de commit: 1.x.x - Version en produccion, x.1.x - Funcionalidad nueva, x.x.1 - Parches y pequeños cambios.
 ```
 
 ### 3. Subir cambios (Push)
-Sube tu rama al servidor para guardarla:
+Sube tus actualizaciones al servidor para guardarla:
 ```bash
-git push -u origin feature/login-pantalla
+git push -u origin developer
 ```
-### 4. Integrar (Pull Request)
-Ve a GitHub.
 
-Abre un Pull Request (PR) comparando tu rama feature/... contra developer.
-
-Avisa al equipo para que revisen tu código.
-
-Una vez aprobado, se hace el Merge en GitHub.
-
-### 5. Limpieza
-Cuando tu código ya esté en developer, borra tu rama local:
-```bash
-git checkout developer
-git pull origin developer
-git branch -d feature/login-pantalla
-``` 
 ---
 Horizon Project - Guía interna 2026
