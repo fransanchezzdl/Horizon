@@ -417,7 +417,7 @@ p {
     visibility: visible;
 }
 
-#dashboard-contenido,
+#portfolio-contenido,
 body > main,
 body > section {
     margin-left: var(--sidebar-width);
