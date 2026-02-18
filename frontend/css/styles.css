@@ -866,6 +866,196 @@ body > section {
     font-weight: 500;
 }
 
+/* ==================== ESTILOS PÁGINA ACADEMY ==================== */
+/* Contenedor principal: Divide la pantalla en contenido (izq) y asesor (der) */
+.academy-layout {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: var(--spacing-2xl);
+    align-items: start;
+}
+
+/* Sidebar del Asesor: Ocupa todo el alto vertical disponible */
+.advisor-sidebar {
+    position: sticky;
+    top: 32px;
+    padding: 0 !important;
+    /* Calcula el alto restando los márgenes del body para que llegue al fondo */
+    height: calc(100vh - 64px); 
+    display: flex;
+    flex-direction: column;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    overflow: hidden;
+    background: white;
+}
+
+/* ESTADO COLAPSADO: Se transforma en un círculo en la esquina superior derecha de su columna */
+.advisor-sidebar.collapsed {
+    width: 64px !important;
+    height: 64px !important; /* El !important asegura que ignore el calc anterior */
+    aspect-ratio: 1 / 1;    /* Fuerza que sea un cuadrado perfecto */
+    border-radius: 50%;
+    margin-left: auto; 
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+    min-height: 0;          /* Evita que el navegador fuerce alturas mínimas */
+}
+
+/* Cabecera del chat (actúa como botón de toggle) */
+.advisor-header {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    background: var(--color-bg-light);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.advisor-header:hover {
+    background: var(--color-bg-lighter);
+}
+
+/* Ocultar elementos cuando está colapsado */
+.advisor-sidebar.collapsed .chat-container,
+.advisor-sidebar.collapsed .chat-input-wrapper,
+.advisor-sidebar.collapsed .user-info {
+    display: none;
+    opacity: 0;
+}
+
+/* Centrar el avatar/icono cuando es un círculo */
+.advisor-sidebar.collapsed .advisor-header {
+    border: none;
+    padding: 0;             /* Quitamos el padding para que no empuje el logo */
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: transparent;
+}
+
+/* Avatar del Bot */
+.bot-avatar {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 20px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background: #10b981;
+    border: 2px solid white;
+    border-radius: 50%;
+}
+
+/* Área de mensajes con scroll automático */
+.chat-container {
+    flex: 1; 
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    background: white;
+}
+
+.chat-bubble {
+    padding: var(--spacing-md);
+    font-size: 13px;
+    line-height: 1.5;
+    max-width: 85%;
+    font-weight: 500;
+}
+
+.chat-bubble.ai {
+    background: var(--color-bg-lighter);
+    color: var(--color-text-primary);
+    border-radius: 0 var(--radius-lg) var(--radius-lg) var(--radius-lg);
+    align-self: flex-start;
+}
+
+.chat-bubble.user {
+    background: var(--color-primary);
+    color: white;
+    border-radius: var(--radius-lg) 0 var(--radius-lg) var(--radius-lg);
+    align-self: flex-end;
+}
+
+/* Input y botón inferior */
+.chat-input-wrapper {
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--color-border);
+    display: flex;
+    gap: var(--spacing-sm);
+    background: white;
+}
+
+/* --- Elementos de la Academia (Columna izquierda) --- */
+
+.academy-progress-card {
+    min-height: auto !important;
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+}
+
+.progress-wrapper {
+    margin-top: var(--spacing-lg);
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: var(--spacing-sm);
+    opacity: 0.9;
+}
+
+.progress-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: white;
+    border-radius: 4px;
+}
+
+.icon-placeholder {
+    font-size: 22px;
+}
+
+/* Adaptación para tablets y móviles */
+@media (max-width: 1024px) {
+    .academy-layout {
+        grid-template-columns: 1fr;
+    }
+    .advisor-sidebar {
+        position: relative;
+        height: 450px;
+        top: 0;
+    }
+}
+
 /* ==================== BUSCADOR (ANALYSIS) ==================== */
 .search-section.card {
     min-height: auto;
