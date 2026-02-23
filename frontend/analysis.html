@@ -6,10 +6,27 @@
     <title>Análisis de Ticker | Horizon</title>
     <!-- Estilos -->
     <link rel="stylesheet" href="css/styles.css">
+    <!-- Supabase y Auth -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/auth.js"></script>
 </head>
 <body>
     <script src="js/layout.js"></script>
     <script src="js/search.js"></script>
+    <script>
+        // Verificar autenticación cuando el DOM está listo
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const hasSession = await authAPI.checkAuth();
+                if (!hasSession) {
+                    window.location.href = 'login.html';
+                }
+            } catch (err) {
+                console.error('Error verificando autenticación:', err);
+                window.location.href = 'login.html';
+            }
+        });
+    </script>
     <div id="dashboard-contenido">
         <section class="bienvenida-section">
         </section>
