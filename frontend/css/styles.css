@@ -166,7 +166,7 @@ p {
     min-height: 300px;
     padding: 40px;
     border-radius: var(--radius-xl);
-
+    transition: all 0.3s ease;
 }
 
 .reflexion-card:hover, .card-large:hover {
