@@ -1445,3 +1445,39 @@ body > section {
         height: 44px;
     }
 }
+
+/* ==================== BOTON LOGOUT ==================== */
+.btn-logout {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 12px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #991b1b;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-logout:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(156, 39, 39, 0.1);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+}
+
+.btn-logout:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
