@@ -1,50 +1,30 @@
 /**
  * Lógica de autenticación para la página de login
- * Maneja el formulario de login, validación de credenciales y sincronización con BD
+ * Se comunica exclusivamente con el Backend FastAPI
  */
 
-// Esperar a que el DOM esté cargado Y authAPI esté disponible
-document.addEventListener('DOMContentLoaded', async () => {
-    // Esperar a que authAPI esté definido
-    let attempts = 0;
-    while (typeof window.authAPI === 'undefined' && attempts < 50) {
-        await new Promise(resolve => setTimeout(resolve, 10));
-        attempts++;
-    }
+// URL del Backend
+const API_URL = "https://horizon--fransanchezzdl.replit.app"; 
 
-    if (typeof window.authAPI === 'undefined') {
-        console.error('[LOGIN] Error: authAPI no está disponible');
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Verificación rápida de sesión local
+    // Si ya tenemos token, no deberíamos estar en el login
+    const token = localStorage.getItem('access_token');
+    if (token) {
+        window.location.href = 'index.html'; 
         return;
     }
 
-    await initializeLogin();
-});
-
-/**
- * Inicializar la página de login
- * Si ya está autenticado, redirigir a index
- */
-async function initializeLogin() {
-    try {
-        const session = await window.authAPI.getCurrentSession();
-        if (session) {
-            window.location.href = 'index.html';
-            return;
-        }
-    } catch (err) {
-        console.error('[LOGIN] Error inicializando login:', err);
-    }
-
-    // Configurar el formulario de login
+    // 2. Configurar el formulario
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
-}
+});
 
 /**
- * Manejar el envío del formulario de login
- * Verifica credenciales en Supabase Auth y luego en tabla usuarios
+ * Manejar el envío del formulario
+ * Envía credenciales al endpoint /login de FastAPI
  */
 async function handleLogin(e) {
     e.preventDefault();
@@ -64,80 +44,64 @@ async function handleLogin(e) {
         return;
     }
 
-    // Validar formato email básico
+    // Validar formato email básico (ahorra una llamada al servidor)
     if (!isValidEmail(email)) {
         showError(errorMsg, 'Por favor ingresa un email válido');
         return;
     }
 
-    // Deshabilitar botón y mostrar estado
+    // UX: Deshabilitar botón y mostrar estado
     const originalText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Verificando credenciales...';
+    btn.textContent = 'Autenticando...';
 
     try {
-        // 1. Intentar login con Supabase Auth
-        console.log('[LOGIN] Iniciando login para:', email);
-        const { user, error: authError } = await window.authAPI.signInWithPassword(email, password);
+        //Llamamos a la API en lugar de supabase directamente
+        const response = await fetch(`${API_URL}/login`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                email: email, 
+                password: password 
+            })
+        });
 
-        if (authError) {
-            // Error en autenticación (credenciales inválidas)
-            console.error('[LOGIN] Error de autenticación:', authError);
-            showError(errorMsg, authError.message || 'Email o contraseña incorrectos');
-            return;
+        const data = await response.json();
+
+        if (!response.ok) {
+            // Si FastAPI devuelve 400, 401 o 500, lanzamos error
+            // Asumimos que FastAPI envía el error en el campo "detail"
+            throw new Error(data.detail || 'Error al iniciar sesión');
         }
 
-        if (!user) {
-            showError(errorMsg, 'Error inesperado. Por favor intenta de nuevo');
-            return;
+        // --- ÉXITO ---
+        console.log('[LOGIN] Login exitoso via API');
+        
+        // 1. Guardamos el token que nos devolvió FastAPI
+        localStorage.setItem('access_token', data.access_token);
+        
+        // 2. (Opcional) Guardar datos del usuario si el backend los envía
+        if (data.user) {
+            localStorage.setItem('user_data', JSON.stringify(data.user));
         }
 
-        // 2. Login exitoso en Supabase Auth, ahora verificar en tabla usuarios
-        console.log('[LOGIN] Autenticación exitosa, verificando tabla usuarios...');
-        btn.textContent = 'Verificando perfil...';
-
-        try {
-            const userProfile = await window.authAPI.getUserProfile(user.id);
-            console.log('[LOGIN] Perfil encontrado:', userProfile);
-        } catch (profileError) {
-            console.error('[LOGIN] Error obteniendo perfil:', profileError);
-
-            // Diferenciar tipos de errores
-            if (profileError.type === 'NOT_FOUND') {
-                // Usuario no registrado en BD
-                console.warn('[LOGIN] Usuario no registrado en tabla usuarios');
-                showError(errorMsg, 'Usuario no registrado en el sistema');
-                await window.authAPI.logout();
-                return;
-            } else if (profileError.type === 'RLS_DENIED') {
-                // Error de RLS - políticas no configuradas
-                console.warn('[LOGIN] Error de permisos RLS');
-                showError(errorMsg, 'Error de permisos. Contacta a soporte');
-                await window.authAPI.logout();
-                return;
-            } else {
-                // Otro error
-                showError(errorMsg, 'Error verificando perfil: ' + (profileError.message || 'Desconocido'));
-                await window.authAPI.logout();
-                return;
-            }
-        }
-
-        // 3. Todo OK - redirigir a index
-        console.log('[LOGIN] Login exitoso, redirigiendo a index...');
+        // 3. Redirigir
         window.location.href = 'index.html';
 
     } catch (err) {
-        console.error('[LOGIN] Error inesperado:', err);
-        showError(errorMsg, 'Ocurrió un error inesperado. Por favor intenta de nuevo');
+        console.error('[LOGIN] Error:', err);
+        showError(errorMsg, err.message || 'Error de conexión con el servidor');
     } finally {
+        // Restaurar botón
         btn.disabled = false;
         btn.textContent = originalText;
     }
 }
 
 /**
- * Validar formato de email
+ * Validar formato de email (Helper)
  */
 function isValidEmail(email) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -145,9 +109,12 @@ function isValidEmail(email) {
 }
 
 /**
- * Mostrar mensaje de error
+ * Mostrar mensaje de error (Helper)
  */
 function showError(element, message) {
     element.textContent = message;
     element.style.display = 'block';
+    // Opcional: Agregar una clase para animación de shake/temblor
+    element.classList.add('shake');
+    setTimeout(() => element.classList.remove('shake'), 500);
 }

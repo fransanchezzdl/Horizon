@@ -1,26 +1,53 @@
 import os
 from fastapi import FastAPI
-from dotenv import load_dotenv
-from pathlib import Path
+from fastapi.middleware.cors import CORSMiddleware
+from typing import Dict
 
-# Cargar variables de entorno
-load_dotenv()
+# Entidades
+from schemas import UsuarioResponse
+from schemas import LoginRequest, LoginResponse
+from crud import usuario_dao
+from crud import auth_crud
 
 app = FastAPI()
 
-# Inicializar cliente de Supabase
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
-# supabase: Client = create_client(url, key)
+# Configurar CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # En producción cambiamos "*" por el dominio real (ej: "https://miweb.com")
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-@app.get("/usuarios")
+@app.get("/usuarios", response_model=list[UsuarioResponse])
 def get_usuarios():
-    # Ejemplo: Traer todos los datos de la tabla 'profiles'
-    response = supabase.table("profiles").select("*").execute()
-    return response.data
+    # Llamamos al DAO en lugar de a la base de datos directamente
+    usuarios = usuario_dao.obtener_todos()
+    return usuarios
 
+@app.post("/login", response_model=LoginResponse)
+def login(credenciales: LoginRequest):
+    """
+    Recibe email y password, valida con Supabase y devuelve un token de acceso.
+    """
+    # 1. Llamamos a nuestro CRUD. 
+    # FastAPI ya validó automáticamente que el email sea válido gracias a Pydantic.
+    token, perfil_usuario = auth_crud.iniciar_sesion(
+        email=credenciales.email, 
+        password=credenciales.password
+    )
+    
+    # 2. Devolvemos la respuesta formateada según nuestro Schema
+    return LoginResponse(
+        access_token=token,
+        user=perfil_usuario
+    )
+
+'''
 @app.post("/crear-item")
 def create_item(nombre: str):
     # Ejemplo: Insertar un dato
     data, count = supabase.table("items").insert({"name": nombre}).execute()
     return {"status": "success", "data": data}
+'''
