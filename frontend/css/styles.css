@@ -1247,11 +1247,6 @@ body > section {
         align-items: stretch;
         gap: var(--spacing-sm);
     }
-
-    #searchBtn {
-        width: 100%;
-    }
-
     /* Layouts especiales */
     section[style*="grid-template-columns:2fr 1fr"] {
         grid-template-columns: 1fr !important;
@@ -1292,19 +1287,18 @@ body > section {
 
 }
 
-/* ==================== PÁGINA DE LOGIN ==================== */
+/* ==================== PÁGINA DE LOGIN Y REGISTER ==================== */
 .login-page {
     display: flex;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
     background: linear-gradient(180deg, var(--color-secondary) 0%, var(--color-primary) 50%, var(--color-bg-light) 100%);
-    padding: var(--spacing-lg);
 }
 
 .login-container {
     background: white;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
     width: 100%;
     max-width: 400px;
@@ -1313,6 +1307,7 @@ body > section {
 
 .login-header {
     text-align: center;
+    margin-top: var(--spacing-sm);
     margin-bottom: var(--spacing-2xl);
 }
 
@@ -1336,10 +1331,15 @@ body > section {
     margin: 0 0 var(--spacing-sm) 0;
 }
 
-.login-header p {
+.login-header .login-footer p {
     color: var(--color-text-secondary);
     font-size: 14px;
     margin: 0;
+}
+
+.login-footer {
+    text-align: center;
+    margin-top: var(--spacing-sm);
 }
 
 .login-container form {

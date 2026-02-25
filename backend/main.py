@@ -6,6 +6,7 @@ from typing import Dict
 # Entidades (imports relativos ahora que `backend` es un paquete)
 from .schemas import UsuarioResponse
 from .schemas import LoginRequest, LoginResponse
+from .schemas import RegisterRequest, RegisterResponse
 from .crud import usuario_dao
 from .crud import auth_crud
 
@@ -41,6 +42,28 @@ def login(credenciales: LoginRequest):
     # 2. Devolvemos la respuesta formateada según nuestro Schema
     return LoginResponse(
         access_token=token,
+        user=perfil_usuario
+    )
+
+
+@app.post("/register", response_model=RegisterResponse)
+def register(datos: RegisterRequest):
+    """
+    Registra un nuevo usuario: crea cuenta en Auth y perfil en la tabla `usuarios`.
+    """
+    token, perfil_usuario = auth_crud.registrar_usuario(
+        email=datos.email,
+        password=datos.password,
+        nombre=datos.nombre,
+        apellidos=datos.apellidos,
+    )
+
+    # Si no hay perfil o fallo, lanzamos error
+    if not perfil_usuario:
+        raise Exception("Error al crear el usuario")
+
+    return RegisterResponse(
+        access_token=token or "",
         user=perfil_usuario
     )
 
