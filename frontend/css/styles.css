@@ -221,13 +221,13 @@ p {
 }
 
 .btn-primary, .reflexion-button, .reflexion-button.primary {
-    background: linear-gradient(180deg, var(--color-secondary), var(--color-primary));
+    background: var(--color-primary);
     color: white;
     box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
 }
 
 .btn-primary:hover, .reflexion-button:hover, .reflexion-button.primary:hover {
-    background: linear-gradient(180deg, var(--color-secondary), var(--color-primary));
+    background: linear-gradient(0deg, var(--color-secondary), var(--color-primary));
     transform: translateY(-2px);
 }
 
@@ -1289,9 +1289,6 @@ body > section {
         padding: var(--spacing-sm) var(--spacing-sm) var(--spacing-sm) 36px;
     }
 
-    h1 {
-        font-size: 20px;
-    }
 }
 
 /* ==================== PÁGINA DE LOGIN ==================== */
@@ -1300,7 +1297,7 @@ body > section {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: linear-gradient(135deg, #0B3D91 0%, #1e5ba8 50%, #2563EB 100%);
+    background: linear-gradient(180deg, var(--color-secondary) 0%, var(--color-primary) 50%, var(--color-bg-light) 100%);
     padding: var(--spacing-lg);
 }
 
@@ -1387,7 +1384,7 @@ body > section {
     width: 100%;
     padding: var(--spacing-md) var(--spacing-lg);
     height: 48px;
-    background: linear-gradient(180deg, #0B3D91, #2563EB);
+    background: var(--color-primary);
     color: white;
     border: none;
     border-radius: var(--radius-md);
@@ -1395,6 +1392,7 @@ body > section {
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
+    text-transform: uppercase;
 }
 
 .login-btn:hover {
