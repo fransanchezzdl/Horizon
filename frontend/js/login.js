@@ -3,8 +3,8 @@
  * Se comunica exclusivamente con el Backend FastAPI
  */
 
-// URL del Backend
-const API_URL = "https://horizon--fransanchezzdl.replit.app"; 
+// URL del Backend (usar localhost en desarrollo)
+const API_URL = "http://localhost:8000";
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Verificación rápida de sesión local
