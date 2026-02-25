@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registrarse | Horizon</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/register.js" defer></script>
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-header">
+            <div class="logo-icon">H</div>
+            <h1>Horizon</h1>
+            <p>Crea una cuenta para empezar</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="nombre">Nombre</label>
+                <input type="text" id="nombre" name="nombre" placeholder="Tu nombre">
+            </div>
+
+            <div class="form-group">
+                <label for="apellidos">Apellidos</label>
+                <input type="text" id="apellidos" name="apellidos" placeholder="Tus apellidos">
+            </div>
+
+            <div class="form-group">
+                <label for="email">Correo</label>
+                <input type="email" id="email" name="email" placeholder="tu@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" name="password" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="login-btn">Crear cuenta</button>
+        </form>
+        <div class="login-footer">
+            <p class="signup-link">¿Ya tienes cuenta? <a class="card-link" href="login.html">Inicia sesión</a></p>
+        </div>
+    </div>
+</body>
+</html>
