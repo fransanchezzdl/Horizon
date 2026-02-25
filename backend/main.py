@@ -3,11 +3,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict
 
-# Entidades
-from schemas import UsuarioResponse
-from schemas import LoginRequest, LoginResponse
-from crud import usuario_dao
-from crud import auth_crud
+# Entidades (imports relativos ahora que `backend` es un paquete)
+from .schemas import UsuarioResponse
+from .schemas import LoginRequest, LoginResponse
+from .crud import usuario_dao
+from .crud import auth_crud
 
 app = FastAPI()
 
