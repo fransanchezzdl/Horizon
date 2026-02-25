@@ -36,7 +36,7 @@ function initSidebar() {
                     </svg>
                     <span class="nav-label">Portafolio</span>
                 </a>
-                <a href="academy.html" class="nav-item">
+                <a href="academia.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 2l-5.5 9h11z M17.5 13c1.93 0 3.5 1.57 3.5 3.5S19.43 20 17.5 20 14 18.43 14 16.5s1.57-3.5 3.5-3.5z M3 13.5h8v8H3z"/>
                     </svg>
@@ -67,8 +67,8 @@ function initSidebar() {
             <div class="user-profile">
                 <div class="user-avatar">A</div>
                 <div class="user-info">
-                    <p class="user-name">_USUARIO_</p>
-                    <p class="user-plan"> P R O </p>
+                    <p class="user-name" id="user-name">Cargando...</p>
+                    <p class="user-plan" id="user-plan">Cargando...</p>
                 </div>
             </div>
             <button id="logoutBtn" class="btn-logout">
@@ -87,6 +87,9 @@ function initSidebar() {
 
     // Inyectar el HTML al inicio del body
     document.body.insertAdjacentHTML('afterbegin', sidebarHTML);
+
+    initNombreUsuario();
+    initMembresia();
 
     // Inicializar event listeners
     initSidebarEvents();
@@ -142,4 +145,48 @@ if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSidebar);
 } else {
     initSidebar();
+}
+
+// Muestra el nombre del usuario abajo en la sidebar
+function initNombreUsuario(token){
+    const userDataString = localStorage.getItem('user_data');
+    if (userDataString) {
+        try {
+            const user = JSON.parse(userDataString);
+            
+            // Usamos el nombre si existe, si no, la primera parte de su email
+            const nombreMostrar = user.nombre || user.email.split('@')[0] || 'Inversor';
+            
+            // Actualizamos el H1 en el HTML
+            const user_name = document.getElementById('user-name');
+            if (user_name) {
+                user_name.textContent = `${nombreMostrar}`;
+            }
+            
+        } catch (e) {
+            console.error('Error leyendo los datos del usuario:', e);
+        }
+    }
+}
+
+// Muestra el plan de membresia del usuario logeado
+function initMembresia(){
+    const userDataString = localStorage.getItem('user_data');
+    if (userDataString) {
+        try {
+            const user = JSON.parse(userDataString);
+            
+            // Usamos el nombre si existe, si no, la primera parte de su email
+            const planMostrar = user.membresia;
+            
+            // Actualizamos el H1 en el HTML
+            const user_plan = document.getElementById('user-plan');
+            if (user_plan) {
+                user_plan.textContent = `Plan ${planMostrar}`;
+            }
+            
+        } catch (e) {
+            console.error('Error leyendo los datos del usuario:', e);
+        }
+    }
 }
