@@ -9,20 +9,6 @@
 <body>
     <script src="js/layout.js"></script>
     <script src="js/logout.js"></script>
-    <script>
-        // Verificar autenticación cuando el DOM está listo
-        document.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const hasSession = await authAPI.checkAuth();
-                if (!hasSession) {
-                    window.location.href = 'login.html';
-                }
-            } catch (err) {
-                console.error('Error verificando autenticación:', err);
-                window.location.href = 'login.html';
-            }
-        });
-    </script>
 
     <div id="dashboard-contenido">
         
