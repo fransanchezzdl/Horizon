@@ -2,17 +2,10 @@
  * Lógica principal del Dashboard (index.html)
  * Se encarga de proteger la ruta y personalizar la vista del usuario
  */
+checkLogin();
 
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Verificar si existe el token en el almacenamiento local
-    const token = localStorage.getItem('access_token');
     
-    // Si no hay token, redirigimos al login inmediatamente
-    if (!token) {
-        window.location.replace('login.html'); // Usamos replace para que no puedan volver atrás con el botón del navegador
-        return; 
-    }
-
     // 2. Si hay token, intentamos mostrar su nombre en la bienvenida
     const userDataString = localStorage.getItem('user_data');
     if (userDataString) {
@@ -33,3 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+function checkLogin(){
+    // 1. Verificar si existe el token en el almacenamiento local
+    const token = localStorage.getItem('access_token');
+    
+    // Si no hay token, redirigimos al login inmediatamente
+    if (!token) {
+        window.location.replace('login.html'); // Usamos replace para que no puedan volver atrás con el botón del navegador
+        return; 
+    }
+}
