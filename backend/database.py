@@ -20,11 +20,8 @@ def _get_env_var(*names: str) -> Optional[str]:
             return v
     return None
 
-
-# Buscamos las variables que normalmente se usan con Supabase
-# En el servidor suele usarse `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` o `SUPABASE_KEY`.
 url: Optional[str] = _get_env_var("SUPABASE_URL")
-key: Optional[str] = _get_env_var("SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_KEY", "SUPABASE_ANON_KEY")
+key: Optional[str] = _get_env_var("SUPABASE_KEY", "SUPABASE_ANON_KEY")
 
 if not url or not key:
     raise ValueError(
