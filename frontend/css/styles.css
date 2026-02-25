@@ -153,6 +153,7 @@ p {
     font-weight: 600;
     transition: color 0.3s ease;
     margin-top: auto;
+    text-decoration: none;
 }
 
 .card-link:hover {
@@ -221,7 +222,7 @@ p {
 }
 
 .btn-primary, .reflexion-button, .reflexion-button.primary {
-    background: var(--color-primary);
+    background: linear-gradient(var(--color-primary), var(--color-primary));
     color: white;
     box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
 }
