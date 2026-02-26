@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from .usuarios import UsuarioResponse  # Importación relativa
+from .usuario_dto import UsuarioResponse  # Importación relativa
 
 # DTO para el registro
 class RegisterRequest(BaseModel):
