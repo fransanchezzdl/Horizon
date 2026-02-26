@@ -1,5 +1,4 @@
-import os
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 # Entidades
@@ -57,7 +56,7 @@ def register(datos: RegisterRequest):
 
     # Si no hay perfil o fallo, lanzamos error
     if not perfil_usuario:
-        raise Exception("Error al crear el usuario")
+        raise HTTPException(status_code= 500, detail="Error al crear el usuario")
 
     return RegisterResponse(
         access_token=token or "",
