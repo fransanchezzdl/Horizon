@@ -14,9 +14,9 @@ class UsuarioDAO:
         """
         response = self.db.table("usuarios").select("id_usuario,nombre,apellidos,email,membresia").execute()
         data = getattr(response, "data", None) or (response.get("data") if isinstance(response, dict) else None)
-    # Convertir cada dict a UsuarioResponse
-    items = data or []
-    return [UsuarioResponse(**item) for item in items]
+        # Convertir cada dict a UsuarioResponse
+        items = data or []
+        return [UsuarioResponse(**item) for item in items]
 
     def obtener_por_id(self, user_id: str) -> UsuarioResponse | None:
         """Devuelve el perfil del usuario por su id (id_usuario) o None."""
