@@ -93,36 +93,42 @@
                 </div>
             </div>
 
-            <aside id="chatAsesor" class="advisor-sidebar card">
-                <div class="advisor-header">
-                    <div class="user-avatar">
-                        <span>🤖</span>
-                        <div class="status-indicator"></div>
-                    </div>
-                    <div class="user-info">
-                        <p class="user-name">Asesor Horizon</p>
-                        <p class="user-plan" style="color: #10b981;">En línea</p>
-                    </div>
-                </div>
-
-                <div class="chat-container">
-                    <div class="chat-bubble ai">
-                        ¡Hola! Soy tu <b>Asesor Horizon</b>. ¿Cómo puedo ayudarte hoy?
-                    </div>
-                    <div class="chat-bubble user">
-                        ¿Qué ajustes recomiendas para mi portafolio?
-                    </div>
-                </div>
-
-                <div class="chat-input-wrapper">
-                    <input type="text" class="search-input" placeholder="Escribe tu duda..." style="padding-left: 12px;">
-                    <button id="sendMsg" class="btn-primary" style="padding: 0 12px; height: 44px;">
-                        Enviar
-                    </button>
-                </div>
-            </aside>
-
         </div>
     </div>
+
+    <!-- Chatbot flotante en esquina inferior derecha -->
+    <aside id="chatAsesor" class="advisor-sidebar card collapsed">
+        <div class="advisor-header">
+            <div class="user-avatar">
+                <svg class="chat-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 2H4C2.9 2 2 2.9 2 4V22L6 18H20C21.1 18 22 17.1 22 16V4C22 2.9 21.1 2 20 2Z" fill="white"/>
+                    <circle cx="8" cy="10" r="1.5" fill="currentColor" opacity="0.3"/>
+                    <circle cx="12" cy="10" r="1.5" fill="currentColor" opacity="0.3"/>
+                    <circle cx="16" cy="10" r="1.5" fill="currentColor" opacity="0.3"/>
+                </svg>
+                <div class="status-indicator"></div>
+            </div>
+            <div class="user-info">
+                <p class="user-name">Asesor Horizon</p>
+                <p class="user-plan" style="color: #10b981;">En línea</p>
+            </div>
+        </div>
+
+        <div class="chat-container">
+            <div class="chat-bubble ai">
+                ¡Hola! Soy tu <b>Asesor Horizon</b>. ¿Cómo puedo ayudarte hoy?
+            </div>
+            <div class="chat-bubble user">
+                ¿Qué ajustes recomiendas para mi portafolio?
+            </div>
+        </div>
+
+        <div class="chat-input-wrapper">
+            <input type="text" class="search-input" placeholder="Escribe tu duda..." style="padding-left: 12px;">
+            <button id="sendMsg" class="btn-primary" style="padding: 0 12px; height: 44px;">
+                Enviar
+            </button>
+        </div>
+    </aside>
 </body>
 </html>
