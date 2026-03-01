@@ -674,6 +674,7 @@ p {
     border-radius: 50%;
     font-weight: 700;
     flex-shrink: 0;
+    position: relative;
 }
 
 .user-info {
@@ -868,38 +869,45 @@ body > section {
 }
 
 /* ==================== ESTILOS PÁGINA ACADEMY ==================== */
-/* Contenedor principal: Divide la pantalla en contenido (izq) y asesor (der) */
+/* Contenedor principal: Solo el contenido principal (el chat es flotante) */
 .academy-layout {
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: var(--spacing-2xl);
-    align-items: start;
+    display: block;
 }
 
-/* Sidebar del Asesor: Ocupa todo el alto vertical disponible */
+/* Sidebar del Asesor: Elemento flotante en esquina inferior derecha */
 .advisor-sidebar {
-    position: sticky;
-    top: 32px;
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 380px;
+    max-height: 600px;
     padding: 0 !important;
-    /* Calcula el alto restando los márgenes del body para que llegue al fondo */
-    height: calc(100vh - 64px); 
     display: flex;
     flex-direction: column;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: all 0.25s ease-out;
     overflow: hidden;
     background: white;
+    z-index: 1000;
+    box-shadow: 0 12px 36px rgba(15, 23, 42, 0.15);
+    border-radius: var(--radius-xl);
 }
 
-/* ESTADO COLAPSADO: Se transforma en un círculo en la esquina superior derecha de su columna */
+/* ESTADO COLAPSADO: Botón flotante circular en esquina inferior derecha */
 .advisor-sidebar.collapsed {
-    width: 64px !important;
-    height: 64px !important; /* El !important asegura que ignore el calc anterior */
-    aspect-ratio: 1 / 1;    /* Fuerza que sea un cuadrado perfecto */
+    width: 72px !important;
+    height: 72px !important;
+    max-height: 72px;
+    min-width: 72px;
+    min-height: 72px;
     border-radius: 50%;
-    margin-left: auto; 
     cursor: pointer;
-    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
-    min-height: 0;          /* Evita que el navegador fuerce alturas mínimas */
+    box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+    transition: all 0.25s ease-out;
+}
+
+.advisor-sidebar.collapsed:hover {
+    box-shadow: 0 5px 10px var(--color-border);
+    transform: scale(1.05);
 }
 
 /* Cabecera del chat (actúa como botón de toggle) */
@@ -911,7 +919,6 @@ body > section {
     gap: var(--spacing-md);
     background: var(--color-bg-light);
     cursor: pointer;
-    transition: background 0.2s;
 }
 
 .advisor-header:hover {
@@ -929,13 +936,42 @@ body > section {
 /* Centrar el avatar/icono cuando es un círculo */
 .advisor-sidebar.collapsed .advisor-header {
     border: none;
-    padding: 0;             /* Quitamos el padding para que no empuje el logo */
+    padding: 0;
     width: 100%;
     height: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     background: transparent;
+}
+
+/* Aumentar tamaño del avatar cuando el chat está colapsado */
+.advisor-sidebar.collapsed .user-avatar {
+    width: 60px;
+    height: 60px;
+    padding: 0;
+}
+
+/* SVG del ícono de estrellas */
+.chat-icon-svg {
+    width: 28px;
+    height: 28px;
+    fill: white;
+    stroke: none;
+}
+
+/* Ocultar el emoji span cuando hay SVG */
+.advisor-sidebar.collapsed .user-avatar .chat-icon-svg {
+    display: block;
+}
+
+/* Ajustar indicador de estado cuando está colapsado */
+.advisor-sidebar.collapsed .status-indicator {
+    bottom: 2px;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    border: 3px solid white;
 }
 
 /* Avatar del Bot */
@@ -1047,13 +1083,29 @@ body > section {
 
 /* Adaptación para tablets y móviles */
 @media (max-width: 1024px) {
-    .academy-layout {
-        grid-template-columns: 1fr;
-    }
     .advisor-sidebar {
-        position: relative;
-        height: 450px;
-        top: 0;
+        width: 320px;
+        max-height: 500px;
+        bottom: 16px;
+        right: 16px;
+    }
+    
+    .advisor-sidebar.collapsed {
+        width: 56px !important;
+        height: 56px !important;
+        max-height: 56px;
+        min-width: 56px;
+        min-height: 56px;
+    }
+    
+    .advisor-sidebar.collapsed .user-avatar {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .advisor-sidebar.collapsed .chat-icon-svg {
+        width: 24px;
+        height: 24px;
     }
 }
 
