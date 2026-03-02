@@ -1,5 +1,5 @@
 from ..database import supabase
-from ..daos import usuario_dao
+from ..daos import usuario_dao, UsuarioDAO
 from ..dtos import UsuarioResponse
 from fastapi import HTTPException
 from supabase import Client
@@ -11,7 +11,7 @@ class AuthService:
     Orquesta llamadas al cliente de Auth (supabase) y al DAO de usuarios.
     """
 
-    def __init__(self, db_client: Client, usuario_dao_instance: usuario_dao.__class__):
+    def __init__(self, db_client: Client, usuario_dao_instance: UsuarioDAO):
         self.db = db_client
         self.usuario_dao = usuario_dao_instance
 
@@ -90,6 +90,54 @@ class AuthService:
             raise
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
+    
+    def validar_token(self, token: str) -> str:
+        """
+        Valida un token JWT de Supabase y extrae el user_id.
+        
+        Verifica el token contra Supabase Auth para asegurar que:
+        - El token fue emitido por Supabase (validación de firma)
+        - No ha expirado
+        - No ha sido revocado
+        
+        Args:
+            token: Token JWT sin el prefijo "Bearer "
+            
+        Returns:
+            str: El user_id del usuario autenticado
+            
+        Raises:
+            HTTPException: Si el token es inválido, expirado o revocado
+        """
+        try:
+            # Validar el token contra Supabase Auth
+            # Esto verifica: firma criptográfica, expiración y revocación
+            user_response = self.db.auth.get_user(token)
+            
+            # Extraer el objeto user (la estructura puede variar según la versión de supabase-py)
+            if hasattr(user_response, 'user'):
+                user = user_response.user
+            elif isinstance(user_response, dict):
+                user = user_response.get('user')
+            else:
+                user = user_response
+            
+            # Extraer el user_id
+            if isinstance(user, dict):
+                user_id = user.get('id')
+            else:
+                user_id = getattr(user, 'id', None)
+            
+            if not user_id:
+                raise HTTPException(status_code=401, detail="Token inválido: no se pudo extraer el user_id")
+            
+            return user_id
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"[AUTH] Error validando token: {str(e)}")
+            raise HTTPException(status_code=401, detail="Token inválido o expirado")
 
 
 # Instanciamos el servicio listo para inyectar en controladores

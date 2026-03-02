@@ -41,12 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
  * Envía un mensaje al chatbot y muestra la respuesta
  */
 async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
-    // Obtener id_usuario de localStorage
-    const userData = JSON.parse(localStorage.getItem('user_data') || '{}');
-    const id_usuario = userData.id_usuario;
+    // Obtener token de autenticación de localStorage
+    const token = localStorage.getItem('access_token');
 
-    if (!id_usuario) {
-        mostrarError(chatContainer, '⚠️ Error: No se pudo obtener tu ID de usuario. Por favor recarga la página.');
+    if (!token) {
+        mostrarError(chatContainer, '⚠️ Error: No estás autenticado. Por favor recarga la página y vuelve a iniciar sesión.');
         return;
     }
 
@@ -67,10 +66,10 @@ async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
         const response = await fetch(`${API_URL}/chat`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({
-                id_usuario: id_usuario,
                 message: mensaje
             })
         });
@@ -84,10 +83,14 @@ async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
             // Manejar errores específicos del servidor
             const errorMsg = data.detail || 'Error al procesar el mensaje';
             
-            // Si es error de límite de caracteres o validación
-            if (response.status === 400) {
-                mostrarError(chatContainer, `⚠️ ${errorMsg}`);
+            // Si es error de autenticación
+            if (response.status === 401) {
+                mostrarError(chatContainer, `🔒 ${errorMsg}`);
             }
+            // Si es error de límite de caracteres o validación
+            else if (response.status === 400) {
+                mostrarError(chatContainer, `⚠️ ${errorMsg}`);
+            }   
             // Si es error de límite de mensajes (429)
             else if (response.status === 429) {
                 mostrarError(chatContainer, `⏱️ ${errorMsg}`);
