@@ -102,7 +102,8 @@ class ChatDAO:
             ChatMessageResponse con el mensaje y la respuesta del IA
             
         Raises:
-            Exception: Si el usuario excede el límite de mensajes o si el mensaje es inválido
+            Exception: Si el usuario excede el límite de mensajes, si el mensaje es inválido,
+                      o si hay errores con el servicio de IA
         """
         # Validar longitud del mensaje (máximo 100 caracteres)
         self._validar_longitud_mensaje(usuario_mensaje)
@@ -112,18 +113,15 @@ class ChatDAO:
         
         if not puede_enviar:
             raise Exception(
-                f"Has alcanzado el límite de {limite} mensajes por minuto para tu membresía. "
-                f"Has enviado {mensajes_enviados} mensajes. Intenta de nuevo luego o mejora tu membresía."
+                f"Has alcanzado el límite de {limite} mensaje/s por minuto para tu membresía. "
+                f"Has enviado {mensajes_enviados} mensaje/s. Intenta de nuevo luego o mejora tu membresía."
             )
         
-        try:
-            # Registrar el mensaje actual
-            self.mensajes_por_usuario[id_usuario].append(datetime.now())
-            
-            # Procesar con Gemini
-            respuesta_ia = self.ai_service.generar_respuesta(id_usuario, usuario_mensaje)
-        except Exception as e:
-            respuesta_ia = f"Error al procesar la pregunta: {str(e)}"
+        # Registrar el mensaje actual
+        self.mensajes_por_usuario[id_usuario].append(datetime.now())
+        
+        # Procesar con Gemini - dejamos que las excepciones se propaguen
+        respuesta_ia = self.ai_service.generar_respuesta(id_usuario, usuario_mensaje)
         
         return ChatMessageResponse(
             usuario_mensaje=usuario_mensaje,
