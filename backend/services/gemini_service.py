@@ -85,7 +85,19 @@ No te presentes en cada mensaje, el usuario ya te conoce."""
             return response.text if response.text else "No se pudo generar una respuesta."
             
         except Exception as e:
-            raise Exception(f"Error al generar respuesta con Gemini: {str(e)}")
+            error_str = str(e)
+            
+            # Detección específica de error de cuota agotada
+            if "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+                raise Exception(f"Cuota agotada")
+            
+            # Otros errores de API
+            elif "API" in error_str or "key" in error_str.lower():
+                raise Exception(f"Error de configuración de Gemini API: {error_str}")
+            
+            # Error genérico
+            else:
+                raise Exception(f"Error al generar respuesta con Gemini: {error_str}")
 
 
 # Instancia global del servicio

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 
 # Entidades
@@ -65,11 +65,15 @@ def register(datos: RegisterRequest):
 
 
 @app.post("/chat", response_model=ChatMessageResponse)
-def chat(mensaje: ChatMessageRequest):
+def chat(mensaje: ChatMessageRequest, authorization: str = Header(None)):
     """
     Endpoint para el chatbot con Gemini.
     
-    Recibe un mensaje del usuario con su id_usuario y devuelve la respuesta del modelo IA.
+    Requiere autenticación con token JWT en el header Authorization.
+    Recibe un mensaje del usuario y devuelve la respuesta del modelo IA.
+    
+    Header requerido:
+    - Authorization: Bearer <JWT_TOKEN>
     
     Límites por membresía:
     - Gratis: 1 mensaje por minuto
@@ -78,9 +82,17 @@ def chat(mensaje: ChatMessageRequest):
     Restricciones:
     - Máximo 100 caracteres por mensaje
     """
+    # 1. Validar token y extraer user_id (lanzará HTTPException si hay error)
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Token de autenticación requerido. Usa el formato 'Bearer <token>'")
+    
+    token = authorization.replace("Bearer ", "")
+    user_id = auth_service.validar_token(token)  # Si falla, lanza HTTPException(401)
+    
+    # 2. Procesar el mensaje con el user_id validado
     try:
         respuesta = chat_service.procesar_mensaje(
-            id_usuario=mensaje.id_usuario,
+            id_usuario=user_id,
             mensaje=mensaje.message
         )
         return respuesta
