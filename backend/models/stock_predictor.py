@@ -15,7 +15,6 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from sklearn.preprocessing import MinMaxScaler
-import pandas_ta as ta
 import yfinance as yf
 from typing import Tuple, Dict, Optional
 import os
@@ -24,6 +23,70 @@ from datetime import datetime, timedelta
 
 # Configuración del dispositivo
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+# ==========================================
+# INDICADORES TÉCNICOS
+# ==========================================
+
+def calculate_rsi(data: pd.Series, periods: int = 14) -> pd.Series:
+    """
+    Calcula el Relative Strength Index (RSI).
+    
+    Args:
+        data: Serie de precios (típicamente Close)
+        periods: Período de cálculo (défault: 14)
+    
+    Returns:
+        Serie con valores RSI (0-100)
+    """
+    delta = data.diff()
+    gain = (delta.where(delta > 0, 0)).rolling(window=periods).mean()
+    loss = (-delta.where(delta < 0, 0)).rolling(window=periods).mean()
+    
+    rs = gain / loss
+    rsi = 100 - (100 / (1 + rs))
+    return rsi
+
+
+def calculate_ema(data: pd.Series, span: int = 20) -> pd.Series:
+    """
+    Calcula el Exponential Moving Average (EMA).
+    
+    Args:
+        data: Serie de precios
+        span: Período de la media móvil (défault: 20)
+    
+    Returns:
+        Serie con valores EMA
+    """
+    return data.ewm(span=span, adjust=False).mean()
+
+
+def calculate_macd(data: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> pd.DataFrame:
+    """
+    Calcula el Moving Average Convergence Divergence (MACD).
+    
+    Args:
+        data: Serie de precios (típicamente Close)
+        fast: Período EMA rápida (défault: 12)
+        slow: Período EMA lenta (défault: 26)
+        signal: Período de la señal (défault: 9)
+    
+    Returns:
+        DataFrame con columnas: MACD, Signal, Histogram
+    """
+    ema_fast = calculate_ema(data, span=fast)
+    ema_slow = calculate_ema(data, span=slow)
+    macd_line = ema_fast - ema_slow
+    signal_line = macd_line.ewm(span=signal, adjust=False).mean()
+    histogram = macd_line - signal_line
+    
+    return pd.DataFrame({
+        'MACD': macd_line,
+        'Signal': signal_line,
+        'Histogram': histogram
+    })
 
 
 # ==========================================
@@ -194,10 +257,10 @@ def get_prediction(
         
         # 2. Calcular indicadores técnicos
         print(f"📊 Calculando indicadores...")
-        df['RSI'] = df.ta.rsi(length=14)
-        macd_result = df.ta.macd(fast=12, slow=26, signal=9)
-        df['MACD'] = macd_result.iloc[:, 0]
-        df['EMA'] = df.ta.ema(length=20)
+        df['RSI'] = calculate_rsi(df['Close'], periods=14)
+        macd_result = calculate_macd(df['Close'], fast=12, slow=26, signal=9)
+        df['MACD'] = macd_result['MACD']
+        df['EMA'] = calculate_ema(df['Close'], span=20)
         df.dropna(inplace=True)
         
         # Obtener precio actual y volatilidad
