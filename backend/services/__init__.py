@@ -4,6 +4,7 @@ from .auth_service import AuthService, auth_service
 from .finance_service import FinanceService, get_finance_service
 from .prediction_service import PredictionService, get_prediction_service
 from .portfolio_service import PortfolioService, get_portfolio_service
+from .gemini_service import GeminiService, gemini_service
 
 __all__ = [
     "AuthService", 
@@ -14,4 +15,6 @@ __all__ = [
     "get_prediction_service",
     "PortfolioService",
     "get_portfolio_service",
+    "GeminiService",
+    "gemini_service",
 ]
