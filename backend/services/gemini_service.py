@@ -19,12 +19,17 @@ class GeminiService:
         api_key = os.getenv("GEMINI_API_KEY")
         
         if not api_key:
-            raise ValueError(
-                "GEMINI_API_KEY no está configurada en las variables de entorno. "
-                "Asegúrate de incluirla en tu archivo backend/.env"
-            )
-        
-        self.client = Client(api_key=api_key)
+            # No lanzar error aquí, dejar que falle cuando se intente usar
+            self.client = None
+            self.api_key_missing = True
+        else:
+            try:
+                self.client = Client(api_key=api_key)
+                self.api_key_missing = False
+            except Exception as e:
+                self.client = None
+                self.api_key_missing = True
+                print(f"[GEMINI] Error al inicializar cliente: {e}")
 
     def generar_respuesta(self, id_usuario: str, mensaje: str) -> str:
         """
@@ -40,18 +45,38 @@ class GeminiService:
         Raises:
             Exception: Si hay error al conectar con Gemini
         """
+        # Verificar si hay API key configurada
+        if self.api_key_missing or not self.client:
+            raise Exception(
+                "API key de Gemini no configurada. Asegúrate de incluir GEMINI_API_KEY en tu archivo backend/.env"
+            )
+        
         try:
-            # Puedes agregar contexto del usuario aquí si es necesario
+            # Podemos agregar contexto del usuario aquí si es necesario
             # por ejemplo, obtener su información de perfil para personalizar respuestas
             
-            prompt = f"""Eres un asesor financiero experto llamado 'Asesor Horizon'.
-Tu responsabilidad es ayudar a usuarios con preguntas sobre finanzas, inversión y gestión de portafolios.
+            prompt = f"""
+Eres un asesor financiero experto llamado 'Asesor Horizon'. Te encuentras en
+una aplicación llamada Horizon, en la sección de AcademIA. Esta aplicación ofrece la posibilidad
+de probar portfolios ficticios, realizar predicciones con modelos de Machine Learning, y acceder
+a cursos de educación financiera básica, para personas que quieran iniciarse en el mundo de las
+inversiones.
+
+Tu responsabilidad es ayudar a usuarios con preguntas sobre finanzas, inversión y gestión de portfolios.
 
 Usuario ID: {id_usuario}
 Pregunta: {mensaje}
 
-Proporciona una respuesta útil, clara y concisa. Si la pregunta no está relacionada con finanzas, 
-sugiere amablemente que te enfocas en temas financieros."""
+Proporciona una respuesta útil, clara y concisa. Si la pregunta no está relacionada con la aplicación Horizon, 
+sugiere amablemente que te enfocas en temas financieros y educativos.
+
+Nunca asegures beneficios ni aconsejes inversiones reales, siempre usar la AcademIA para aprender con portfolios
+ficticios. 
+
+Si el usuario pregunta por sus datos, indícale que por seguridad, como modelo y asesor, no recibes esa información
+y queda encriptada en la base de datos de la aplicación.
+
+No te presentes en cada mensaje, el usuario ya te conoce."""
             
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash",

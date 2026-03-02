@@ -86,11 +86,29 @@ def chat(mensaje: ChatMessageRequest):
         return respuesta
     except Exception as e:
         error_msg = str(e)
-        # Si es error de límite, devolver 429 (Too Many Requests)
+        
+        # Si es error de límite de mensajes, devolver 429 (Too Many Requests)
         if "límite" in error_msg.lower() or "limit" in error_msg.lower():
             raise HTTPException(status_code=429, detail=error_msg)
+        
         # Si es error de validación (longitud, vacío, usuario no encontrado)
         elif any(keyword in error_msg.lower() for keyword in ["demasiado largo", "vacío", "no encontrado"]):
             raise HTTPException(status_code=400, detail=error_msg)
-        # Otros errores
+        
+        # Si es error de API key de Gemini
+        elif "api" in error_msg.lower() and ("key" in error_msg.lower() or "credential" in error_msg.lower()):
+            raise HTTPException(
+                status_code=500, 
+                detail="Error de configuración: La API key de Gemini no está configurada correctamente. Contacta al administrador."
+            )
+        
+        # Si es error de cuota agotada de Gemini
+        elif "quota" in error_msg.lower() or "resource exhausted" in error_msg.lower() or "429" in error_msg:
+            raise HTTPException(
+                status_code=503,
+                detail="El servicio de IA ha alcanzado su límite de uso. Por favor intenta de nuevo más tarde."
+            )
+        
+        # Otros errores del servicio de IA
+        raise HTTPException(status_code=500, detail=f"Error del servicio de IA: {error_msg}")
         raise HTTPException(status_code=500, detail=error_msg)
