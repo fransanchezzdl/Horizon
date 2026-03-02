@@ -31,7 +31,7 @@ class GeminiService:
                 self.api_key_missing = True
                 print(f"[GEMINI] Error al inicializar cliente: {e}")
 
-    def generar_respuesta(self, id_usuario: str, mensaje: str) -> str:
+    def generar_respuesta(self, mensaje: str) -> str:
         """
         Genera una respuesta usando la API de Google Gemini.
         
@@ -64,7 +64,6 @@ inversiones.
 
 Tu responsabilidad es ayudar a usuarios con preguntas sobre finanzas, inversión y gestión de portfolios.
 
-Usuario ID: {id_usuario}
 Pregunta: {mensaje}
 
 Proporciona una respuesta útil, clara y concisa. Si la pregunta no está relacionada con la aplicación Horizon, 
