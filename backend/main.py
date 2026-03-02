@@ -72,16 +72,16 @@ def chat(mensaje: ChatMessageRequest):
     Recibe un mensaje del usuario con su id_usuario y devuelve la respuesta del modelo IA.
     
     Límites por membresía:
-    - Gratis: 1 mensajes por minuto
-    - PRO: 5 mensajes por minuto
+    - Gratis: 1 mensaje por minuto
+    - PRO: 1 mensaje por minuto
     
     Restricciones:
     - Máximo 100 caracteres por mensaje
     """
     try:
-        respuesta = chat_dao.procesar_mensaje(
+        respuesta = chat_service.procesar_mensaje(
             id_usuario=mensaje.id_usuario,
-            usuario_mensaje=mensaje.message
+            mensaje=mensaje.message
         )
         return respuesta
     except Exception as e:
@@ -111,4 +111,3 @@ def chat(mensaje: ChatMessageRequest):
         
         # Otros errores del servicio de IA
         raise HTTPException(status_code=500, detail=f"Error del servicio de IA: {error_msg}")
-        raise HTTPException(status_code=500, detail=error_msg)
