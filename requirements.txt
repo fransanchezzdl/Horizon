@@ -2,7 +2,8 @@ fastapi[all]
 supabase
 python-dotenv
 pydantic[email]
-uvicorn[standard]
+uvicorn
+google.genai
 
 # Data Science & Machine Learning
 torch>=2.0.0

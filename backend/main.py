@@ -62,3 +62,35 @@ def register(datos: RegisterRequest):
         access_token=token or "",
         user=perfil_usuario
     )
+
+
+@app.post("/chat", response_model=ChatMessageResponse)
+def chat(mensaje: ChatMessageRequest):
+    """
+    Endpoint para el chatbot con Gemini.
+    
+    Recibe un mensaje del usuario con su id_usuario y devuelve la respuesta del modelo IA.
+    
+    Límites por membresía:
+    - Gratis: 1 mensajes por minuto
+    - PRO: 5 mensajes por minuto
+    
+    Restricciones:
+    - Máximo 100 caracteres por mensaje
+    """
+    try:
+        respuesta = chat_dao.procesar_mensaje(
+            id_usuario=mensaje.id_usuario,
+            usuario_mensaje=mensaje.message
+        )
+        return respuesta
+    except Exception as e:
+        error_msg = str(e)
+        # Si es error de límite, devolver 429 (Too Many Requests)
+        if "límite" in error_msg.lower() or "limit" in error_msg.lower():
+            raise HTTPException(status_code=429, detail=error_msg)
+        # Si es error de validación (longitud, vacío, usuario no encontrado)
+        elif any(keyword in error_msg.lower() for keyword in ["demasiado largo", "vacío", "no encontrado"]):
+            raise HTTPException(status_code=400, detail=error_msg)
+        # Otros errores
+        raise HTTPException(status_code=500, detail=error_msg)
