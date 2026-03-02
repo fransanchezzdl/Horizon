@@ -22,6 +22,10 @@ from .prediction_dto import (
     HistoricalPredictionResponse,
     PredictionStatsResponse,
 )
+from .chat_dto import (
+    ChatMessageRequest,
+    ChatMessageResponse,
+)
 
 __all__ = [
     "UsuarioResponse",
@@ -48,4 +52,7 @@ __all__ = [
     "BlendedReturnResponse",
     "HistoricalPredictionResponse",
     "PredictionStatsResponse",
+    # Chat DTOs
+    "ChatMessageRequest",
+    "ChatMessageResponse",
 ]
