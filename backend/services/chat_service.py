@@ -4,6 +4,12 @@ from ..dtos.chat_dto import ChatMessageRequest, ChatMessageResponse
 from ..daos.usuario_dao import usuario_dao
 from ..daos.chat_dao import chat_dao
 from .gemini_service import gemini_service
+from ..exceptions import (
+    RateLimitExceededError,
+    MessageTooLongError,
+    EmptyMessageError,
+    UsuarioNoEncontradoError
+)
 
 
 class ChatService:
@@ -46,7 +52,7 @@ class ChatService:
         # 2. Obtener usuario (necesitamos su membresía para rate limiting)
         usuario = self.usuario_dao.obtener_por_id(id_usuario)
         if not usuario:
-            raise Exception("Usuario no encontrado")
+            raise UsuarioNoEncontradoError(id_usuario)
         
         # 3. Verificar límite de mensajes (rate limiting)
         puede_enviar, mensajes_enviados, limite = self.chat_dao.verificar_limite_mensajes(
@@ -55,10 +61,7 @@ class ChatService:
         )
         
         if not puede_enviar:
-            raise Exception(
-                f"Has alcanzado el límite de {limite} mensaje/s por minuto para tu membresía. "
-                f"Has enviado {mensajes_enviados} mensaje/s. Intenta de nuevo luego o mejora tu membresía."
-            )
+            raise RateLimitExceededError(mensajes_enviados, limite, usuario.membresia)
         
         # 4. Registrar el mensaje (para rate limiting)
         self.chat_dao.registrar_mensaje(id_usuario)
@@ -84,12 +87,9 @@ class ChatService:
         """
         longitud = len(mensaje.strip())
         if longitud > 100:
-            raise Exception(
-                f"El mensaje es demasiado largo. Máximo 100 caracteres. "
-                f"Tu mensaje tiene {longitud} caracteres."
-            )
+            raise MessageTooLongError(longitud)
         if longitud == 0:
-            raise Exception("El mensaje no puede estar vacío.")
+            raise EmptyMessageError()
 
 
 # Instancia singleton del servicio
