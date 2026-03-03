@@ -83,6 +83,15 @@ function initSidebar() {
     </aside>
 
     <div id="sidebarOverlay" class="sidebar-overlay"></div>
+    
+    <!-- Botón para mobile -->
+    <button class="mobile-menu-toggle" id="mobileMenuToggle">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+        </svg>
+    </button>
     `;
 
     // Inyectar el HTML al inicio del body
@@ -99,25 +108,41 @@ function initSidebar() {
 function initSidebarEvents() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
+    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const SIDEBAR_STATE_KEY = 'sidebar_collapsed';
+    const isMobile = window.innerWidth <= 768;
 
-    // Toggle sidebar en desktop
+    // Restaurar estado de sidebar colapsada solo en desktop
+    if (!isMobile && localStorage.getItem(SIDEBAR_STATE_KEY) === 'true') {
+        sidebar.classList.add('collapsed');
+    }
+
+    // Toggle desde el botón dentro de la sidebar (desktop)
     sidebarToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('collapsed');
+        if (isMobile) {
+            sidebar.classList.remove('open');
+            sidebarOverlay.classList.remove('visible');
+            return;
+        }
+
+        const isCollapsed = sidebar.classList.toggle('collapsed');
+        localStorage.setItem(SIDEBAR_STATE_KEY, isCollapsed);
     });
 
-    // Toggle sidebar en mobile
-    if (window.innerWidth <= 768) {
-        sidebarToggle.addEventListener('click', () => {
+    // Toggle desde botón hamburguesa (mobile)
+    if (mobileMenuToggle) {
+        mobileMenuToggle.addEventListener('click', () => {
             sidebar.classList.toggle('open');
             sidebarOverlay.classList.toggle('visible');
         });
-
-        sidebarOverlay.addEventListener('click', () => {
-            sidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('visible');
-        });
     }
+
+    // Cerrar sidebar al hacer click en overlay
+    sidebarOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        sidebarOverlay.classList.remove('visible');
+    });
 
     // Marcar el item activo según la página actual
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
@@ -127,15 +152,15 @@ function initSidebarEvents() {
         }
     });
 
-    // Cerrar sidebar al hacer click en un link en mobile
-    if (window.innerWidth <= 768) {
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
+    // Cerrar sidebar al hacer click en un link (siempre)
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', () => {
+            if (sidebar.classList.contains('open')) {
                 sidebar.classList.remove('open');
                 sidebarOverlay.classList.remove('visible');
-            });
+            }
         });
-    }
+    });
 
     // Nota: La lógica de logout está en logout.js
 }

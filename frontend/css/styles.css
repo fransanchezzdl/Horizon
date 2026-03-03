@@ -720,6 +720,35 @@ p {
     visibility: visible;
 }
 
+/* Botón hamburguesa para mobile */
+.mobile-menu-toggle {
+    display: none;
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    z-index: 1002;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #1f2937;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
+    transition: all 0.3s ease;
+}
+
+.mobile-menu-toggle:hover {
+    background: #f3f4f6;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.mobile-menu-toggle:active {
+    transform: scale(0.95);
+}
+
 #dashboard-contenido,
 body > main,
 body > section {
@@ -921,6 +950,12 @@ body > section {
     cursor: pointer;
 }
 
+.advisor-header .close-icon {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+}
+
 .advisor-header:hover {
     background: var(--color-bg-lighter);
 }
@@ -928,7 +963,8 @@ body > section {
 /* Ocultar elementos cuando está colapsado */
 .advisor-sidebar.collapsed .chat-container,
 .advisor-sidebar.collapsed .chat-input-wrapper,
-.advisor-sidebar.collapsed .user-info {
+.advisor-sidebar.collapsed .user-info,
+.advisor-sidebar.collapsed .close-icon {
     display: none;
     opacity: 0;
 }
@@ -1282,6 +1318,11 @@ body > section {
 }
 
 @media (max-width: 768px) {
+    /* Bot\u00f3n hamburguesa visible en mobile */
+    .mobile-menu-toggle {
+        display: flex;
+    }
+
     /* Sidebar */
     .sidebar {
         transform: translateX(-100%);
