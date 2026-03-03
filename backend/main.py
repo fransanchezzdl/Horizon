@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 # Entidades
 from .dtos import *
 from .daos import *
 from .services import *
+
+# Exception handlers
+from .exceptions import register_exception_handlers
 
 app = FastAPI()
 
@@ -16,6 +19,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Registrar exception handlers globales
+register_exception_handlers(app)
+
 
 @app.get("/usuarios", response_model=list[UsuarioResponse])
 def get_usuarios():
@@ -65,7 +72,7 @@ def register(datos: RegisterRequest):
 
 
 @app.post("/chat", response_model=ChatMessageResponse)
-def chat(mensaje: ChatMessageRequest, authorization: str = Header(None)):
+def chat(mensaje: ChatMessageRequest, user_id: str = Depends(auth_service.get_current_user)):
     """
     Endpoint para el chatbot con Gemini.
     
@@ -81,45 +88,11 @@ def chat(mensaje: ChatMessageRequest, authorization: str = Header(None)):
     
     Restricciones:
     - Máximo 100 caracteres por mensaje
+    
+    Nota: Los errores se manejan automáticamente por exception handlers globales.
     """
-    # 1. Validar token y extraer user_id (lanzará HTTPException si hay error)
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Token de autenticación requerido. Usa el formato 'Bearer <token>'")
-    
-    token = authorization.replace("Bearer ", "")
-    user_id = auth_service.validar_token(token)  # Si falla, lanza HTTPException(401)
-    
-    # 2. Procesar el mensaje con el user_id validado
-    try:
-        respuesta = chat_service.procesar_mensaje(
-            id_usuario=user_id,
-            mensaje=mensaje.message
-        )
-        return respuesta
-    except Exception as e:
-        error_msg = str(e)
-        
-        # Si es error de límite de mensajes, devolver 429 (Too Many Requests)
-        if "límite" in error_msg.lower() or "limit" in error_msg.lower():
-            raise HTTPException(status_code=429, detail=error_msg)
-        
-        # Si es error de validación (longitud, vacío, usuario no encontrado)
-        elif any(keyword in error_msg.lower() for keyword in ["demasiado largo", "vacío", "no encontrado"]):
-            raise HTTPException(status_code=400, detail=error_msg)
-        
-        # Si es error de API key de Gemini
-        elif "api" in error_msg.lower() and ("key" in error_msg.lower() or "credential" in error_msg.lower()):
-            raise HTTPException(
-                status_code=500, 
-                detail="Error de configuración: La API key de Gemini no está configurada correctamente. Contacta al administrador."
-            )
-        
-        # Si es error de cuota agotada de Gemini
-        elif "quota" in error_msg.lower() or "resource exhausted" in error_msg.lower() or "429" in error_msg:
-            raise HTTPException(
-                status_code=503,
-                detail="El servicio de IA ha alcanzado su límite de uso. Por favor intenta de nuevo más tarde."
-            )
-        
-        # Otros errores del servicio de IA
-        raise HTTPException(status_code=500, detail=f"Error del servicio de IA: {error_msg}")
+    # El servicio lanza excepciones personalizadas que los handlers convierten en respuestas HTTP
+    return chat_service.procesar_mensaje(
+        id_usuario=user_id,
+        mensaje=mensaje.message
+    )
