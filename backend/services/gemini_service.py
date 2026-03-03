@@ -3,6 +3,12 @@
 import os
 from dotenv import load_dotenv
 from google.genai import Client
+from ..exceptions import (
+    GeminiAPIKeyMissingError,
+    GeminiQuotaExceededError,
+    GeminiAPIConfigError,
+    GeminiAPIError
+)
 
 
 # Primero intentamos cargar el .env que está junto a database.py (backend/.env)
@@ -47,9 +53,7 @@ class GeminiService:
         """
         # Verificar si hay API key configurada
         if self.api_key_missing or not self.client:
-            raise Exception(
-                "API key de Gemini no configurada. Asegúrate de incluir GEMINI_API_KEY en tu archivo backend/.env"
-            )
+            raise GeminiAPIKeyMissingError()
         
         try:
             # Podemos agregar contexto del usuario aquí si es necesario
@@ -75,7 +79,9 @@ ficticios.
 Si el usuario pregunta por sus datos, indícale que por seguridad, como modelo y asesor, no recibes esa información
 y queda encriptada en la base de datos de la aplicación.
 
-No te presentes en cada mensaje, el usuario ya te conoce."""
+No te presentes en cada mensaje, el usuario ya te conoce.
+
+Separa la respuesta en párrafos y no la hagas muy extensa"""
             
             response = self.client.models.generate_content(
                 model="gemini-2.5-flash",
@@ -89,15 +95,15 @@ No te presentes en cada mensaje, el usuario ya te conoce."""
             
             # Detección específica de error de cuota agotada
             if "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
-                raise Exception(f"Cuota agotada")
+                raise GeminiQuotaExceededError()
             
             # Otros errores de API
             elif "API" in error_str or "key" in error_str.lower():
-                raise Exception(f"Error de configuración de Gemini API: {error_str}")
+                raise GeminiAPIConfigError(error_str)
             
             # Error genérico
             else:
-                raise Exception(f"Error al generar respuesta con Gemini: {error_str}")
+                raise GeminiAPIError(error_str)
 
 
 # Instancia global del servicio

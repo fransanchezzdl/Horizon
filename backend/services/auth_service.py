@@ -1,7 +1,7 @@
 from ..database import supabase
 from ..daos import usuario_dao, UsuarioDAO
 from ..dtos import UsuarioResponse
-from fastapi import HTTPException
+from fastapi import HTTPException, Header
 from supabase import Client
 
 
@@ -138,6 +138,41 @@ class AuthService:
         except Exception as e:
             print(f"[AUTH] Error validando token: {str(e)}")
             raise HTTPException(status_code=401, detail="Token inválido o expirado")
+    
+    def get_current_user(self, authorization: str = Header(None)) -> str:
+        """
+        Dependency para validar autenticación JWT en endpoints protegidos.
+        
+        Extrae y valida el token JWT del header Authorization.
+        
+        Args:
+            authorization: Header Authorization con formato 'Bearer <token>'
+            
+        Returns:
+            str: user_id del usuario autenticado
+            
+        Raises:
+            HTTPException(401): Si el token es inválido, falta o está mal formateado
+            
+        Uso en endpoints:
+            from fastapi import Depends
+            from backend.services.auth_service import auth_service
+            
+            @app.post("/endpoint")
+            def endpoint(user_id: str = Depends(auth_service.get_current_user)):
+                # user_id contiene el ID del usuario autenticado
+                ...
+        """
+        if not authorization or not authorization.startswith("Bearer "):
+            raise HTTPException(
+                status_code=401, 
+                detail="Token de autenticación requerido. Usa el formato 'Bearer <token>'"
+            )
+        
+        token = authorization.replace("Bearer ", "")
+        user_id = self.validar_token(token)  # Lanza HTTPException(401) si es inválido
+        
+        return user_id
 
 
 # Instanciamos el servicio listo para inyectar en controladores
