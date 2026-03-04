@@ -81,7 +81,13 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Bollinger Bands %B
     bbands = ta.bbands(df["Close"], length=20, std=2)
-    df["Bollinger_PctB"] = bbands["BBP_20_2.0"]
+    bbp_col = [col for col in bbands.columns if col.startswith("BBP")]
+    if not bbp_col:
+        raise ValueError(
+            f"No se encontró la columna BBP en Bollinger Bands. "
+            f"Columnas disponibles: {list(bbands.columns)}"
+        )
+    df["Bollinger_PctB"] = bbands[bbp_col[0]]
 
     # ATR de 14 períodos
     df["ATR"] = ta.atr(df["High"], df["Low"], df["Close"], length=14)
