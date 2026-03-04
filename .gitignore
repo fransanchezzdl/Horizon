@@ -12,3 +12,4 @@ ENV/
 # Modelos entrenados (pesados, no subir a git)
 backend/models/saved_models/*.pth
 backend/models/saved_models/*.pkl
+backend/models/saved_models/*.json
