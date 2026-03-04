@@ -19,7 +19,7 @@ STABLE_CONFIG = {
     "epochs": 150,
     "batch_size": 16,
     "trend_threshold": 0.01,  # ±1.0% para tendencia alcista/bajista
-    "early_stopping_patience": 10,
+    "early_stopping_patience": 20,
 }
 
 VOLATILE_CONFIG = {
@@ -31,14 +31,48 @@ VOLATILE_CONFIG = {
     "epochs": 200,
     "batch_size": 32,
     "trend_threshold": 0.03,  # ±3.0% para activos volátiles
-    "early_stopping_patience": 15,
+    "early_stopping_patience": 25,
 }
 
-# Features del modelo (9 features)
-FEATURE_COLS = [
+# Variaciones de hiperparámetros para diversificar el ensemble.
+# Cada modelo del ensemble usa una configuración ligeramente diferente.
+ENSEMBLE_VARIATIONS = {
+    "stable": [
+        {"hidden_dim": 64, "window_size": 30, "dropout": 0.10, "num_layers": 2},
+        {"hidden_dim": 48, "window_size": 30, "dropout": 0.15, "num_layers": 2},
+        {"hidden_dim": 80, "window_size": 30, "dropout": 0.05, "num_layers": 2},
+        {"hidden_dim": 64, "window_size": 20, "dropout": 0.10, "num_layers": 2},
+        {"hidden_dim": 64, "window_size": 40, "dropout": 0.20, "num_layers": 3},
+    ],
+    "volatile": [
+        {"hidden_dim": 64, "window_size": 60, "dropout": 0.30, "num_layers": 2},
+        {"hidden_dim": 48, "window_size": 60, "dropout": 0.35, "num_layers": 2},
+        {"hidden_dim": 80, "window_size": 60, "dropout": 0.25, "num_layers": 2},
+        {"hidden_dim": 64, "window_size": 45, "dropout": 0.30, "num_layers": 2},
+        {"hidden_dim": 64, "window_size": 75, "dropout": 0.30, "num_layers": 3},
+    ],
+}
+
+# Features de contexto de mercado (solo para activos volátiles)
+MARKET_CONTEXT_TICKERS = {
+    "VIX": "^VIX",      # Índice de volatilidad (miedo del mercado)
+    "NASDAQ": "^IXIC",   # Índice NASDAQ Composite
+}
+
+# Features base (9 features, para todos los activos)
+BASE_FEATURE_COLS = [
     "Close", "Volume", "RSI", "MACD", "EMA",
     "Bollinger_PctB", "ATR", "Log_Return", "Volume_Ratio"
 ]
+
+# Features adicionales para activos volátiles (2 extras)
+VOLATILE_EXTRA_COLS = ["VIX_Close", "NASDAQ_Return"]
+
+# Features completas para volátiles (11 features)
+VOLATILE_FEATURE_COLS = BASE_FEATURE_COLS + VOLATILE_EXTRA_COLS
+
+# Alias para compatibilidad con código existente
+FEATURE_COLS = BASE_FEATURE_COLS
 
 # Ensemble
 ENSEMBLE_SIZE = 5
@@ -67,3 +101,10 @@ def get_asset_type(ticker: str) -> str:
     if ticker in TICKERS["volatile"]:
         return "volatile"
     return "stable"
+
+
+def get_feature_cols(ticker: str) -> list:
+    """Devuelve la lista de features según el tipo de activo."""
+    if ticker in TICKERS["volatile"]:
+        return VOLATILE_FEATURE_COLS.copy()
+    return BASE_FEATURE_COLS.copy()
