@@ -1,21 +1,27 @@
 """
 Gestión del ensemble de modelos BiGRU para el predictor Horizon.
 
-Entrena N modelos con diferentes semillas de inicialización y
-combina sus predicciones mediante voto mayoritario para la tendencia
+Entrena N modelos con diferentes hiperparámetros y semillas de inicialización,
+y combina sus predicciones mediante voto mayoritario para la tendencia
 y estadísticas sobre los retornos predichos para el precio orientativo.
 """
 
+import json
 import os
 import torch
 import numpy as np
+from datetime import datetime, timezone
 from typing import List
 
 from .config import (
     ENSEMBLE_SIZE,
+    ENSEMBLE_VARIATIONS,
     FEATURE_COLS,
     SAVED_MODELS_DIR,
+    TICKERS,
     get_config,
+    get_asset_type,
+    get_feature_cols,
 )
 from .data_pipeline import prepare_data, load_scaler, download_data, compute_features
 from .model import HorizonBiGRU
@@ -26,37 +32,46 @@ def train_ensemble(ticker: str) -> dict:
     """
     Entrena el ensemble completo de N modelos para un ticker dado.
 
-    Cada modelo se entrena con una semilla diferente para introducir
-    diversidad. El scaler y los modelos se guardan en saved_models/.
+    Cada modelo usa hiperparámetros diferentes (ENSEMBLE_VARIATIONS) para
+    introducir diversidad real en el ensemble. Los datos se preparan una vez
+    por cada window_size único para evitar descargas redundantes.
 
     Args:
         ticker: Símbolo del activo (ej: 'KO', 'TSLA').
 
     Returns:
-        Diccionario con métricas agregadas del ensemble:
-            - ticker: símbolo del activo
-            - n_models: número de modelos entrenados
-            - individual_metrics: lista de métricas por modelo
-            - avg_val_loss: pérdida de validación media
-            - avg_directional_accuracy: accuracy direccional media en test
+        Diccionario con métricas agregadas del ensemble.
     """
     config = get_config(ticker)
+    asset_type = get_asset_type(ticker)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    variations = ENSEMBLE_VARIATIONS[asset_type]
 
     print(f"\n{'='*60}")
     print(f"🎯 Entrenando ensemble para {ticker} ({ENSEMBLE_SIZE} modelos)")
     print(f"   Dispositivo: {device}")
     print(f"{'='*60}")
 
-    # Preparar datos una sola vez (compartido por todos los modelos)
-    data = prepare_data(ticker, config)
+    # Preparar datos una vez por cada window_size único
+    unique_window_sizes = list(set(v["window_size"] for v in variations))
+    data_by_window = {}
+    for ws in unique_window_sizes:
+        ws_config = config.copy()
+        ws_config["window_size"] = ws
+        data_by_window[ws] = prepare_data(ticker, ws_config)
 
     individual_metrics = []
 
-    for model_idx in range(ENSEMBLE_SIZE):
-        metrics = train_single_model(ticker, model_idx, config, data, device)
+    for model_idx, variation in enumerate(variations):
+        model_config = config.copy()
+        model_config.update(variation)
+
+        ws = variation["window_size"]
+        data = data_by_window[ws]
+
+        metrics = train_single_model(ticker, model_idx, model_config, data, device)
         # Evaluar en test
-        model = _load_single_model(ticker, model_idx, config, device)
+        model = _load_single_model(ticker, model_idx, model_config, device)
         test_metrics = evaluate_model(
             model, data["X_test"], data["y_test"], device
         )
@@ -69,10 +84,56 @@ def train_ensemble(ticker: str) -> dict:
     avg_dir_acc = float(
         np.mean([m["directional_accuracy"] for m in individual_metrics])
     )
+    avg_mae = float(np.mean([m["mae"] for m in individual_metrics]))
+    avg_rmse = float(np.mean([m["rmse"] for m in individual_metrics]))
+    avg_precision_up = float(np.mean([m["precision_up"] for m in individual_metrics]))
+    avg_recall_up = float(np.mean([m["recall_up"] for m in individual_metrics]))
 
     print(f"\n✅ Ensemble {ticker} completado:")
     print(f"   Val Loss medio: {avg_val_loss:.6f}")
     print(f"   Accuracy direccional media (test): {avg_dir_acc:.2%}")
+
+    # Guardar informe JSON
+    report = {
+        "ticker": ticker,
+        "asset_type": asset_type,
+        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "n_models": ENSEMBLE_SIZE,
+        "config_used": config,
+        "feature_cols": get_feature_cols(ticker),
+        "metrics": {
+            "avg_val_loss": avg_val_loss,
+            "avg_directional_accuracy": avg_dir_acc,
+            "avg_mae": avg_mae,
+            "avg_rmse": avg_rmse,
+            "avg_precision_up": avg_precision_up,
+            "avg_recall_up": avg_recall_up,
+            "naive_baseline_accuracy": individual_metrics[0].get(
+                "naive_baseline_accuracy", None
+            ),
+        },
+        "individual_models": [
+            {
+                "model_idx": i,
+                "seed": 42 + i,
+                "variation": variations[i],
+                "val_loss": m["best_val_loss"],
+                "epochs_trained": m["epochs_trained"],
+                "directional_accuracy": m["directional_accuracy"],
+                "mae": m["mae"],
+                "rmse": m["rmse"],
+                "precision_up": m["precision_up"],
+                "recall_up": m["recall_up"],
+            }
+            for i, m in enumerate(individual_metrics)
+        ],
+    }
+
+    os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+    report_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_report.json")
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(report, f, indent=2, ensure_ascii=False, default=str)
+    print(f"📄 Informe guardado en {report_path}")
 
     return {
         "ticker": ticker,
@@ -80,6 +141,10 @@ def train_ensemble(ticker: str) -> dict:
         "individual_metrics": individual_metrics,
         "avg_val_loss": avg_val_loss,
         "avg_directional_accuracy": avg_dir_acc,
+        "avg_mae": avg_mae,
+        "avg_rmse": avg_rmse,
+        "avg_precision_up": avg_precision_up,
+        "avg_recall_up": avg_recall_up,
     }
 
 
@@ -92,7 +157,7 @@ def _load_single_model(
     Args:
         ticker: Símbolo del activo.
         model_idx: Índice del modelo dentro del ensemble.
-        config: Diccionario de configuración.
+        config: Diccionario de configuración (puede incluir variación específica).
         device: Dispositivo de cómputo.
 
     Returns:
@@ -108,8 +173,9 @@ def _load_single_model(
             f"Ejecuta train_ensemble('{ticker}') primero."
         )
 
+    feature_cols = get_feature_cols(ticker)
     model = HorizonBiGRU(
-        input_dim=len(FEATURE_COLS),
+        input_dim=len(feature_cols),
         hidden_dim=config["hidden_dim"],
         num_layers=config["num_layers"],
         dropout=config["dropout"],
@@ -134,11 +200,15 @@ def load_ensemble(ticker: str) -> List[HorizonBiGRU]:
         FileNotFoundError: Si alguno de los modelos no existe en disco.
     """
     config = get_config(ticker)
+    asset_type = get_asset_type(ticker)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    variations = ENSEMBLE_VARIATIONS[asset_type]
 
     models = []
-    for model_idx in range(ENSEMBLE_SIZE):
-        model = _load_single_model(ticker, model_idx, config, device)
+    for model_idx, variation in enumerate(variations):
+        model_config = config.copy()
+        model_config.update(variation)
+        model = _load_single_model(ticker, model_idx, model_config, device)
         models.append(model)
 
     print(f"📦 Ensemble de {ticker} cargado ({len(models)} modelos).")
@@ -180,40 +250,48 @@ def predict_ensemble(ticker: str) -> dict:
         ValueError: Si no hay datos disponibles para el ticker.
     """
     config = get_config(ticker)
+    asset_type = get_asset_type(ticker)
     threshold = config["trend_threshold"]
-    window_size = config["window_size"]
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    variations = ENSEMBLE_VARIATIONS[asset_type]
 
-    # Cargar ensemble y scaler
-    models = load_ensemble(ticker)
+    # Tamaño máximo de ventana para descargar datos suficientes
+    max_window_size = max(v["window_size"] for v in variations)
+
     scaler = load_scaler(ticker)
 
     # Descargar datos recientes y calcular features
+    include_market_context = ticker in TICKERS["volatile"]
     raw_df = download_data(ticker)
-    feat_df = compute_features(raw_df)
+    feat_df = compute_features(raw_df, include_market_context=include_market_context)
+    feature_cols = get_feature_cols(ticker)
 
-    if len(feat_df) < window_size:
+    if len(feat_df) < max_window_size:
         raise ValueError(
             f"Datos insuficientes para {ticker}: "
-            f"se necesitan al menos {window_size} filas, "
+            f"se necesitan al menos {max_window_size} filas, "
             f"disponibles {len(feat_df)}."
         )
 
     # Precio actual (último cierre disponible)
     current_price = float(feat_df["Close"].iloc[-1])
 
-    # Escalar features con el scaler guardado
-    last_window_raw = feat_df[FEATURE_COLS].values[-window_size:]
+    # Escalar la ventana máxima de features con el scaler guardado
+    last_window_raw = feat_df[feature_cols].values[-max_window_size:]
     last_window_scaled = scaler.transform(last_window_raw)
 
-    # Tensor de entrada: [1, window_size, n_features]
-    input_tensor = (
-        torch.from_numpy(last_window_scaled).float().unsqueeze(0).to(device)
-    )
+    # Cargar ensemble de modelos (evita I/O redundante por modelo)
+    models = load_ensemble(ticker)
 
-    # Predicción de cada modelo
+    # Predicción de cada modelo con su window_size específico
     individual_returns = []
-    for model in models:
+    for model, variation in zip(models, variations):
+        ws = variation["window_size"]
+        window_slice = last_window_scaled[-ws:]
+        input_tensor = (
+            torch.from_numpy(window_slice).float().unsqueeze(0).to(device)
+        )
+
         model.eval()
         with torch.no_grad():
             pred_return = model(input_tensor).item()

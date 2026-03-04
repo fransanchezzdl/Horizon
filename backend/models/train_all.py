@@ -61,6 +61,8 @@ def main() -> None:
                 f"  ✅ {r['ticker']:10s} | "
                 f"Val Loss: {r['avg_val_loss']:.6f} | "
                 f"Dir. Acc: {r['avg_directional_accuracy']:.2%} | "
+                f"Prec↑: {r.get('avg_precision_up', 0):.2%} | "
+                f"Rec↑: {r.get('avg_recall_up', 0):.2%} | "
                 f"Tiempo: {r['elapsed_seconds']:.1f}s"
             )
         else:
