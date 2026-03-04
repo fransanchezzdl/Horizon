@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from typing import Dict
 
 from .model import HorizonBiGRU
-from .config import FEATURE_COLS, SAVED_MODELS_DIR
+from .config import SAVED_MODELS_DIR
 
 
 def train_single_model(
@@ -63,7 +63,7 @@ def train_single_model(
 
     # Instanciar modelo
     model = HorizonBiGRU(
-        input_dim=len(FEATURE_COLS),
+        input_dim=data["X_train"].shape[2],
         hidden_dim=hidden_dim,
         num_layers=num_layers,
         dropout=dropout,
@@ -73,7 +73,7 @@ def train_single_model(
     criterion = nn.HuberLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=5
+        optimizer, mode="min", factor=0.7, patience=8
     )
 
     # DataLoaders
@@ -173,8 +173,8 @@ def evaluate_model(
     """
     Evalúa un modelo entrenado en el conjunto de test.
 
-    Calcula MAE, RMSE y accuracy direccional (porcentaje de veces que
-    el modelo predice correctamente si el retorno será positivo o negativo).
+    Calcula MAE, RMSE, accuracy direccional, precision/recall para la clase
+    alcista y un baseline naive para comparación.
 
     Args:
         model: Modelo HorizonBiGRU entrenado.
@@ -183,7 +183,8 @@ def evaluate_model(
         device: Dispositivo de cómputo.
 
     Returns:
-        Diccionario con métricas: mae, rmse, directional_accuracy.
+        Diccionario con métricas: mae, rmse, directional_accuracy,
+        precision_up, recall_up, naive_baseline_accuracy, n_samples_test.
     """
     model.eval()
     model.to(device)
@@ -198,13 +199,36 @@ def evaluate_model(
     mae = float(np.mean(np.abs(preds - y_true)))
     rmse = float(math.sqrt(np.mean((preds - y_true) ** 2)))
 
+    preds_flat = preds.flatten()
+    true_flat = y_true.flatten()
+
     # Accuracy direccional: ¿el signo del retorno predicho coincide con el real?
     directional_accuracy = float(
-        np.mean(np.sign(preds.flatten()) == np.sign(y_true.flatten()))
+        np.mean(np.sign(preds_flat) == np.sign(true_flat))
+    )
+
+    # Precision/Recall para dirección positiva (ALCISTA)
+    pred_positive = preds_flat > 0
+    true_positive = true_flat > 0
+
+    tp = np.sum(pred_positive & true_positive)
+    fp = np.sum(pred_positive & ~true_positive)
+    fn = np.sum(~pred_positive & true_positive)
+
+    precision_up = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+    recall_up = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
+
+    # Baseline naive: predecir siempre retorno 0 (sin movimiento)
+    naive_accuracy = float(
+        np.mean(np.sign(np.zeros_like(true_flat)) == np.sign(true_flat))
     )
 
     return {
         "mae": mae,
         "rmse": rmse,
         "directional_accuracy": directional_accuracy,
+        "precision_up": precision_up,
+        "recall_up": recall_up,
+        "naive_baseline_accuracy": naive_accuracy,
+        "n_samples_test": len(true_flat),
     }
