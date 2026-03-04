@@ -162,6 +162,15 @@ function initSidebarEvents() {
         });
     });
 
+    // Abrir perfil del usuario al hacer click
+    const userProfile = document.querySelector('.user-profile');
+    if (userProfile) {
+        userProfile.style.cursor = 'pointer';
+        userProfile.addEventListener('click', () => {
+            window.location.href = 'profile.html';
+        });
+    }
+
     // Nota: La lógica de logout está en logout.js
 }
 
