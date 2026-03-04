@@ -15,7 +15,18 @@ import torch
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple, Dict
 
-from .config import FEATURE_COLS, PREDICTION_HORIZON, TRAIN_RATIO, VAL_RATIO, SAVED_MODELS_DIR
+from .config import (
+    FEATURE_COLS,
+    BASE_FEATURE_COLS,
+    VOLATILE_FEATURE_COLS,
+    MARKET_CONTEXT_TICKERS,
+    PREDICTION_HORIZON,
+    TRAIN_RATIO,
+    VAL_RATIO,
+    SAVED_MODELS_DIR,
+    get_feature_cols,
+    get_asset_type,
+)
 
 
 def download_data(ticker: str) -> pd.DataFrame:
@@ -45,11 +56,11 @@ def download_data(ticker: str) -> pd.DataFrame:
     return df
 
 
-def compute_features(df: pd.DataFrame) -> pd.DataFrame:
+def compute_features(df: pd.DataFrame, include_market_context: bool = False) -> pd.DataFrame:
     """
-    Calcula las 9 features técnicas del modelo.
+    Calcula las features técnicas del modelo.
 
-    Features calculadas:
+    Features base calculadas (9):
         1. Close         — precio de cierre
         2. Volume        — volumen de transacciones
         3. RSI(14)       — Relative Strength Index
@@ -60,11 +71,16 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
         8. Log_Return    — retorno logarítmico diario
         9. Volume_Ratio  — ratio volumen vs media móvil 20 días
 
+    Features adicionales de contexto de mercado (2, solo si include_market_context=True):
+        10. VIX_Close    — precio de cierre del índice VIX
+        11. NASDAQ_Return — retorno logarítmico diario del NASDAQ
+
     Args:
         df: DataFrame con columnas OHLCV (Open, High, Low, Close, Volume).
+        include_market_context: Si True, añade VIX_Close y NASDAQ_Return.
 
     Returns:
-        DataFrame con las 9 features calculadas, sin NaNs.
+        DataFrame con las features calculadas, sin NaNs.
     """
     df = df.copy()
 
@@ -79,9 +95,15 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     # EMA de 50 períodos
     df["EMA"] = ta.ema(df["Close"], length=50)
 
-    # Bollinger Bands %B
+    # Bollinger Bands %B (búsqueda robusta de columna para compatibilidad con pandas_ta)
     bbands = ta.bbands(df["Close"], length=20, std=2)
-    df["Bollinger_PctB"] = bbands["BBP_20_2.0"]
+    bbp_col = [col for col in bbands.columns if col.startswith("BBP")]
+    if not bbp_col:
+        raise ValueError(
+            f"No se encontró la columna BBP en Bollinger Bands. "
+            f"Columnas disponibles: {list(bbands.columns)}"
+        )
+    df["Bollinger_PctB"] = bbands[bbp_col[0]]
 
     # ATR de 14 períodos
     df["ATR"] = ta.atr(df["High"], df["Low"], df["Close"], length=14)
@@ -92,10 +114,48 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     # Ratio de volumen (volumen / media móvil 20 días)
     df["Volume_Ratio"] = df["Volume"] / df["Volume"].rolling(20).mean()
 
+    # Contexto de mercado: VIX y NASDAQ (solo para activos volátiles)
+    if include_market_context:
+        start_date = df.index.min().strftime("%Y-%m-%d")
+        end_date = df.index.max().strftime("%Y-%m-%d")
+
+        vix_df = yf.download(
+            MARKET_CONTEXT_TICKERS["VIX"],
+            start=start_date,
+            end=end_date,
+            progress=False,
+            auto_adjust=True,
+        )
+        nasdaq_df = yf.download(
+            MARKET_CONTEXT_TICKERS["NASDAQ"],
+            start=start_date,
+            end=end_date,
+            progress=False,
+            auto_adjust=True,
+        )
+
+        # Aplanar MultiIndex si yfinance lo devuelve
+        if isinstance(vix_df.columns, pd.MultiIndex):
+            vix_df.columns = vix_df.columns.get_level_values(0)
+        if isinstance(nasdaq_df.columns, pd.MultiIndex):
+            nasdaq_df.columns = nasdaq_df.columns.get_level_values(0)
+
+        vix_close = vix_df["Close"].rename("VIX_Close")
+        nasdaq_return = np.log(
+            nasdaq_df["Close"] / nasdaq_df["Close"].shift(1)
+        ).rename("NASDAQ_Return")
+
+        df = df.join(vix_close, how="left").join(nasdaq_return, how="left")
+        # Rellenar hacia adelante fechas sin datos (ej: fines de semana para crypto)
+        df["VIX_Close"] = df["VIX_Close"].ffill()
+        df["NASDAQ_Return"] = df["NASDAQ_Return"].ffill()
+
     # Eliminar filas con NaN producidos por los indicadores
     df.dropna(inplace=True)
 
-    return df[FEATURE_COLS]
+    if include_market_context:
+        return df[VOLATILE_FEATURE_COLS]
+    return df[BASE_FEATURE_COLS]
 
 
 def compute_target(df: pd.DataFrame, horizon: int = PREDICTION_HORIZON) -> pd.Series:
@@ -164,7 +224,10 @@ def prepare_data(ticker: str, config: dict) -> dict:
 
     # 1. Descargar y calcular features
     raw_df = download_data(ticker)
-    feat_df = compute_features(raw_df)
+    include_market_context = get_asset_type(ticker) == "volatile"
+    feat_df = compute_features(raw_df, include_market_context=include_market_context)
+
+    feature_cols = get_feature_cols(ticker)
 
     # 2. Calcular target (retorno a 5 días) y eliminar NaNs resultantes
     target = compute_target(feat_df)
@@ -173,7 +236,7 @@ def prepare_data(ticker: str, config: dict) -> dict:
     feat_df.dropna(inplace=True)
 
     targets_array = feat_df["_target"].values
-    features_array = feat_df[FEATURE_COLS].values
+    features_array = feat_df[feature_cols].values
     dates = feat_df.index
     close_prices = feat_df["Close"].values
 
