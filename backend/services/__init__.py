@@ -6,6 +6,7 @@ from .prediction_service import PredictionService, get_prediction_service
 from .portfolio_service import PortfolioService, get_portfolio_service
 from .gemini_service import GeminiService, gemini_service
 from .chat_service import ChatService, chat_service
+from .activo_service import ActivoService, activo_service
 
 __all__ = [
     "AuthService", 
@@ -19,5 +20,7 @@ __all__ = [
     "GeminiService",
     "gemini_service",
     "ChatService",
-    "chat_service"
+    "chat_service",
+    "ActivoService",
+    "activo_service",
 ]
