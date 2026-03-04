@@ -1,4 +1,5 @@
 from .usuario_dto import UsuarioResponse
+from .activo_dto import ActivoResponse
 from .login_dto import LoginRequest, LoginResponse
 from .register_dto import RegisterRequest, RegisterResponse
 from .portfolio_dto import (
@@ -29,6 +30,7 @@ from .chat_dto import (
 
 __all__ = [
     "UsuarioResponse",
+    "ActivoResponse",
     "LoginRequest",
     "LoginResponse",
     "RegisterRequest",
