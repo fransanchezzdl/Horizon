@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Horizon</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <main class="main-content">
+        <section class="profile-header">
+            <div class="profile-banner"></div>
+            <div class="profile-card">
+                <div class="profile-avatar-container">
+                    <div class="profile-avatar" id="profileAvatar">A</div>
+                </div>
+                <div class="profile-basic-info">
+                    <h1 id="profileName">Cargando...</h1>
+                    <p class="profile-email" id="profileEmail">email@example.com</p>
+                    <div class="profile-plan-badge" id="profilePlan">Plan Free</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-content">
+            <div class="profile-grid">
+                <!-- Información General -->
+                <div class="profile-section">
+                    <h2>Información General</h2>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Nombre Completo</span>
+                            <p class="info-value" id="infoNombre">-</p>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <p class="info-value" id="infoEmail">-</p>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Teléfono</span>
+                            <p class="info-value" id="infoTelefono">-</p>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">País</span>
+                            <p class="info-value" id="infoPais">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="profile-section">
+                    <h2>Estadísticas</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statPortfolio">0</div>
+                            <div class="stat-label">Activos en Portfolio</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statPredictions">0</div>
+                            <div class="stat-label">Predicciones</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statAccuracy">-</div>
+                            <div class="stat-label">Precisión Promedio</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plan y Membresía -->
+                <div class="profile-section">
+                    <h2>Plan y Membresía</h2>
+                    <div class="membership-info">
+                        <div class="membership-item">
+                            <span class="membership-label">Plan Actual</span>
+                            <p class="membership-value" id="membershipPlan">Free</p>
+                        </div>
+                        <div class="membership-item">
+                            <span class="membership-label">Fecha de Registro</span>
+                            <p class="membership-value" id="membershipDate">-</p>
+                        </div>
+                        <div class="membership-item">
+                            <span class="membership-label">Estado</span>
+                            <p class="membership-value status-active" id="membershipStatus">Activo</p>
+                        </div>
+                    </div>
+                    <button class="btn-upgrade" id="btnUpgrade">Actualizar Plan</button>
+                </div>
+
+                <!-- Seguridad -->
+                <div class="profile-section">
+                    <h2>Seguridad</h2>
+                    <div class="security-options">
+                        <div class="security-item">
+                            <div class="security-info">
+                                <h3>Cambiar Contraseña</h3>
+                                <p>Actualiza tu contraseña regularmente para mantener tu cuenta segura</p>
+                            </div>
+                            <button class="btn-secondary" id="btnChangePassword">Cambiar</button>
+                        </div>
+                        <div class="security-item">
+                            <div class="security-info">
+                                <h3>Autenticación de Dos Factores</h3>
+                                <p>Añade una capa adicional de seguridad a tu cuenta</p>
+                            </div>
+                            <button class="btn-secondary" id="btn2FA">Configurar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de Acción -->
+            <div class="profile-actions">
+                <button class="btn-primary" id="btnEditProfile">Editar Perfil</button>
+                <a href="index.html" class="btn-secondary">Volver al Dashboard</a>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/layout.js"></script>
+    <script src="js/profile.js"></script>
+</body>
+</html>
