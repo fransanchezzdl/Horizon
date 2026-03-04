@@ -71,6 +71,29 @@ def register(datos: RegisterRequest):
     )
 
 
+# ─── Endpoints de Activos ───────────────────────────────────────────
+
+@app.get("/activos")
+def listar_activos(q: str = ""):
+    """
+    Lista todos los activos. Si se pasa ?q=texto, filtra por ticker o nombre.
+    """
+    if q:
+        return activo_service.buscar_activos(q)
+    return activo_service.listar_activos()
+
+
+@app.get("/activos/{ticker}")
+def obtener_activo(ticker: str):
+    """
+    Devuelve un activo concreto por su ticker.
+    """
+    activo = activo_service.obtener_activo(ticker)
+    if not activo:
+        raise HTTPException(status_code=404, detail="Activo no encontrado")
+    return activo
+
+
 @app.post("/chat", response_model=ChatMessageResponse)
 def chat(mensaje: ChatMessageRequest, user_id: str = Depends(auth_service.get_current_user)):
     """
