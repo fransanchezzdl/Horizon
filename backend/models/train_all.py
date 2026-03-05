@@ -57,18 +57,12 @@ def main() -> None:
     print("=" * 60)
     for r in results:
         if r["status"] == "OK":
-            threshold_str = (
-                f"Threshold: ±{r['dynamic_threshold']:.4f} | "
-                if r.get("dynamic_threshold") is not None
-                else ""
-            )
             print(
                 f"  ✅ {r['ticker']:10s} | "
                 f"Val Loss: {r['avg_val_loss']:.6f} | "
                 f"Dir. Acc: {r['avg_directional_accuracy']:.2%} | "
                 f"Prec↑: {r.get('avg_precision_up', 0):.2%} | "
                 f"Rec↑: {r.get('avg_recall_up', 0):.2%} | "
-                f"{threshold_str}"
                 f"Tiempo: {r['elapsed_seconds']:.1f}s"
             )
         else:
