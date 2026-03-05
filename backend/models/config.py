@@ -5,8 +5,8 @@ Dos perfiles de configuración según tipo de activo.
 
 # Catálogo de tickers iniciales
 TICKERS = {
-    "stable": ["KO"], #, "AAPL", "GC=F", "SI=F"],
-    "volatile": ["TSLA"] #, "NVDA", "BTC-USD", "ETH-USD"]
+    "stable": ["KO", "AAPL", "GC=F", "SI=F"],
+    "volatile": ["TSLA", "NVDA", "BTC-USD", "ETH-USD"] # type: ignore
 }
 
 # Configuración por tipo de activo
