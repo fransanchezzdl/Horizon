@@ -8,6 +8,7 @@ y estadísticas sobre los retornos predichos para el precio orientativo.
 
 import json
 import os
+import pickle
 import torch
 import numpy as np
 from datetime import datetime, timezone
@@ -23,7 +24,13 @@ from .config import (
     get_asset_type,
     get_feature_cols,
 )
-from .data_pipeline import prepare_data, load_scaler, download_data, compute_features
+from .data_pipeline import (
+    prepare_data,
+    prepare_data_multi_window,
+    load_scaler,
+    download_data,
+    compute_features,
+)
 from .model import HorizonBiGRU
 from .trainer import train_single_model, evaluate_model
 
@@ -52,13 +59,16 @@ def train_ensemble(ticker: str) -> dict:
     print(f"   Dispositivo: {device}")
     print(f"{'='*60}")
 
-    # Preparar datos una vez por cada window_size único
+    # Preparar todos los datos UNA SOLA VEZ para todos los window_sizes
     unique_window_sizes = list(set(v["window_size"] for v in variations))
-    data_by_window = {}
-    for ws in unique_window_sizes:
-        ws_config = config.copy()
-        ws_config["window_size"] = ws
-        data_by_window[ws] = prepare_data(ticker, ws_config)
+    all_data = prepare_data_multi_window(ticker, config, unique_window_sizes)
+    dynamic_threshold = all_data["dynamic_threshold"]
+
+    # Guardar threshold dinámico para inferencia
+    os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+    threshold_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_threshold.pkl")
+    with open(threshold_path, "wb") as f:
+        pickle.dump(dynamic_threshold, f)
 
     individual_metrics = []
 
@@ -67,7 +77,7 @@ def train_ensemble(ticker: str) -> dict:
         model_config.update(variation)
 
         ws = variation["window_size"]
-        data = data_by_window[ws]
+        data = all_data[ws]  # Datos para este window_size específico
 
         metrics = train_single_model(ticker, model_idx, model_config, data, device)
         # Evaluar en test
@@ -77,6 +87,13 @@ def train_ensemble(ticker: str) -> dict:
         )
         metrics.update(test_metrics)
         individual_metrics.append(metrics)
+
+    # Guardar pesos del ensemble (val_loss por modelo)
+    model_weights = {i: m["best_val_loss"] for i, m in enumerate(individual_metrics)}
+    weights_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_weights.pkl")
+    with open(weights_path, "wb") as f:
+        pickle.dump(model_weights, f)
+    print(f"⚖️ Pesos del ensemble guardados en {weights_path}")
 
     avg_val_loss = float(
         np.mean([m["best_val_loss"] for m in individual_metrics])
@@ -92,6 +109,7 @@ def train_ensemble(ticker: str) -> dict:
     print(f"\n✅ Ensemble {ticker} completado:")
     print(f"   Val Loss medio: {avg_val_loss:.6f}")
     print(f"   Accuracy direccional media (test): {avg_dir_acc:.2%}")
+    print(f"   Threshold dinámico: ±{dynamic_threshold:.4f} ({dynamic_threshold * 100:.2f}%)")
 
     # Guardar informe JSON
     report = {
@@ -101,6 +119,7 @@ def train_ensemble(ticker: str) -> dict:
         "n_models": ENSEMBLE_SIZE,
         "config_used": config,
         "feature_cols": get_feature_cols(ticker),
+        "dynamic_threshold": dynamic_threshold,
         "metrics": {
             "avg_val_loss": avg_val_loss,
             "avg_directional_accuracy": avg_dir_acc,
@@ -145,6 +164,7 @@ def train_ensemble(ticker: str) -> dict:
         "avg_rmse": avg_rmse,
         "avg_precision_up": avg_precision_up,
         "avg_recall_up": avg_recall_up,
+        "dynamic_threshold": dynamic_threshold,
     }
 
 
@@ -251,9 +271,36 @@ def predict_ensemble(ticker: str) -> dict:
     """
     config = get_config(ticker)
     asset_type = get_asset_type(ticker)
-    threshold = config["trend_threshold"]
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     variations = ENSEMBLE_VARIATIONS[asset_type]
+
+    # Cargar threshold dinámico si está disponible, si no usar el fijo de config
+    threshold_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_threshold.pkl")
+    if os.path.exists(threshold_path):
+        with open(threshold_path, "rb") as f:
+            threshold = pickle.load(f)
+        print(f"📏 Usando threshold dinámico: ±{threshold:.4f}")
+    else:
+        threshold = config["trend_threshold"]
+        print(f"⚠️ Threshold dinámico no encontrado, usando fijo: ±{threshold}")
+
+    # Cargar pesos del ensemble basados en val_loss
+    weights_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_weights.pkl")
+    if os.path.exists(weights_path):
+        with open(weights_path, "rb") as f:
+            val_losses = pickle.load(f)
+        # Pesos inversamente proporcionales al val_loss: menor pérdida = mayor peso
+        # Se añade epsilon para evitar división por cero si val_loss == 0.0
+        inv_losses = {k: 1.0 / (v + 1e-8) for k, v in val_losses.items()}
+        total_inv = sum(inv_losses.values())
+        # Si faltan índices (modelos no entrenados), usar peso uniforme como fallback
+        if all(i in inv_losses for i in range(ENSEMBLE_SIZE)):
+            model_weights = [inv_losses[i] / total_inv for i in range(ENSEMBLE_SIZE)]
+        else:
+            model_weights = [1.0 / ENSEMBLE_SIZE] * ENSEMBLE_SIZE
+        print(f"⚖️ Pesos ponderados: {[f'{w:.3f}' for w in model_weights]}")
+    else:
+        model_weights = [1.0 / ENSEMBLE_SIZE] * ENSEMBLE_SIZE
 
     # Tamaño máximo de ventana para descargar datos suficientes
     max_window_size = max(v["window_size"] for v in variations)
@@ -297,24 +344,22 @@ def predict_ensemble(ticker: str) -> dict:
             pred_return = model(input_tensor).item()
         individual_returns.append(pred_return)
 
-    # Tendencia por voto mayoritario
-    votes = []
-    for ret in individual_returns:
+    # Votación ponderada para tendencia
+    trend_weights = {"ALCISTA": 0.0, "BAJISTA": 0.0, "LATERAL": 0.0}
+    for ret, weight in zip(individual_returns, model_weights):
         if ret > threshold:
-            votes.append("ALCISTA")
+            trend_weights["ALCISTA"] += weight
         elif ret < -threshold:
-            votes.append("BAJISTA")
+            trend_weights["BAJISTA"] += weight
         else:
-            votes.append("LATERAL")
+            trend_weights["LATERAL"] += weight
 
-    # Tendencia ganadora y confianza
-    from collections import Counter
-    vote_counts = Counter(votes)
-    winning_trend, winning_count = vote_counts.most_common(1)[0]
-    confidence = winning_count / ENSEMBLE_SIZE
+    winning_trend = max(trend_weights, key=trend_weights.get)
+    confidence = trend_weights[winning_trend]  # Ya en rango 0-1 (pesos suman 1)
 
-    # Estadísticas de retornos
-    mean_return = float(np.mean(individual_returns))
+    # Retorno ponderado por rendimiento de los modelos
+    weighted_return = sum(w * r for w, r in zip(model_weights, individual_returns))
+    mean_return = float(weighted_return)
     std_return = float(np.std(individual_returns))
 
     predicted_price = current_price * np.exp(mean_return)
@@ -323,7 +368,7 @@ def predict_ensemble(ticker: str) -> dict:
 
     return {
         "trend": winning_trend,
-        "confidence": confidence,
+        "confidence": round(confidence, 4),
         "current_price": current_price,
         "predicted_price": float(predicted_price),
         "price_upper": float(price_upper),
