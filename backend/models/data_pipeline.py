@@ -302,6 +302,137 @@ def prepare_data(ticker: str, config: dict) -> dict:
     }
 
 
+def compute_dynamic_threshold(targets: np.ndarray, percentile: float = 60.0) -> float:
+    """
+    Calcula un threshold dinámico basado en la distribución real de retornos.
+
+    Usa el percentil dado de los retornos absolutos del conjunto de train.
+    Esto adapta el threshold a la volatilidad real del activo:
+    - KO (baja vol): threshold ~0.003-0.005
+    - TSLA (alta vol): threshold ~0.04-0.06
+    - GC=F (media vol): threshold ~0.01-0.02
+
+    Args:
+        targets: Array de retornos logarítmicos a 5 días (solo train).
+        percentile: Percentil de la distribución de |retornos|. Default: 60.
+
+    Returns:
+        Float con el threshold adaptativo.
+    """
+    abs_returns = np.abs(targets)
+    if len(abs_returns) == 0:
+        raise ValueError("Cannot compute dynamic threshold from empty targets array.")
+    threshold = float(np.percentile(abs_returns, percentile))
+    return threshold
+
+
+def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> dict:
+    """
+    Prepara datos una sola vez y crea secuencias para múltiples window_sizes.
+
+    Descarga datos, calcula features y escala UNA SOLA VEZ, luego crea
+    secuencias para cada window_size. El scaler se ajusta solo en train
+    y se guarda una única vez en disco.
+
+    Args:
+        ticker: Símbolo del activo.
+        config: Diccionario de configuración base (de get_config()).
+        window_sizes: Lista de tamaños de ventana para los que crear secuencias.
+
+    Returns:
+        Diccionario con:
+            - 'scaler': MinMaxScaler ajustado (única instancia)
+            - 'dynamic_threshold': threshold dinámico calculado desde train targets
+            - <ws>: dict con X_train, y_train, X_val, y_val, X_test, y_test,
+                    dates_test, close_test para cada window_size ws.
+    """
+    # 1. Descargar y calcular features UNA SOLA VEZ
+    raw_df = download_data(ticker)
+    include_market_context = get_asset_type(ticker) == "volatile"
+    feat_df = compute_features(raw_df, include_market_context=include_market_context)
+    feature_cols = get_feature_cols(ticker)
+
+    # 2. Calcular target UNA SOLA VEZ
+    target = compute_target(feat_df)
+    feat_df = feat_df.copy()
+    feat_df["_target"] = target
+    feat_df.dropna(inplace=True)
+
+    targets_array = feat_df["_target"].values
+    features_array = feat_df[feature_cols].values
+    dates = feat_df.index
+    close_prices = feat_df["Close"].values
+
+    n = len(features_array)
+    train_end = int(n * TRAIN_RATIO)
+    val_end = int(n * (TRAIN_RATIO + VAL_RATIO))
+
+    # 3. Split cronológico ANTES de escalar
+    train_features = features_array[:train_end]
+    val_features = features_array[train_end:val_end]
+    test_features = features_array[val_end:]
+
+    train_targets = targets_array[:train_end]
+    val_targets = targets_array[train_end:val_end]
+    test_targets = targets_array[val_end:]
+
+    dates_test = dates[val_end:]
+    close_test = close_prices[val_end:]
+
+    # 4. Escalar UNA SOLA VEZ (fit solo en train)
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    train_scaled = scaler.fit_transform(train_features)
+    val_scaled = scaler.transform(val_features)
+    test_scaled = scaler.transform(test_features)
+
+    # 5. Guardar scaler UNA SOLA VEZ
+    os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+    scaler_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_scaler.pkl")
+    with open(scaler_path, "wb") as f:
+        pickle.dump(scaler, f)
+    print(f"💾 Scaler guardado en {scaler_path}")
+
+    # 6. Calcular threshold dinámico desde train targets
+    dynamic_threshold = compute_dynamic_threshold(train_targets, percentile=60.0)
+    print(
+        f"📏 Threshold dinámico calculado: ±{dynamic_threshold:.4f} "
+        f"({dynamic_threshold * 100:.2f}%)"
+    )
+
+    result: dict = {"scaler": scaler, "dynamic_threshold": dynamic_threshold}
+
+    # 7. Crear secuencias para cada window_size
+    for ws in window_sizes:
+        X_train, y_train = create_sequences(train_scaled, train_targets, ws)
+        X_val, y_val = create_sequences(val_scaled, val_targets, ws)
+        X_test, y_test = create_sequences(test_scaled, test_targets, ws)
+
+        X_train_t = torch.from_numpy(X_train).float()
+        y_train_t = torch.from_numpy(y_train).float().unsqueeze(1)
+        X_val_t = torch.from_numpy(X_val).float()
+        y_val_t = torch.from_numpy(y_val).float().unsqueeze(1)
+        X_test_t = torch.from_numpy(X_test).float()
+        y_test_t = torch.from_numpy(y_test).float().unsqueeze(1)
+
+        print(
+            f"📊 Split (ws={ws}): train={len(X_train_t)}, "
+            f"val={len(X_val_t)}, test={len(X_test_t)} secuencias."
+        )
+
+        result[ws] = {
+            "X_train": X_train_t,
+            "y_train": y_train_t,
+            "X_val": X_val_t,
+            "y_val": y_val_t,
+            "X_test": X_test_t,
+            "y_test": y_test_t,
+            "dates_test": dates_test,
+            "close_test": close_test,
+        }
+
+    return result
+
+
 def load_scaler(ticker: str) -> MinMaxScaler:
     """
     Carga el scaler guardado para un ticker dado.
