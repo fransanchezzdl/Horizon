@@ -7,11 +7,9 @@ function initSidebar() {
                 <div class="logo-icon">H</div>
                 <span class="logo-text">Horizon</span>
             </div>
-            <button class="sidebar-toggle" id="sidebarToggle">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="3" y1="6" x2="21" y2="6"></line>
-                    <line x1="3" y1="12" x2="21" y2="12"></line>
-                    <line x1="3" y1="18" x2="21" y2="18"></line>
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Contraer barra lateral" title="Contraer barra lateral">
+                <svg class="sidebar-toggle-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
                 </svg>
             </button>
         </div>
@@ -25,14 +23,12 @@ function initSidebar() {
                     <span class="nav-label">Dashboard</span>
                 </a>
                 <a href="analysis.html" class="nav-item">
-                    <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
-                    </svg>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill=currentColor stroke=currentColor    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <span class="nav-label">Análisis de Ticker</span>
                 </a>
                 <a href="portfolio.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
                     </svg>
                     <span class="nav-label">Portfolio</span>
                 </a>
@@ -84,14 +80,41 @@ function initSidebar() {
 
     <div id="sidebarOverlay" class="sidebar-overlay"></div>
     
-    <!-- Botón para mobile -->
-    <button class="mobile-menu-toggle" id="mobileMenuToggle">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="3" y1="6" x2="21" y2="6"></line>
-            <line x1="3" y1="12" x2="21" y2="12"></line>
-            <line x1="3" y1="18" x2="21" y2="18"></line>
-        </svg>
-    </button>
+    <!-- Barra inferior para móvil -->
+    <nav class="bottom-navbar" id="bottomNavbar">
+        <div class="bottom-navbar-items">
+            <a href="index.html" class="bottom-navbar-item" title="Dashboard">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="analysis.html" class="bottom-navbar-item" title="Análisis">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
+                </svg>
+                <span>Análisis</span>
+            </a>
+            <a href="portfolio.html" class="bottom-navbar-item" title="Portfolio">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                </svg>
+                <span>Portfolio</span>
+            </a>
+            <a href="academia.html" class="bottom-navbar-item" title="Academia">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2l-5.5 9h11z M17.5 13c1.93 0 3.5 1.57 3.5 3.5S19.43 20 17.5 20 14 18.43 14 16.5s1.57-3.5 3.5-3.5z M3 13.5h8v8H3z"/>
+                </svg>
+                <span>AcademIA</span>
+            </a>
+            <a href="profile.html" class="bottom-navbar-item" title="Perfil">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+                <span>Perfil</span>
+            </a>
+        </div>
+    </nav>
     `;
 
     // Inyectar el HTML al inicio del body
@@ -108,7 +131,6 @@ function initSidebar() {
 function initSidebarEvents() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
-    const mobileMenuToggle = document.getElementById('mobileMenuToggle');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
     const SIDEBAR_STATE_KEY = 'sidebar_collapsed';
     const isMobile = window.innerWidth <= 768;
@@ -118,33 +140,28 @@ function initSidebarEvents() {
         sidebar.classList.add('collapsed');
     }
 
-    // Toggle desde el botón dentro de la sidebar (desktop)
+    // Ajustar dirección de flecha según el estado actual del sidebar.
+    const syncSidebarToggleState = () => {
+        const isCollapsed = sidebar.classList.contains('collapsed');
+        sidebarToggle.classList.toggle('is-collapsed', isCollapsed);
+
+        const actionText = isCollapsed ? 'Expandir barra lateral' : 'Contraer barra lateral';
+        sidebarToggle.setAttribute('aria-label', actionText);
+        sidebarToggle.setAttribute('title', actionText);
+    };
+
+    syncSidebarToggleState();
+
+    // Toggle desde el botón dentro de la sidebar (desktop solo)
     sidebarToggle.addEventListener('click', () => {
-        if (isMobile) {
-            sidebar.classList.remove('open');
-            sidebarOverlay.classList.remove('visible');
-            return;
-        }
+        if (isMobile) return;
 
         const isCollapsed = sidebar.classList.toggle('collapsed');
         localStorage.setItem(SIDEBAR_STATE_KEY, isCollapsed);
+        syncSidebarToggleState();
     });
 
-    // Toggle desde botón hamburguesa (mobile)
-    if (mobileMenuToggle) {
-        mobileMenuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('open');
-            sidebarOverlay.classList.toggle('visible');
-        });
-    }
-
-    // Cerrar sidebar al hacer click en overlay
-    sidebarOverlay.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-        sidebarOverlay.classList.remove('visible');
-    });
-
-    // Marcar el item activo según la página actual
+    // Marcar el item activo según la página actual (sidebar)
     const currentPage = window.location.pathname.split('/').pop() || 'index.html';
     document.querySelectorAll('.nav-item').forEach(item => {
         if (item.getAttribute('href') === currentPage) {
@@ -152,15 +169,34 @@ function initSidebarEvents() {
         }
     });
 
-    // Cerrar sidebar al hacer click en un link (siempre)
-    document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', () => {
-            if (sidebar.classList.contains('open')) {
-                sidebar.classList.remove('open');
-                sidebarOverlay.classList.remove('visible');
+    // Función para actualizar el indicador del bottom navbar y marcar item activo
+    const updateBottomNavbarIndicator = () => {
+        const navItems = document.querySelectorAll('.bottom-navbar-item');
+        let activeItem = null;
+
+        navItems.forEach(item => {
+            item.classList.remove('active');
+            if (item.getAttribute('href') === currentPage) {
+                item.classList.add('active');
+                activeItem = item;
             }
         });
-    });
+
+        // Animar el indicador azul
+        const indicator = document.querySelector('.bottom-navbar-indicator');
+        if (activeItem && indicator) {
+            const itemWidth = activeItem.offsetWidth;
+            const itemLeft = activeItem.offsetLeft;
+            indicator.style.left = itemLeft + 'px';
+            indicator.style.width = itemWidth + 'px';
+        }
+    };
+
+    // Sincronizar indicador al cargar
+    updateBottomNavbarIndicator();
+
+    // Actualizar indicador cuando se redimensiona la ventana
+    window.addEventListener('resize', updateBottomNavbarIndicator);
 
     // Abrir perfil del usuario al hacer click
     const userProfile = document.querySelector('.user-profile');
