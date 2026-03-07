@@ -568,9 +568,23 @@ p {
     transition: all 0.3s ease;
 }
 
+.sidebar-toggle-icon {
+    transition: transform 0.24s ease, opacity 0.24s ease;
+    transform-origin: center;
+    opacity: 0.9;
+}
+
+.sidebar-toggle.is-collapsed .sidebar-toggle-icon {
+    transform: rotate(180deg);
+}
+
 .sidebar-toggle:hover {
     background: #f3f4f6;
     color: #1f2937;
+}
+
+.sidebar-toggle:hover .sidebar-toggle-icon {
+    opacity: 1;
 }
 
 .sidebar-nav {
@@ -686,6 +700,12 @@ p {
     display: none;
 }
 
+/* Centrar avatar cuando la sidebar está colapsada */
+.sidebar.collapsed .user-profile {
+    justify-content: center;
+    padding: 12px 0;
+}
+
 .user-name {
     margin: 0;
     font-size: 14px;
@@ -720,40 +740,66 @@ p {
     visibility: visible;
 }
 
-/* Botón hamburguesa para mobile */
-.mobile-menu-toggle {
+/* ==================== BARRA INFERIOR MÓVIL ==================== */
+.bottom-navbar {
     display: none;
     position: fixed;
-    top: 16px;
-    left: 16px;
-    z-index: 1002;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    width: 48px;
-    height: 48px;
+    bottom: 1%;
+    left: 1%;
+    right: 1%;
+    height: 70px;
+    background: white;
+    box-shadow: 0 0px 10px var(--color-primary);
+    z-index: 1000;
+    border-radius: var(--radius-lg);
+}
+
+.bottom-navbar-items {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    height: 100%;
+    width: 100%;
+    padding: 8px 0 0 0;
+    position: relative;
+}
+
+.bottom-navbar-item {
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 8px 0;
+    color: #6b7280;
+    text-decoration: none;
+    font-size: 11px;
     cursor: pointer;
-    color: #1f2937;
-    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.1);
-    transition: all 0.3s ease;
+    transition: color 0.3s ease;
+    flex: 1;
+    position: relative;
 }
 
-.mobile-menu-toggle:hover {
-    background: #f3f4f6;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+.bottom-navbar-item:hover {
+    color: var(--color-primary);
 }
 
-.mobile-menu-toggle:active {
-    transform: scale(0.95);
+.bottom-navbar-item.active {
+    color: var(--color-primary);
 }
+
+.bottom-navbar-item svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
 
 #dashboard-contenido,
 body > main,
 body > section {
     margin-left: var(--sidebar-width);
-    transition: margin-left 0.3s ease;
+    transition: margin-left 0.3s ease, padding-bottom 0.3s ease;
     padding: 32px;
 }
 
@@ -1693,25 +1739,23 @@ body > section {
 }
 
 @media (max-width: 768px) {
-    /* Bot\u00f3n hamburguesa visible en mobile */
-    .mobile-menu-toggle {
+    /* Mostrar barra inferior en móvil */
+    .bottom-navbar {
         display: flex;
     }
 
-    /* Sidebar */
+    /* Ocultar sidebar en móvil */
     .sidebar {
-        transform: translateX(-100%);
-        position: fixed;
-        z-index: 1001;
-        box-shadow: 2px 0 12px rgba(0, 0, 0, 0.15);
+        display: none;
     }
 
-    .sidebar.open {
-        transform: translateX(0);
+    /* Ocultar toggle de sidebar en móvil */
+    .sidebar-toggle {
+        display: none;
     }
 
     .sidebar-overlay {
-        display: block;
+        display: none;
     }
 
     #dashboard-contenido,
@@ -1719,6 +1763,7 @@ body > section {
     body > section {
         margin-left: 0;
         padding: var(--spacing-lg);
+        padding-bottom: calc(70px + var(--spacing-lg));
     }
 
     /* Cards */
@@ -1978,4 +2023,18 @@ body > section {
 .btn-logout:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+.btn-logout svg {
+    flex-shrink: 0;
+}
+
+/* Ocultar texto del botón cuando la sidebar está colapsada */
+.sidebar.collapsed .btn-logout span {
+    display: none;
+}
+
+.sidebar.collapsed .btn-logout {
+    justify-content: center;
+    padding: 12px;
 }
