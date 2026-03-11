@@ -71,8 +71,18 @@ VOLATILE_EXTRA_COLS = ["VIX_Close", "NASDAQ_Return"]
 # Features completas para volátiles (11 features)
 VOLATILE_FEATURE_COLS = BASE_FEATURE_COLS + VOLATILE_EXTRA_COLS
 
+# Features de sentimiento (3 extras, opcionales si USE_SENTIMENT=True)
+SENTIMENT_FEATURE_COLS = ["sentiment_score", "sentiment_magnitude", "news_volume"]
+
+# Features combinadas con sentimiento (12 / 14 features)
+BASE_WITH_SENTIMENT_COLS = BASE_FEATURE_COLS + SENTIMENT_FEATURE_COLS       # 12
+VOLATILE_WITH_SENTIMENT_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS  # 14
+
 # Alias para compatibilidad con código existente
 FEATURE_COLS = BASE_FEATURE_COLS
+
+# Activar análisis de sentimiento (requiere FINNHUB_API_KEY y paquete transformers)
+USE_SENTIMENT = True
 
 # Ensemble
 ENSEMBLE_SIZE = 5
@@ -87,6 +97,32 @@ TEST_RATIO = 0.15
 
 # Rutas
 SAVED_MODELS_DIR = "backend/models/saved_models"
+
+# Configuración XGBoost
+XGBOOST_CONFIG = {
+    "n_estimators": 300,
+    "max_depth": 6,
+    "learning_rate": 0.05,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "early_stopping_rounds": 20,
+}
+
+# Pesos del meta-ensemble (BiGRU + XGBoost)
+META_ENSEMBLE_WEIGHTS = {
+    "bigru": 0.6,
+    "xgboost": 0.4,
+}
+
+# Factor de escala para sigmoid(bigru_return * scale) en el meta-ensemble.
+# Un valor de 50 hace que un retorno de ±0.02 (±2%) mapee a probabilidades
+# cerca de 0.73/0.27, proporcionando sensibilidad razonable a señales pequeñas.
+META_ENSEMBLE_SIGMOID_SCALE = 50.0
+
+# Semi-anchura de la zona neutra en el meta-ensemble (score en [0,1]).
+# Un delta de 0.05 define la banda [0.45, 0.55] como LATERAL,
+# equilibrando entre señales falsas y detección de tendencias débiles.
+META_ENSEMBLE_TREND_DELTA = 0.05
 
 
 def get_config(ticker: str) -> dict:
@@ -104,7 +140,13 @@ def get_asset_type(ticker: str) -> str:
 
 
 def get_feature_cols(ticker: str) -> list:
-    """Devuelve la lista de features según el tipo de activo."""
+    """
+    Devuelve la lista de features según el tipo de activo.
+
+    Si USE_SENTIMENT=True incluye las 3 features de sentimiento.
+    """
     if ticker in TICKERS["volatile"]:
-        return VOLATILE_FEATURE_COLS.copy()
-    return BASE_FEATURE_COLS.copy()
+        base = VOLATILE_WITH_SENTIMENT_COLS if USE_SENTIMENT else VOLATILE_FEATURE_COLS
+    else:
+        base = BASE_WITH_SENTIMENT_COLS if USE_SENTIMENT else BASE_FEATURE_COLS
+    return base.copy()
