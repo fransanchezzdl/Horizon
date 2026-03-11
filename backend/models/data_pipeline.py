@@ -19,11 +19,13 @@ from .config import (
     FEATURE_COLS,
     BASE_FEATURE_COLS,
     VOLATILE_FEATURE_COLS,
+    SENTIMENT_FEATURE_COLS,
     MARKET_CONTEXT_TICKERS,
     PREDICTION_HORIZON,
     TRAIN_RATIO,
     VAL_RATIO,
     SAVED_MODELS_DIR,
+    USE_SENTIMENT,
     get_feature_cols,
     get_asset_type,
 )
@@ -56,7 +58,11 @@ def download_data(ticker: str) -> pd.DataFrame:
     return df
 
 
-def compute_features(df: pd.DataFrame, include_market_context: bool = False) -> pd.DataFrame:
+def compute_features(
+    df: pd.DataFrame,
+    include_market_context: bool = False,
+    ticker: str = "",
+) -> pd.DataFrame:
     """
     Calcula las features técnicas del modelo.
 
@@ -75,9 +81,15 @@ def compute_features(df: pd.DataFrame, include_market_context: bool = False) -> 
         10. VIX_Close    — precio de cierre del índice VIX
         11. NASDAQ_Return — retorno logarítmico diario del NASDAQ
 
+    Features de sentimiento (3, solo si USE_SENTIMENT=True y ticker proporcionado):
+        12. sentiment_score      — sentimiento medio [-1.0, +1.0]
+        13. sentiment_magnitude  — confianza media [0.0, 1.0]
+        14. news_volume          — número de artículos
+
     Args:
         df: DataFrame con columnas OHLCV (Open, High, Low, Close, Volume).
         include_market_context: Si True, añade VIX_Close y NASDAQ_Return.
+        ticker: Símbolo del activo para obtener sentimiento (opcional).
 
     Returns:
         DataFrame con las features calculadas, sin NaNs.
@@ -153,9 +165,41 @@ def compute_features(df: pd.DataFrame, include_market_context: bool = False) -> 
     # Eliminar filas con NaN producidos por los indicadores
     df.dropna(inplace=True)
 
+    # Seleccionar columnas técnicas finales
     if include_market_context:
-        return df[VOLATILE_FEATURE_COLS]
-    return df[BASE_FEATURE_COLS]
+        tech_df = df[VOLATILE_FEATURE_COLS].copy()
+    else:
+        tech_df = df[BASE_FEATURE_COLS].copy()
+
+    # Añadir features de sentimiento si está habilitado
+    if USE_SENTIMENT and ticker:
+        try:
+            from .sentiment import compute_historical_sentiment
+            start_date = tech_df.index.min().strftime("%Y-%m-%d")
+            end_date = tech_df.index.max().strftime("%Y-%m-%d")
+            sentiment_df = compute_historical_sentiment(ticker, start_date, end_date)
+            # Reindexar al índice de tech_df y rellenar hacia adelante
+            # con límite de 5 días para no propagar sentimiento obsoleto
+            sentiment_df = sentiment_df.reindex(tech_df.index)
+            sentiment_df = sentiment_df.ffill(limit=5).fillna(
+                {"sentiment_score": 0.0, "sentiment_magnitude": 0.0, "news_volume": 0}
+            )
+            for col in SENTIMENT_FEATURE_COLS:
+                tech_df[col] = sentiment_df[col].values
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "No se pudieron calcular features de sentimiento para %s: %s. "
+                "Usando valores neutros.",
+                ticker, exc
+            )
+            for col in SENTIMENT_FEATURE_COLS:
+                if col == "news_volume":
+                    tech_df[col] = 0
+                else:
+                    tech_df[col] = 0.0
+
+    return tech_df
 
 
 def compute_target(df: pd.DataFrame, horizon: int = PREDICTION_HORIZON) -> pd.Series:
@@ -225,7 +269,11 @@ def prepare_data(ticker: str, config: dict) -> dict:
     # 1. Descargar y calcular features
     raw_df = download_data(ticker)
     include_market_context = get_asset_type(ticker) == "volatile"
-    feat_df = compute_features(raw_df, include_market_context=include_market_context)
+    feat_df = compute_features(
+        raw_df,
+        include_market_context=include_market_context,
+        ticker=ticker,
+    )
 
     feature_cols = get_feature_cols(ticker)
 
