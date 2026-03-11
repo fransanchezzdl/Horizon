@@ -27,8 +27,10 @@ def main() -> None:
     results = []
 
     print("=" * 60)
-    print("🌅 HORIZON — Entrenamiento masivo del ensemble BiGRU")
+    print("🌅 HORIZON — Entrenamiento masivo del ensemble BiGRU + XGBoost")
     print(f"   Tickers: {all_tickers}")
+    from .config import USE_SENTIMENT
+    print(f"   Sentimiento FinBERT: {'✅ Activado' if USE_SENTIMENT else '❌ Desactivado'}")
     print("=" * 60)
 
     for ticker in all_tickers:
@@ -57,10 +59,13 @@ def main() -> None:
     print("=" * 60)
     for r in results:
         if r["status"] == "OK":
+            xgb_acc = r.get("xgb_directional_accuracy")
+            xgb_str = f"XGB Acc: {xgb_acc:.2%} | " if xgb_acc is not None else ""
             print(
                 f"  ✅ {r['ticker']:10s} | "
                 f"Val Loss: {r['avg_val_loss']:.6f} | "
                 f"Dir. Acc: {r['avg_directional_accuracy']:.2%} | "
+                f"{xgb_str}"
                 f"Prec↑: {r.get('avg_precision_up', 0):.2%} | "
                 f"Rec↑: {r.get('avg_recall_up', 0):.2%} | "
                 f"Tiempo: {r['elapsed_seconds']:.1f}s"

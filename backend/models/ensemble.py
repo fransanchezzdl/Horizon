@@ -19,6 +19,9 @@ from .config import (
     FEATURE_COLS,
     SAVED_MODELS_DIR,
     TICKERS,
+    META_ENSEMBLE_WEIGHTS,
+    META_ENSEMBLE_SIGMOID_SCALE,
+    META_ENSEMBLE_TREND_DELTA,
     get_config,
     get_asset_type,
     get_feature_cols,
@@ -26,6 +29,7 @@ from .config import (
 from .data_pipeline import prepare_data, load_scaler, download_data, compute_features
 from .model import HorizonBiGRU
 from .trainer import train_single_model, evaluate_model
+from .xgboost_model import train_xgboost, predict_xgboost
 
 
 def train_ensemble(ticker: str) -> dict:
@@ -93,7 +97,18 @@ def train_ensemble(ticker: str) -> dict:
     print(f"   Val Loss medio: {avg_val_loss:.6f}")
     print(f"   Accuracy direccional media (test): {avg_dir_acc:.2%}")
 
-    # Guardar informe JSON
+    # ── Entrenar XGBoost con los mismos datos ──────────────────────────────────
+    xgb_metrics = {}
+    feature_cols = get_feature_cols(ticker)
+    # Usamos el dataset con el window_size mayor para tener más contexto
+    max_ws = max(v["window_size"] for v in variations)
+    xgb_data = data_by_window[max_ws]
+    try:
+        xgb_metrics = train_xgboost(ticker, xgb_data, feature_cols)
+    except Exception as exc:
+        print(f"⚠️  XGBoost no entrenado para {ticker}: {exc}")
+
+    # ── Guardar informe JSON ───────────────────────────────────────────────────
     report = {
         "ticker": ticker,
         "asset_type": asset_type,
@@ -101,6 +116,10 @@ def train_ensemble(ticker: str) -> dict:
         "n_models": ENSEMBLE_SIZE,
         "config_used": config,
         "feature_cols": get_feature_cols(ticker),
+        "sentiment_used": any(
+            c in get_feature_cols(ticker)
+            for c in ["sentiment_score", "sentiment_magnitude", "news_volume"]
+        ),
         "metrics": {
             "avg_val_loss": avg_val_loss,
             "avg_directional_accuracy": avg_dir_acc,
@@ -112,6 +131,7 @@ def train_ensemble(ticker: str) -> dict:
                 "naive_baseline_accuracy", None
             ),
         },
+        "xgboost_metrics": xgb_metrics,
         "individual_models": [
             {
                 "model_idx": i,
@@ -145,6 +165,10 @@ def train_ensemble(ticker: str) -> dict:
         "avg_rmse": avg_rmse,
         "avg_precision_up": avg_precision_up,
         "avg_recall_up": avg_recall_up,
+        "xgb_directional_accuracy": xgb_metrics.get("xgb_directional_accuracy"),
+        "xgb_precision_up": xgb_metrics.get("xgb_precision_up"),
+        "xgb_recall_up": xgb_metrics.get("xgb_recall_up"),
+        "xgb_feature_importance": xgb_metrics.get("feature_importance", {}),
     }
 
 
@@ -263,7 +287,11 @@ def predict_ensemble(ticker: str) -> dict:
     # Descargar datos recientes y calcular features
     include_market_context = ticker in TICKERS["volatile"]
     raw_df = download_data(ticker)
-    feat_df = compute_features(raw_df, include_market_context=include_market_context)
+    feat_df = compute_features(
+        raw_df,
+        include_market_context=include_market_context,
+        ticker=ticker,
+    )
     feature_cols = get_feature_cols(ticker)
 
     if len(feat_df) < max_window_size:
@@ -321,14 +349,41 @@ def predict_ensemble(ticker: str) -> dict:
     price_upper = current_price * np.exp(mean_return + std_return)
     price_lower = current_price * np.exp(mean_return - std_return)
 
+    # ── Meta-ensemble: combinar BiGRU + XGBoost ────────────────────────────────
+    # Convertir retorno BiGRU en probabilidad mediante sigmoid escalado
+    import math
+    bigru_prob = 1.0 / (1.0 + math.exp(-mean_return * META_ENSEMBLE_SIGMOID_SCALE))
+
+    # Obtener predicción XGBoost con el último timestep (sin escala, features raw)
+    last_features_raw = feat_df[feature_cols].values[-1]
+    xgb_result = predict_xgboost(ticker, last_features_raw)
+    xgb_prob = xgb_result["probability"]
+
+    w_bigru = META_ENSEMBLE_WEIGHTS["bigru"]
+    w_xgb = META_ENSEMBLE_WEIGHTS["xgboost"]
+    final_score = w_bigru * bigru_prob + w_xgb * xgb_prob
+
+    # Umbral: si score > 0.5 + δ → ALCISTA; < 0.5 - δ → BAJISTA; si no → LATERAL
+    delta = META_ENSEMBLE_TREND_DELTA
+    if final_score > 0.5 + delta:
+        meta_trend = "ALCISTA"
+    elif final_score < 0.5 - delta:
+        meta_trend = "BAJISTA"
+    else:
+        meta_trend = "LATERAL"
+
     return {
         "trend": winning_trend,
+        "meta_trend": meta_trend,
+        "meta_score": round(final_score, 6),
         "confidence": confidence,
         "current_price": current_price,
         "predicted_price": float(predicted_price),
         "price_upper": float(price_upper),
         "price_lower": float(price_lower),
         "predicted_return": mean_return,
+        "xgboost_direction": xgb_result["direction"],
+        "xgboost_probability": xgb_prob,
         "individual_predictions": [
             {"model_id": i + 1, "predicted_return": r}
             for i, r in enumerate(individual_returns)

@@ -10,6 +10,7 @@ from typing import Dict
 
 from .config import get_config, get_asset_type, PREDICTION_HORIZON
 from .ensemble import predict_ensemble
+from .sentiment import get_daily_sentiment
 
 
 def get_prediction(ticker: str) -> Dict:
@@ -53,20 +54,29 @@ def get_prediction(ticker: str) -> Dict:
 
         predicted_return_pct = round(ensemble_result["predicted_return"] * 100, 4)
 
+        # Obtener sentimiento reciente para el ticker
+        sentiment_data = get_daily_sentiment(ticker, days_back=7)
+
         return {
             "ticker": ticker,
             "asset_type": asset_type,
             "current_price": round(ensemble_result["current_price"], 4),
             "prediction": {
                 "trend": ensemble_result["trend"],
+                "meta_trend": ensemble_result.get("meta_trend", ensemble_result["trend"]),
+                "meta_score": ensemble_result.get("meta_score"),
                 "confidence": round(ensemble_result["confidence"], 4),
                 "predicted_price": round(ensemble_result["predicted_price"], 4),
                 "price_upper": round(ensemble_result["price_upper"], 4),
                 "price_lower": round(ensemble_result["price_lower"], 4),
                 "predicted_return_pct": predicted_return_pct,
                 "horizon_days": PREDICTION_HORIZON,
+                "xgboost_direction": ensemble_result.get("xgboost_direction"),
+                "xgboost_probability": ensemble_result.get("xgboost_probability"),
             },
             "individual_models": ensemble_result["individual_predictions"],
+            "sentiment_available": sentiment_data["available"],
+            "sentiment_score": sentiment_data["sentiment_score"],
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         }
 

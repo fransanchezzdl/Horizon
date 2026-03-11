@@ -25,3 +25,8 @@ python-dateutil>=2.8.0
 
 # Opcional: Visualización (si se usa en endpoints)
 matplotlib>=3.7.0
+
+# Mejoras de precisión del predictor
+transformers>=4.48.0
+finnhub-python>=2.4.0
+xgboost>=2.0.0
