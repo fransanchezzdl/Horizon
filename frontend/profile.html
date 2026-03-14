@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <main class="main-content">
+    <script src="js/layout.js"></script>
+    <script src="js/profile.js"></script>
+    <div id="dashboard-contenido">
         <section class="profile-header">
             <div class="profile-banner"></div>
             <div class="profile-card">
@@ -25,7 +27,7 @@
         <section class="profile-content">
             <div class="profile-grid">
                 <!-- Información General -->
-                <div class="profile-section">
+                <div class="card">
                     <h2>Información General</h2>
                     <div class="info-list">
                         <div class="info-item">
@@ -48,7 +50,7 @@
                 </div>
 
                 <!-- Estadísticas -->
-                <div class="profile-section">
+                <div class="card">
                     <h2>Estadísticas</h2>
                     <div class="stats-grid">
                         <div class="stat-card">
@@ -67,7 +69,7 @@
                 </div>
 
                 <!-- Plan y Membresía -->
-                <div class="profile-section">
+                <div class="card">
                     <h2>Plan y Membresía</h2>
                     <div class="membership-info">
                         <div class="membership-item">
@@ -87,7 +89,7 @@
                 </div>
 
                 <!-- Seguridad -->
-                <div class="profile-section">
+                <div class="card">
                     <h2>Seguridad</h2>
                     <div class="security-options">
                         <div class="security-item">
@@ -114,9 +116,6 @@
                 <a href="index.html" class="btn-secondary">Volver al Dashboard</a>
             </div>
         </section>
-    </main>
-
-    <script src="js/layout.js"></script>
-    <script src="js/profile.js"></script>
+    </div>
 </body>
 </html>
