@@ -11,7 +11,8 @@ from .exceptions import (
     GeminiAPIKeyMissingError,
     GeminiQuotaExceededError,
     GeminiAPIConfigError,
-    GeminiAPIError
+    GeminiAPIError,
+    ReflexionNoEncontradaError,
 )
 
 
@@ -83,6 +84,14 @@ async def gemini_api_error_handler(request: Request, exc: GeminiAPIError):
     )
 
 
+async def reflexion_no_encontrada_handler(request: Request, exc: ReflexionNoEncontradaError):
+    """Maneja errores de reflexión no encontrada (404 Not Found)."""
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)}
+    )
+
+
 def register_exception_handlers(app):
     """
     Registra todos los exception handlers en la aplicación FastAPI.
@@ -104,3 +113,4 @@ def register_exception_handlers(app):
     app.add_exception_handler(GeminiQuotaExceededError, gemini_quota_exceeded_handler)
     app.add_exception_handler(GeminiAPIConfigError, gemini_api_config_handler)
     app.add_exception_handler(GeminiAPIError, gemini_api_error_handler)
+    app.add_exception_handler(ReflexionNoEncontradaError, reflexion_no_encontrada_handler)

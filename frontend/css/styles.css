@@ -231,22 +231,6 @@ p {
     background: linear-gradient(0deg, var(--color-secondary), var(--color-primary));
     transform: translateY(-2px);
 }
-
-/* Button Outline */
-.btn-outline {
-    background: white;
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--radius-md);
-    box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
-}
-
-.btn-outline:hover {
-    background: var(--color-bg-lighter);
-    border-color: #d1d5db;
-    
-}
-
 /* Button Icon */
 .btn-icon {
     background: none;
@@ -2033,4 +2017,145 @@ body > section {
 .sidebar.collapsed .btn-logout {
     justify-content: center;
     padding: 12px;
+}
+
+/* ==================== PÁGINA: ARTÍCULO DE REFLEXIÓN ==================== */
+
+/* Hero */
+.articulo-hero {
+    background: linear-gradient(135deg, var(--color-secondary) 0%, var(--color-primary) 100%);
+    border-radius: var(--radius-xl);
+    padding: 48px 40px 40px;
+    margin-bottom: var(--spacing-xl);
+}
+
+.articulo-tema-badge {
+    display: inline-block;
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    border-radius: var(--radius-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.articulo-titulo {
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 0 0 var(--spacing-xl) 0;
+}
+
+.articulo-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+    flex-wrap: wrap;
+}
+
+.articulo-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.articulo-meta-item svg {
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+/* Cita destacada */
+.articulo-cita-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.articulo-cita {
+    border-left: 4px solid var(--color-primary);
+    margin: 0;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: white;
+    border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+    color: var(--color-text-primary);
+    font-size: 18px;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.5;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* Cuerpo */
+.articulo-cuerpo-section {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-2xl) 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.articulo-contenido p {
+    color: var(--color-text-primary);
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.75;
+    margin: 0 0 var(--spacing-lg) 0;
+}
+
+.articulo-contenido p:last-child {
+    margin-bottom: 0;
+}
+
+/* Tags */
+.articulo-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--color-border);
+}
+
+.tag-badge {
+    display: inline-block;
+    padding: 4px var(--spacing-md);
+    background: var(--color-bg-lighter);
+    color: var(--color-text-secondary);
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 20px;
+    border: 1px solid var(--color-border);
+    text-transform: capitalize;
+}
+
+/* Footer */
+.articulo-footer {
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-xl);
+    border-top: 1px solid var(--color-border);
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+
+    .articulo-hero {
+        padding: var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .articulo-titulo {
+        font-size: 22px;
+    }
+
+    .articulo-cuerpo-section {
+        padding: var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .articulo-cita {
+        font-size: 16px;
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
 }

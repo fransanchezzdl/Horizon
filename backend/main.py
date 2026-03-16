@@ -119,3 +119,33 @@ def chat(mensaje: ChatMessageRequest, user_id: str = Depends(auth_service.get_cu
         id_usuario=user_id,
         mensaje=mensaje.message
     )
+
+
+# ─── Endpoints de Reflexiones ──────────────────────────────────────────
+
+@app.get("/reflexion/aleatoria", response_model=ReflexionArticuloResponse)
+def reflexion_aleatoria(user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Devuelve una reflexión financiera activa elegida aleatoriamente.
+
+    Requiere autenticación con token JWT en el header Authorization.
+
+    Errores posibles:
+    - 401 si el token es inválido o no se incluye.
+    - 404 si no hay reflexiones activas en la base de datos.
+    """
+    return reflexion_service.obtener_aleatoria()
+
+
+@app.get("/reflexion/{id_reflexion}", response_model=ReflexionArticuloResponse)
+def obtener_reflexion(id_reflexion: int, user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Devuelve el artículo completo de una reflexión concreta por su ID.
+
+    Requiere autenticación con token JWT en el header Authorization.
+
+    Errores posibles:
+    - 401 si el token es inválido o no se incluye.
+    - 404 si no existe ninguna reflexión con ese ID.
+    """
+    return reflexion_service.obtener_por_id(id_reflexion)

@@ -75,3 +75,16 @@ class GeminiAPIError(Exception):
     def __init__(self, detalle: str):
         self.detalle = detalle
         super().__init__(f"Error al generar respuesta con Gemini: {detalle}")
+
+
+# ===== EXCEPCIONES DEL SERVICIO DE REFLEXIONES =====
+
+class ReflexionNoEncontradaError(Exception):
+    """Excepción cuando no existe ninguna reflexión activa o el ID no corresponde a ningún registro."""
+
+    def __init__(self, id_reflexion: int = None):
+        self.id_reflexion = id_reflexion
+        if id_reflexion is not None:
+            super().__init__(f"Reflexión con ID {id_reflexion} no encontrada.")
+        else:
+            super().__init__("No hay reflexiones disponibles en este momento.")
