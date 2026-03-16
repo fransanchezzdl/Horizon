@@ -3,6 +3,20 @@ Configuración del modelo Horizon Predictor.
 Dos perfiles de configuración según tipo de activo.
 """
 
+import os
+from dotenv import load_dotenv
+
+# Cargar variables de entorno
+load_dotenv()
+
+# Variables de entorno
+FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", None)
+ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", None)
+SAVED_MODELS_DIR = os.getenv("SAVED_MODELS_DIR", "backend/models/saved_models")
+USE_SENTIMENT = os.getenv("USE_SENTIMENT", "True").lower() == "true"
+USE_ADVANCED_FEATURES = os.getenv("USE_ADVANCED_FEATURES", "True").lower() == "true"
+USE_ATTENTION_MODEL = os.getenv("USE_ATTENTION_MODEL", "True").lower() == "true"
+
 # Catálogo de tickers iniciales
 TICKERS = {
     "stable": ["KO", "AAPL", "GC=F", "SI=F"],
@@ -14,12 +28,12 @@ STABLE_CONFIG = {
     "window_size": 30,
     "hidden_dim": 64,
     "num_layers": 2,
-    "dropout": 0.1,
-    "learning_rate": 0.001,
-    "epochs": 150,
+    "dropout": 0.2,        # Subido de 0.1 — el modelo attention es más expresivo
+    "learning_rate": 0.0005,  # Bajado de 0.001 — más estable con attention
+    "epochs": 200,         # Subido de 150 — más tiempo para converger
     "batch_size": 16,
-    "trend_threshold": 0.01,  # ±1.0% para tendencia alcista/bajista
-    "early_stopping_patience": 20,
+    "trend_threshold": 0.01,
+    "early_stopping_patience": 30,  # Subido de 20 — más paciencia
 }
 
 VOLATILE_CONFIG = {
@@ -27,29 +41,29 @@ VOLATILE_CONFIG = {
     "hidden_dim": 64,
     "num_layers": 2,
     "dropout": 0.3,
-    "learning_rate": 0.0005,
-    "epochs": 200,
+    "learning_rate": 0.0003,  # Bajado de 0.0005
+    "epochs": 250,         # Subido de 200
     "batch_size": 32,
-    "trend_threshold": 0.03,  # ±3.0% para activos volátiles
-    "early_stopping_patience": 25,
+    "trend_threshold": 0.03,
+    "early_stopping_patience": 35,  # Subido de 25
 }
 
 # Variaciones de hiperparámetros para diversificar el ensemble.
 # Cada modelo del ensemble usa una configuración ligeramente diferente.
 ENSEMBLE_VARIATIONS = {
     "stable": [
-        {"hidden_dim": 64, "window_size": 30, "dropout": 0.10, "num_layers": 2},
-        {"hidden_dim": 48, "window_size": 30, "dropout": 0.15, "num_layers": 2},
-        {"hidden_dim": 80, "window_size": 30, "dropout": 0.05, "num_layers": 2},
-        {"hidden_dim": 64, "window_size": 20, "dropout": 0.10, "num_layers": 2},
-        {"hidden_dim": 64, "window_size": 40, "dropout": 0.20, "num_layers": 3},
+        {"hidden_dim": 48, "window_size": 30, "dropout": 0.30, "num_layers": 2},
+        {"hidden_dim": 48, "window_size": 30, "dropout": 0.40, "num_layers": 2},
+        {"hidden_dim": 64, "window_size": 30, "dropout": 0.35, "num_layers": 2},
+        {"hidden_dim": 48, "window_size": 20, "dropout": 0.30, "num_layers": 2},
+        {"hidden_dim": 48, "window_size": 40, "dropout": 0.35, "num_layers": 2},
     ],
     "volatile": [
-        {"hidden_dim": 64, "window_size": 60, "dropout": 0.30, "num_layers": 2},
-        {"hidden_dim": 48, "window_size": 60, "dropout": 0.35, "num_layers": 2},
-        {"hidden_dim": 80, "window_size": 60, "dropout": 0.25, "num_layers": 2},
-        {"hidden_dim": 64, "window_size": 45, "dropout": 0.30, "num_layers": 2},
-        {"hidden_dim": 64, "window_size": 75, "dropout": 0.30, "num_layers": 3},
+        {"hidden_dim": 64, "window_size": 60, "dropout": 0.35, "num_layers": 2},
+        {"hidden_dim": 48, "window_size": 60, "dropout": 0.40, "num_layers": 2},
+        {"hidden_dim": 80, "window_size": 60, "dropout": 0.30, "num_layers": 2},
+        {"hidden_dim": 64, "window_size": 45, "dropout": 0.35, "num_layers": 2},
+        {"hidden_dim": 64, "window_size": 75, "dropout": 0.35, "num_layers": 3},
     ],
 }
 
@@ -62,7 +76,9 @@ MARKET_CONTEXT_TICKERS = {
 # Features base (9 features, para todos los activos)
 BASE_FEATURE_COLS = [
     "Close", "Volume", "RSI", "MACD", "EMA",
-    "Bollinger_PctB", "ATR", "Log_Return", "Volume_Ratio"
+    "Bollinger_PctB", "ATR", "Log_Return", "Volume_Ratio",
+    # Features de régimen de mercado (3) — siempre incluidas
+    "SMA200_Dist", "SMA50_Slope", "Realized_Vol",
 ]
 
 # Features adicionales para activos volátiles (2 extras)
@@ -74,15 +90,42 @@ VOLATILE_FEATURE_COLS = BASE_FEATURE_COLS + VOLATILE_EXTRA_COLS
 # Features de sentimiento (3 extras, opcionales si USE_SENTIMENT=True)
 SENTIMENT_FEATURE_COLS = ["sentiment_score", "sentiment_magnitude", "news_volume"]
 
+# Features técnicas avanzadas (10 seleccionadas por correlación > 0.03)
+# Eliminadas por baja correlación: ADX, Stochastic_K/D, Williams_R, MFI, ROC, Keltner_PctB, Donchian_PctB
+ADVANCED_TECHNICAL_COLS = [
+    # Volumen (2) - alta correlación
+    "CMF",                # Chaikin Money Flow (0.0954)
+    "OBV",                # On Balance Volume (0.0699)
+    
+    # Tendencia (4) - correlación media-alta
+    "Aroon_Up",           # Aroon Up (0.0666)
+    "Aroon_Down",         # Aroon Down (0.0402)
+    "DX",                 # Directional Movement Index (0.0408)
+    "CCI",                # Commodity Channel Index (0.0391)
+    
+    # Momentum (3) - correlación media
+    "TSI",                # True Strength Index (0.0407)
+    "KST",                # Know Sure Thing (0.0405)
+    "CMO",                # Chande Momentum Oscillator (0.0368)
+    
+    # Osciladores (1) - correlación media
+    "Ultimate_Osc",       # Ultimate Oscillator (0.0310)
+]
+
 # Features combinadas con sentimiento (12 / 14 features)
 BASE_WITH_SENTIMENT_COLS = BASE_FEATURE_COLS + SENTIMENT_FEATURE_COLS       # 12
 VOLATILE_WITH_SENTIMENT_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS  # 14
 
+# Features combinadas con técnicas avanzadas (19 / 21 features)
+BASE_WITH_ADVANCED_COLS = BASE_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 19
+VOLATILE_WITH_ADVANCED_COLS = VOLATILE_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 21
+
+# Features combinadas con sentimiento + técnicas avanzadas (22 / 24 features)
+BASE_WITH_ALL_COLS = BASE_FEATURE_COLS + SENTIMENT_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 22
+VOLATILE_WITH_ALL_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 24
+
 # Alias para compatibilidad con código existente
 FEATURE_COLS = BASE_FEATURE_COLS
-
-# Activar análisis de sentimiento (requiere FINNHUB_API_KEY y paquete transformers)
-USE_SENTIMENT = True
 
 # Ensemble
 ENSEMBLE_SIZE = 5
@@ -94,9 +137,6 @@ PREDICTION_HORIZON = 5  # 5 días de trading
 TRAIN_RATIO = 0.70
 VAL_RATIO = 0.15
 TEST_RATIO = 0.15
-
-# Rutas
-SAVED_MODELS_DIR = "backend/models/saved_models"
 
 # Configuración XGBoost
 XGBOOST_CONFIG = {
@@ -143,10 +183,33 @@ def get_feature_cols(ticker: str) -> list:
     """
     Devuelve la lista de features según el tipo de activo.
 
-    Si USE_SENTIMENT=True incluye las 3 features de sentimiento.
+    Combina features base, contexto de mercado (volátiles), sentimiento y técnicas avanzadas
+    según las flags USE_SENTIMENT y USE_ADVANCED_FEATURES.
+    
+    Configuraciones posibles:
+    - Stable sin extras: 9 features
+    - Stable + sentiment: 12 features
+    - Stable + advanced: 27 features
+    - Stable + sentiment + advanced: 30 features
+    - Volatile sin extras: 11 features
+    - Volatile + sentiment: 14 features
+    - Volatile + advanced: 29 features
+    - Volatile + sentiment + advanced: 32 features
     """
-    if ticker in TICKERS["volatile"]:
-        base = VOLATILE_WITH_SENTIMENT_COLS if USE_SENTIMENT else VOLATILE_FEATURE_COLS
+    is_volatile = ticker in TICKERS["volatile"]
+    
+    # Determinar features base según tipo de activo
+    if is_volatile:
+        base = VOLATILE_FEATURE_COLS.copy()
     else:
-        base = BASE_WITH_SENTIMENT_COLS if USE_SENTIMENT else BASE_FEATURE_COLS
-    return base.copy()
+        base = BASE_FEATURE_COLS.copy()
+    
+    # Añadir sentimiento si está habilitado
+    if USE_SENTIMENT:
+        base.extend(SENTIMENT_FEATURE_COLS)
+    
+    # Añadir técnicas avanzadas si está habilitado
+    if USE_ADVANCED_FEATURES:
+        base.extend(ADVANCED_TECHNICAL_COLS)
+    
+    return base
