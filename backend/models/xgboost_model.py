@@ -64,21 +64,25 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list) -> dict:
     """
     XGBClassifier = _get_xgb_classifier()
 
-    # ── Extraer último timestep de cada secuencia ──────────────────────────────
-    # X tiene forma [n_sequences, window_size, n_features]; tomamos [:, -1, :]
-    X_train = data["X_train"].numpy()[:, -1, :]
-    y_train_raw = data["y_train"].numpy().ravel()
+    # ── Construir features temporales agregadas ────────────────────────────────
+    # Usamos estadísticas de toda la ventana: last, mean, std, trend por feature.
+    # Esto da al XGBoost información temporal sin necesitar secuencias.
+    def build_xgb_features(X_tensor):
+        X = X_tensor.numpy()  # [n, window, features]
+        last  = X[:, -1, :]
+        mean  = X.mean(axis=1)
+        std   = X.std(axis=1)
+        trend = X[:, -1, :] - X[:, 0, :]  # cambio total en la ventana
+        return np.concatenate([last, mean, std, trend], axis=1)
 
-    X_val = data["X_val"].numpy()[:, -1, :]
-    y_val_raw = data["y_val"].numpy().ravel()
+    X_train = build_xgb_features(data["X_train"])
+    X_val   = build_xgb_features(data["X_val"])
+    X_test  = build_xgb_features(data["X_test"])
 
-    X_test = data["X_test"].numpy()[:, -1, :]
-    y_test_raw = data["y_test"].numpy().ravel()
-
-    # Etiquetas binarias: 1 si retorno > 0
-    y_train = (y_train_raw > 0).astype(int)
-    y_val = (y_val_raw > 0).astype(int)
-    y_test = (y_test_raw > 0).astype(int)
+    # y son clases enteras (0=BAJISTA, 1=LATERAL, 2=ALCISTA)
+    y_train = data["y_train"].numpy().ravel()
+    y_val   = data["y_val"].numpy().ravel()
+    y_test  = data["y_test"].numpy().ravel()
 
     cfg = XGBOOST_CONFIG
     model = XGBClassifier(
@@ -88,8 +92,9 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list) -> dict:
         subsample=cfg["subsample"],
         colsample_bytree=cfg["colsample_bytree"],
         early_stopping_rounds=cfg["early_stopping_rounds"],
-        eval_metric="logloss",
-        use_label_encoder=False,
+        eval_metric="mlogloss",
+        objective="multi:softprob",
+        num_class=3,
         verbosity=0,
         random_state=42,
     )
@@ -103,24 +108,29 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list) -> dict:
 
     # ── Métricas en test ───────────────────────────────────────────────────────
     y_pred = model.predict(X_test)
-    y_prob = model.predict_proba(X_test)[:, 1]
+    y_prob = model.predict_proba(X_test)[:, 2]  # probabilidad clase ALCISTA (2)
 
     dir_acc = float(np.mean(y_pred == y_test))
 
-    # Precision y recall para clase 1 (alcista)
-    tp = int(np.sum((y_pred == 1) & (y_test == 1)))
-    fp = int(np.sum((y_pred == 1) & (y_test == 0)))
-    fn = int(np.sum((y_pred == 0) & (y_test == 1)))
+    # Precision y recall para clase 2 (ALCISTA)
+    tp = int(np.sum((y_pred == 2) & (y_test == 2)))
+    fp = int(np.sum((y_pred == 2) & (y_test != 2)))
+    fn = int(np.sum((y_pred != 2) & (y_test == 2)))
 
     precision_up = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall_up = tp / (tp + fn) if (tp + fn) > 0 else 0.0
 
     # ── Importancia de features (top 10) ──────────────────────────────────────
+    # Las features expandidas son 4x (last, mean, std, trend), pero solo
+    # reportamos las del último timestep (primeras n_features columnas)
     importances = model.feature_importances_
-    top_n = min(10, len(feature_cols))
-    top_indices = np.argsort(importances)[::-1][:top_n]
+    n_features = len(feature_cols)
+    # Tomar solo las importancias del bloque "last" (primeras n_features)
+    last_importances = importances[:n_features]
+    top_n = min(10, n_features)
+    top_indices = np.argsort(last_importances)[::-1][:top_n]
     feature_importance = {
-        feature_cols[i]: round(float(importances[i]), 6)
+        feature_cols[i]: round(float(last_importances[i]), 6)
         for i in top_indices
     }
 
@@ -172,7 +182,9 @@ def predict_xgboost(ticker: str, features: np.ndarray) -> Dict:
             arr = arr.reshape(1, -1)
 
         direction = int(model.predict(arr)[0])
-        probability = float(model.predict_proba(arr)[0, 1])
+        # En clasificación 3 clases: 0=BAJISTA, 1=LATERAL, 2=ALCISTA
+        probs = model.predict_proba(arr)[0]
+        probability = float(probs[2]) if len(probs) == 3 else float(probs[-1])
 
         return {"direction": direction, "probability": probability}
 

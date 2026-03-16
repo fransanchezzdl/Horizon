@@ -23,6 +23,7 @@ from .config import (
     META_ENSEMBLE_WEIGHTS,
     META_ENSEMBLE_SIGMOID_SCALE,
     META_ENSEMBLE_TREND_DELTA,
+    USE_ATTENTION_MODEL,
     get_config,
     get_asset_type,
     get_feature_cols,
@@ -34,9 +35,10 @@ from .data_pipeline import (
     download_data,
     compute_features,
 )
-from .model import HorizonBiGRU
+from .model import HorizonBiGRU, HorizonBiGRUAttention
 from .trainer import train_single_model, evaluate_model
 from .xgboost_model import train_xgboost, predict_xgboost
+from .meta_ensemble import get_meta_ensemble_prediction
 
 
 def train_ensemble(ticker: str) -> dict:
@@ -87,7 +89,7 @@ def train_ensemble(ticker: str) -> dict:
         # Evaluar en test
         model = _load_single_model(ticker, model_idx, model_config, device)
         test_metrics = evaluate_model(
-            model, data["X_test"], data["y_test"], device
+            model, data["X_test"], data["y_test"], device, threshold=dynamic_threshold
         )
         metrics.update(test_metrics)
         individual_metrics.append(metrics)
@@ -120,7 +122,7 @@ def train_ensemble(ticker: str) -> dict:
     feature_cols = get_feature_cols(ticker)
     # Usamos el dataset con el window_size mayor para tener más contexto
     max_ws = max(v["window_size"] for v in variations)
-    xgb_data = data_by_window[max_ws] # type: ignore
+    xgb_data = all_data[max_ws]  # type: ignore
     try:
         xgb_metrics = train_xgboost(ticker, xgb_data, feature_cols)
     except Exception as exc:
@@ -194,18 +196,7 @@ def _load_single_model(
 ) -> HorizonBiGRU:
     """
     Carga un único modelo guardado desde disco.
-
-    Args:
-        ticker: Símbolo del activo.
-        model_idx: Índice del modelo dentro del ensemble.
-        config: Diccionario de configuración (puede incluir variación específica).
-        device: Dispositivo de cómputo.
-
-    Returns:
-        HorizonBiGRU cargado y en modo evaluación.
-
-    Raises:
-        FileNotFoundError: Si el archivo .pth no existe.
+    Usa HorizonBiGRUAttention si USE_ATTENTION_MODEL=True.
     """
     model_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_model_{model_idx}.pth")
     if not os.path.exists(model_path):
@@ -215,7 +206,8 @@ def _load_single_model(
         )
 
     feature_cols = get_feature_cols(ticker)
-    model = HorizonBiGRU(
+    ModelClass = HorizonBiGRUAttention if USE_ATTENTION_MODEL else HorizonBiGRU
+    model = ModelClass(
         input_dim=len(feature_cols),
         hidden_dim=config["hidden_dim"],
         num_layers=config["num_layers"],
@@ -356,7 +348,9 @@ def predict_ensemble(ticker: str) -> dict:
     models = load_ensemble(ticker)
 
     # Predicción de cada modelo con su window_size específico
+    # El modelo devuelve un retorno continuo [1, 1]
     individual_returns = []
+
     for model, variation in zip(models, variations):
         ws = variation["window_size"]
         window_slice = last_window_scaled[-ws:]
@@ -367,74 +361,63 @@ def predict_ensemble(ticker: str) -> dict:
         model.eval()
         with torch.no_grad():
             pred_return = model(input_tensor).item()
+
         individual_returns.append(pred_return)
 
-    # Votación ponderada para tendencia
-    trend_weights = {"ALCISTA": 0.0, "BAJISTA": 0.0, "LATERAL": 0.0}
-    for ret, weight in zip(individual_returns, model_weights):
-        if ret > threshold:
-            trend_weights["ALCISTA"] += weight
-        elif ret < -threshold:
-            trend_weights["BAJISTA"] += weight
-        else:
-            trend_weights["LATERAL"] += weight
+    # Votación ponderada sobre retornos predichos
+    mean_return = float(np.average(individual_returns, weights=model_weights))
+    std_return  = float(np.std(individual_returns))
 
-    winning_trend = max(trend_weights, key=trend_weights.get)
-    confidence = trend_weights[winning_trend]  # Ya en rango 0-1 (pesos suman 1)
+    # Tendencia por threshold
+    if mean_return > threshold:
+        winning_trend = "ALCISTA"
+    elif mean_return < -threshold:
+        winning_trend = "BAJISTA"
+    else:
+        winning_trend = "LATERAL"
 
-    # Retorno ponderado por rendimiento de los modelos
-    weighted_return = sum(w * r for w, r in zip(model_weights, individual_returns))
-    mean_return = float(weighted_return)
-    std_return = float(np.std(individual_returns))
+    # Confianza: qué fracción de modelos coincide con la tendencia ganadora
+    if winning_trend == "ALCISTA":
+        confidence = float(np.mean([r > threshold for r in individual_returns]))
+    elif winning_trend == "BAJISTA":
+        confidence = float(np.mean([r < -threshold for r in individual_returns]))
+    else:
+        confidence = float(np.mean([abs(r) <= threshold for r in individual_returns]))
 
     predicted_price = current_price * np.exp(mean_return)
     price_upper = current_price * np.exp(mean_return + std_return)
     price_lower = current_price * np.exp(mean_return - std_return)
 
     # ── Meta-ensemble: combinar BiGRU + XGBoost ────────────────────────────────
-    # Convertir retorno BiGRU en probabilidad mediante sigmoid escalado
-    import math
-    bigru_prob = 1.0 / (1.0 + math.exp(-mean_return * META_ENSEMBLE_SIGMOID_SCALE))
-
-    # Obtener predicción XGBoost con el último timestep (sin escala, features raw)
+    # Obtener predicción XGBoost con el último timestep (features raw)
     last_features_raw = feat_df[feature_cols].values[-1]
     xgb_result = predict_xgboost(ticker, last_features_raw)
     xgb_prob = xgb_result["probability"]
 
-    w_bigru = META_ENSEMBLE_WEIGHTS["bigru"]
-    w_xgb = META_ENSEMBLE_WEIGHTS["xgboost"]
-    final_score = w_bigru * bigru_prob + w_xgb * xgb_prob
-
-    # Umbral: si score > 0.5 + δ → ALCISTA; < 0.5 - δ → BAJISTA; si no → LATERAL
-    delta = META_ENSEMBLE_TREND_DELTA
-    if final_score > 0.5 + delta:
-        meta_trend = "ALCISTA"
-    elif final_score < 0.5 - delta:
-        meta_trend = "BAJISTA"
-    else:
-        meta_trend = "LATERAL"
+    # Usar el módulo meta_ensemble para combinar predicciones
+    meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob)
 
     return {
         "trend": winning_trend,
-
         "confidence": round(confidence, 4),
-        "predicted_price": round(predicted_price, 2),
-        "price_upper": round(price_upper, 2),
-        "price_lower": round(price_lower, 2),
-        "predicted_return": round(mean_return, 4),
-        "meta_trend": meta_trend,
-        "meta_score": round(final_score, 6),
-        "confidence": confidence,
-
         "current_price": current_price,
         "predicted_price": float(predicted_price),
         "price_upper": float(price_upper),
         "price_lower": float(price_lower),
         "predicted_return": mean_return,
-        "xgboost_direction": xgb_result["direction"],
-        "xgboost_probability": xgb_prob,
+        "predicted_return_pct": round(mean_return * 100, 2),
+
+        # Meta-ensemble results
+        "meta_trend": meta_result["meta_trend"],
+        "meta_score": round(meta_result["meta_score"], 6),
+
+        # XGBoost results
+        "xgboost_direction": "ALCISTA" if xgb_result["direction"] == 1 else "BAJISTA",
+        "xgboost_probability": round(xgb_prob, 6),
+
+        # Individual predictions
         "individual_predictions": [
-            {"model_id": i + 1, "predicted_return": r}
+            {"model_id": i + 1, "predicted_return": r, "predicted_return_pct": round(r * 100, 2)}
             for i, r in enumerate(individual_returns)
         ],
     }

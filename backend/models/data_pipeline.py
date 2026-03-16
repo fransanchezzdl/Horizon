@@ -20,12 +20,14 @@ from .config import (
     BASE_FEATURE_COLS,
     VOLATILE_FEATURE_COLS,
     SENTIMENT_FEATURE_COLS,
+    ADVANCED_TECHNICAL_COLS,
     MARKET_CONTEXT_TICKERS,
     PREDICTION_HORIZON,
     TRAIN_RATIO,
     VAL_RATIO,
     SAVED_MODELS_DIR,
     USE_SENTIMENT,
+    USE_ADVANCED_FEATURES,
     get_feature_cols,
     get_asset_type,
 )
@@ -126,6 +128,21 @@ def compute_features(
     # Ratio de volumen (volumen / media móvil 20 días)
     df["Volume_Ratio"] = df["Volume"] / df["Volume"].rolling(20).mean()
 
+    # === FEATURES DE RÉGIMEN DE MERCADO (3) ===
+    # Estas features dan contexto sobre el estado macro del mercado,
+    # algo que los indicadores técnicos de corto plazo no capturan.
+
+    # 1. Posición respecto a SMA200: ¿estamos en tendencia alcista o bajista?
+    sma200 = df["Close"].rolling(200).mean()
+    df["SMA200_Dist"] = (df["Close"] - sma200) / sma200  # % de distancia normalizado
+
+    # 2. Pendiente de SMA50: momentum de medio plazo (¿la tendencia acelera o frena?)
+    sma50 = df["Close"].rolling(50).mean()
+    df["SMA50_Slope"] = sma50.diff(5) / sma50.shift(5)  # cambio % en 5 días
+
+    # 3. Volatilidad realizada 20 días: régimen de volatilidad actual
+    df["Realized_Vol"] = df["Log_Return"].rolling(20).std() * (252 ** 0.5)  # anualizada
+
     # Contexto de mercado: VIX y NASDAQ (solo para activos volátiles)
     if include_market_context:
         start_date = df.index.min().strftime("%Y-%m-%d")
@@ -162,14 +179,37 @@ def compute_features(
         df["VIX_Close"] = df["VIX_Close"].ffill()
         df["NASDAQ_Return"] = df["NASDAQ_Return"].ffill()
 
+    # Añadir features técnicas avanzadas ANTES de dropna() si está habilitado
+    if USE_ADVANCED_FEATURES:
+        try:
+            from .advanced_features import add_advanced_technical_features
+            df = add_advanced_technical_features(df)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "No se pudieron calcular features técnicas avanzadas: %s. "
+                "Usando valores por defecto.",
+                exc
+            )
+            # Añadir valores por defecto para todas las features avanzadas
+            for col in ADVANCED_TECHNICAL_COLS:
+                if col in ["Stochastic_K", "Stochastic_D", "MFI"]:
+                    df[col] = 50.0
+                elif col in ["Williams_R"]:
+                    df[col] = -50.0
+                elif col in ["ADX"]:
+                    df[col] = 25.0
+                else:
+                    df[col] = 0.0
+
     # Eliminar filas con NaN producidos por los indicadores
     df.dropna(inplace=True)
 
-    # Seleccionar columnas técnicas finales
-    if include_market_context:
-        tech_df = df[VOLATILE_FEATURE_COLS].copy()
-    else:
-        tech_df = df[BASE_FEATURE_COLS].copy()
+    # Seleccionar columnas base + avanzadas (todo lo que ya está en df)
+    # Las columnas de sentimiento se añaden después porque vienen de una API externa
+    all_feature_cols = get_feature_cols(ticker)
+    non_sentiment_cols = [c for c in all_feature_cols if c not in SENTIMENT_FEATURE_COLS]
+    tech_df = df[non_sentiment_cols].copy()
 
     # Añadir features de sentimiento si está habilitado
     if USE_SENTIMENT and ticker:
@@ -178,8 +218,6 @@ def compute_features(
             start_date = tech_df.index.min().strftime("%Y-%m-%d")
             end_date = tech_df.index.max().strftime("%Y-%m-%d")
             sentiment_df = compute_historical_sentiment(ticker, start_date, end_date)
-            # Reindexar al índice de tech_df y rellenar hacia adelante
-            # con límite de 5 días para no propagar sentimiento obsoleto
             sentiment_df = sentiment_df.reindex(tech_df.index)
             sentiment_df = sentiment_df.ffill(limit=5).fillna(
                 {"sentiment_score": 0.0, "sentiment_magnitude": 0.0, "news_volume": 0}
@@ -205,18 +243,38 @@ def compute_features(
 def compute_target(df: pd.DataFrame, horizon: int = PREDICTION_HORIZON) -> pd.Series:
     """
     Calcula el target: retorno logarítmico acumulado a 'horizon' días.
+    Usado internamente para calcular el threshold dinámico y las clases.
+    """
+    return np.log(df["Close"].shift(-horizon) / df["Close"])
 
-    target_t = log(Close_{t+horizon} / Close_t)
+
+def compute_class_target(
+    returns: np.ndarray,
+    threshold: float,
+) -> np.ndarray:
+    """
+    Convierte retornos continuos en clases balanceadas de 3 categorías.
+
+    Clases:
+        0 → BAJISTA  (retorno < -threshold)
+        1 → LATERAL  (retorno en [-threshold, +threshold])
+        2 → ALCISTA  (retorno > +threshold)
+
+    El threshold se calcula dinámicamente sobre el conjunto de train
+    para garantizar que las clases estén aproximadamente balanceadas
+    (cada clase ~33% del total).
 
     Args:
-        df: DataFrame que contiene la columna 'Close'.
-        horizon: Número de días de trading hacia adelante (default: 5).
+        returns:   Array de retornos logarítmicos.
+        threshold: Umbral dinámico calculado con compute_dynamic_threshold().
 
     Returns:
-        Serie con el retorno acumulado por fila.
+        Array de enteros [0, 1, 2] con la clase de cada muestra.
     """
-    target = np.log(df["Close"].shift(-horizon) / df["Close"])
-    return target
+    classes = np.ones(len(returns), dtype=np.int64)  # default: LATERAL
+    classes[returns > threshold] = 2   # ALCISTA
+    classes[returns < -threshold] = 0  # BAJISTA
+    return classes
 
 
 def create_sequences(
@@ -377,36 +435,22 @@ def compute_dynamic_threshold(targets: np.ndarray, percentile: float = 60.0) -> 
 def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> dict:
     """
     Prepara datos una sola vez y crea secuencias para múltiples window_sizes.
-
-    Descarga datos, calcula features y escala UNA SOLA VEZ, luego crea
-    secuencias para cada window_size. El scaler se ajusta solo en train
-    y se guarda una única vez en disco.
-
-    Args:
-        ticker: Símbolo del activo.
-        config: Diccionario de configuración base (de get_config()).
-        window_sizes: Lista de tamaños de ventana para los que crear secuencias.
-
-    Returns:
-        Diccionario con:
-            - 'scaler': MinMaxScaler ajustado (única instancia)
-            - 'dynamic_threshold': threshold dinámico calculado desde train targets
-            - <ws>: dict con X_train, y_train, X_val, y_val, X_test, y_test,
-                    dates_test, close_test para cada window_size ws.
+    Los targets son clases (0=BAJISTA, 1=LATERAL, 2=ALCISTA) balanceadas
+    usando el threshold dinámico calculado sobre train.
     """
     # 1. Descargar y calcular features UNA SOLA VEZ
     raw_df = download_data(ticker)
     include_market_context = get_asset_type(ticker) == "volatile"
-    feat_df = compute_features(raw_df, include_market_context=include_market_context)
+    feat_df = compute_features(raw_df, include_market_context=include_market_context, ticker=ticker)
     feature_cols = get_feature_cols(ticker)
 
-    # 2. Calcular target UNA SOLA VEZ
+    # 2. Calcular retornos continuos y convertir a clases
     target = compute_target(feat_df)
     feat_df = feat_df.copy()
     feat_df["_target"] = target
     feat_df.dropna(inplace=True)
 
-    targets_array = feat_df["_target"].values
+    returns_array = feat_df["_target"].values
     features_array = feat_df[feature_cols].values
     dates = feat_df.index
     close_prices = feat_df["Close"].values
@@ -417,65 +461,87 @@ def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> 
 
     # 3. Split cronológico ANTES de escalar
     train_features = features_array[:train_end]
-    val_features = features_array[train_end:val_end]
-    test_features = features_array[val_end:]
+    val_features   = features_array[train_end:val_end]
+    test_features  = features_array[val_end:]
 
-    train_targets = targets_array[:train_end]
-    val_targets = targets_array[train_end:val_end]
-    test_targets = targets_array[val_end:]
+    train_returns = returns_array[:train_end]
+    val_returns   = returns_array[train_end:val_end]
+    test_returns  = returns_array[val_end:]
 
     dates_test = dates[val_end:]
     close_test = close_prices[val_end:]
 
-    # 4. Escalar UNA SOLA VEZ (fit solo en train)
+    # 4. Threshold dinámico calculado SOLO sobre train (percentil 60 de |retornos|)
+    dynamic_threshold = compute_dynamic_threshold(train_returns, percentile=60.0)
+    print(f"📏 Threshold dinámico: ±{dynamic_threshold:.4f} ({dynamic_threshold*100:.2f}%)")
+
+    # Distribución direccional en train
+    up_pct = float(np.mean(train_returns > dynamic_threshold)) * 100
+    down_pct = float(np.mean(train_returns < -dynamic_threshold)) * 100
+    neutral_pct = 100 - up_pct - down_pct
+    print(f"   ALCISTA: {up_pct:.1f}% | LATERAL: {neutral_pct:.1f}% | BAJISTA: {down_pct:.1f}%")
+
+    # Targets son retornos continuos (float) — el threshold se aplica en evaluate_model
+    train_targets = train_returns
+    val_targets   = val_returns
+    test_targets  = test_returns
+
+    # 5. Escalar UNA SOLA VEZ (fit solo en train)
     scaler = MinMaxScaler(feature_range=(0, 1))
     train_scaled = scaler.fit_transform(train_features)
-    val_scaled = scaler.transform(val_features)
-    test_scaled = scaler.transform(test_features)
+    val_scaled   = scaler.transform(val_features)
+    test_scaled  = scaler.transform(test_features)
 
-    # 5. Guardar scaler UNA SOLA VEZ
+    # 6. Guardar scaler y threshold
     os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
     scaler_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_scaler.pkl")
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler, f)
     print(f"💾 Scaler guardado en {scaler_path}")
 
-    # 6. Calcular threshold dinámico desde train targets
-    dynamic_threshold = compute_dynamic_threshold(train_targets, percentile=60.0)
-    print(
-        f"📏 Threshold dinámico calculado: ±{dynamic_threshold:.4f} "
-        f"({dynamic_threshold * 100:.2f}%)"
-    )
-
-    result: dict = {"scaler": scaler, "dynamic_threshold": dynamic_threshold}
+    result: dict = {
+        "scaler": scaler,
+        "dynamic_threshold": dynamic_threshold,
+        # Guardar retornos continuos para inferencia de precio
+        "train_returns": train_returns,
+        "val_returns": val_returns,
+        "test_returns": test_returns,
+    }
 
     # 7. Crear secuencias para cada window_size
     for ws in window_sizes:
         X_train, y_train = create_sequences(train_scaled, train_targets, ws)
-        X_val, y_val = create_sequences(val_scaled, val_targets, ws)
-        X_test, y_test = create_sequences(test_scaled, test_targets, ws)
+        X_val,   y_val   = create_sequences(val_scaled,   val_targets,   ws)
+        X_test,  y_test  = create_sequences(test_scaled,  test_targets,  ws)
 
+        # y son retornos continuos (float) para HuberLoss
         X_train_t = torch.from_numpy(X_train).float()
         y_train_t = torch.from_numpy(y_train).float().unsqueeze(1)
-        X_val_t = torch.from_numpy(X_val).float()
-        y_val_t = torch.from_numpy(y_val).float().unsqueeze(1)
-        X_test_t = torch.from_numpy(X_test).float()
-        y_test_t = torch.from_numpy(y_test).float().unsqueeze(1)
+        X_val_t   = torch.from_numpy(X_val).float()
+        y_val_t   = torch.from_numpy(y_val).float().unsqueeze(1)
+        X_test_t  = torch.from_numpy(X_test).float()
+        y_test_t  = torch.from_numpy(y_test).float().unsqueeze(1)
 
-        print(
-            f"📊 Split (ws={ws}): train={len(X_train_t)}, "
-            f"val={len(X_val_t)}, test={len(X_test_t)} secuencias."
-        )
+        # También guardar retornos continuos alineados con las secuencias
+        # (para calcular precio predicho en inferencia)
+        _, y_train_ret = create_sequences(train_scaled, train_returns, ws)
+        _, y_val_ret   = create_sequences(val_scaled,   val_returns,   ws)
+        _, y_test_ret  = create_sequences(test_scaled,  test_returns,  ws)
+
+        print(f"📊 Split (ws={ws}): train={len(X_train_t)}, val={len(X_val_t)}, test={len(X_test_t)}")
 
         result[ws] = {
             "X_train": X_train_t,
             "y_train": y_train_t,
-            "X_val": X_val_t,
-            "y_val": y_val_t,
-            "X_test": X_test_t,
-            "y_test": y_test_t,
-            "dates_test": dates_test,
-            "close_test": close_test,
+            "X_val":   X_val_t,
+            "y_val":   y_val_t,
+            "X_test":  X_test_t,
+            "y_test":  y_test_t,
+            "y_train_returns": y_train_ret,
+            "y_val_returns":   y_val_ret,
+            "y_test_returns":  y_test_ret,
+            "dates_test":  dates_test,
+            "close_test":  close_test,
         }
 
     return result

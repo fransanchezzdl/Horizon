@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "alphavantage": {
+      "command": "uvx",
+      "args": ["av-mcp", "REDACTED_ALPHAVANTAGE_KEY"],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}
