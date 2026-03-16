@@ -50,20 +50,13 @@ VOLATILE_CONFIG = {
 
 # Variaciones de hiperparámetros para diversificar el ensemble.
 # Cada modelo del ensemble usa una configuración ligeramente diferente.
+# Para pruebas rápidas: solo 1 variación por tipo
 ENSEMBLE_VARIATIONS = {
     "stable": [
-        {"hidden_dim": 48, "window_size": 30, "dropout": 0.30, "num_layers": 2},
-        {"hidden_dim": 48, "window_size": 30, "dropout": 0.40, "num_layers": 2},
         {"hidden_dim": 64, "window_size": 30, "dropout": 0.35, "num_layers": 2},
-        {"hidden_dim": 48, "window_size": 20, "dropout": 0.30, "num_layers": 2},
-        {"hidden_dim": 48, "window_size": 40, "dropout": 0.35, "num_layers": 2},
     ],
     "volatile": [
         {"hidden_dim": 64, "window_size": 60, "dropout": 0.35, "num_layers": 2},
-        {"hidden_dim": 48, "window_size": 60, "dropout": 0.40, "num_layers": 2},
-        {"hidden_dim": 80, "window_size": 60, "dropout": 0.30, "num_layers": 2},
-        {"hidden_dim": 64, "window_size": 45, "dropout": 0.35, "num_layers": 2},
-        {"hidden_dim": 64, "window_size": 75, "dropout": 0.35, "num_layers": 3},
     ],
 }
 
@@ -128,7 +121,7 @@ VOLATILE_WITH_ALL_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS + ADVANC
 FEATURE_COLS = BASE_FEATURE_COLS
 
 # Ensemble
-ENSEMBLE_SIZE = 5
+ENSEMBLE_SIZE = 1  # Cambiar a 1 para pruebas rápidas, 5 para producción
 
 # Predicción
 PREDICTION_HORIZON = 5  # 5 días de trading

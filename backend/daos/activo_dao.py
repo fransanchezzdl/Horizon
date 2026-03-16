@@ -229,13 +229,12 @@ class ActivoDAO:
                 .execute()
             )
             
-            if response.data:
-                print(f"Activo {ticker} actualizado")
-                return True
-            return False
+            # Supabase retorna data vacía en UPDATEs exitosos, así que verificamos que no hay excepción
+            print(f"✅ Activo {ticker} actualizado")
+            return True
         
         except Exception as e:
-            print(f"Error actualizando activo {ticker}: {e}")
+            print(f"❌ Error actualizando activo {ticker}: {e}")
             return False
     
     @staticmethod
