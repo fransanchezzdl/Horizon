@@ -3,7 +3,7 @@
  * Similar a login.js pero llama a /register
  */
 
-const API_URL = "http://localhost:8000";
+const API_BASE = window.API_BASE;
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = localStorage.getItem('access_token');
@@ -46,7 +46,7 @@ async function handleRegister(e) {
     btn.textContent = 'Creando...';
 
     try {
-        const response = await fetch(`${API_URL}/register`, {
+        const response = await fetch(`${API_BASE}/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
