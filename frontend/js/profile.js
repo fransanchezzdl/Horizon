@@ -1,4 +1,5 @@
 checkLogin();
+const API_BASE = window.API_BASE;
 
 // Cargar datos del perfil del usuario
 function loadProfileData() {
@@ -47,7 +48,7 @@ async function loadUserStats(userId) {
         const token = localStorage.getItem('token');
         
         // Obtener datos del portfolio
-        const portfolioRes = await fetch(`http://localhost:8000/api/portfolio/${userId}`, {
+        const portfolioRes = await fetch(`${API_BASE}/api/portfolio/${userId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -60,7 +61,7 @@ async function loadUserStats(userId) {
         }
         
         // Obtener datos de predicciones
-        const predictionsRes = await fetch(`http://localhost:8000/api/predictions/${userId}`, {
+        const predictionsRes = await fetch(`${API_BASE}/api/predictions/${userId}`, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
