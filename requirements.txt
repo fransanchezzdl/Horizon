@@ -30,3 +30,6 @@ matplotlib>=3.7.0
 transformers>=4.48.0
 finnhub-python>=2.4.0
 xgboost>=2.0.0
+
+# Testing
+hypothesis>=6.0.0

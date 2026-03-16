@@ -14,8 +14,16 @@ import torch.nn as nn
 from torch.utils.data import DataLoader, TensorDataset
 from typing import Dict
 
-from .model import HorizonBiGRU
+from .model import HorizonBiGRU, HorizonBiGRUAttention
 from .config import SAVED_MODELS_DIR
+
+def _get_model_class():
+    """Devuelve la clase de modelo según configuración."""
+    try:
+        from .config import USE_ATTENTION_MODEL
+        return HorizonBiGRUAttention if USE_ATTENTION_MODEL else HorizonBiGRU
+    except ImportError:
+        return HorizonBiGRU
 
 
 def train_single_model(
@@ -61,8 +69,9 @@ def train_single_model(
     batch_size = config["batch_size"]
     patience = config["early_stopping_patience"]
 
-    # Instanciar modelo
-    model = HorizonBiGRU(
+    # Instanciar modelo (Attention o BiGRU según config)
+    ModelClass = _get_model_class()
+    model = ModelClass(
         input_dim=data["X_train"].shape[2],
         hidden_dim=hidden_dim,
         num_layers=num_layers,
@@ -70,18 +79,19 @@ def train_single_model(
     ).to(device)
 
     # Loss, optimizador y scheduler
-    criterion = nn.HuberLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    # HuberLoss para regresión (robusto a outliers)
+    criterion = nn.HuberLoss(delta=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-4)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.7, patience=8
+        optimizer, mode="min", factor=0.7, patience=10
     )
 
-    # DataLoaders
+    # DataLoaders — y_train son retornos continuos (float)
     train_dataset = TensorDataset(data["X_train"], data["y_train"])
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 
     val_X = data["X_val"].to(device)
-    val_y = data["y_val"].to(device)
+    val_y = data["y_val"].to(device)  # float tensor
 
     # Early stopping
     best_val_loss = float("inf")
@@ -165,70 +175,50 @@ def train_single_model(
 
 
 def evaluate_model(
-    model: HorizonBiGRU,
+    model,
     X_test: torch.Tensor,
     y_test: torch.Tensor,
     device: torch.device,
+    threshold: float = 0.01,
 ) -> dict:
     """
-    Evalúa un modelo entrenado en el conjunto de test.
+    Evalúa el modelo de regresión en el conjunto de test.
 
-    Calcula MAE, RMSE, accuracy direccional, precision/recall para la clase
-    alcista y un baseline naive para comparación.
-
-    Args:
-        model: Modelo HorizonBiGRU entrenado.
-        X_test: Tensor de features del test [n, window_size, n_features].
-        y_test: Tensor de targets reales del test [n, 1].
-        device: Dispositivo de cómputo.
-
-    Returns:
-        Diccionario con métricas: mae, rmse, directional_accuracy,
-        precision_up, recall_up, naive_baseline_accuracy, n_samples_test.
+    Convierte retornos predichos a dirección usando el threshold dinámico.
+    y_test son retornos continuos (float).
     """
     model.eval()
     model.to(device)
     X_test = X_test.to(device)
-    y_test = y_test.to(device)
 
     with torch.no_grad():
-        preds = model(X_test).cpu().numpy()
+        preds = model(X_test).squeeze(1).cpu().numpy()  # [n]
 
-    y_true = y_test.cpu().numpy()
+    y_true = y_test.squeeze(1).cpu().numpy()  # [n]
 
-    mae = float(np.mean(np.abs(preds - y_true)))
-    rmse = float(math.sqrt(np.mean((preds - y_true) ** 2)))
+    # Convertir retornos a dirección binaria con threshold
+    pred_dir = (preds > threshold).astype(int)
+    true_dir = (y_true > threshold).astype(int)
 
-    preds_flat = preds.flatten()
-    true_flat = y_true.flatten()
+    accuracy = float(np.mean(pred_dir == true_dir))
 
-    # Accuracy direccional: ¿el signo del retorno predicho coincide con el real?
-    directional_accuracy = float(
-        np.mean(np.sign(preds_flat) == np.sign(true_flat))
-    )
+    mae  = float(np.mean(np.abs(preds - y_true)))
+    rmse = float(np.sqrt(np.mean((preds - y_true) ** 2)))
 
-    # Precision/Recall para dirección positiva (ALCISTA)
-    pred_positive = preds_flat > 0
-    true_positive = true_flat > 0
+    tp = np.sum((pred_dir == 1) & (true_dir == 1))
+    fp = np.sum((pred_dir == 1) & (true_dir == 0))
+    fn = np.sum((pred_dir == 0) & (true_dir == 1))
+    precision = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
+    recall    = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
 
-    tp = np.sum(pred_positive & true_positive)
-    fp = np.sum(pred_positive & ~true_positive)
-    fn = np.sum(~pred_positive & true_positive)
-
-    precision_up = float(tp / (tp + fp)) if (tp + fp) > 0 else 0.0
-    recall_up = float(tp / (tp + fn)) if (tp + fn) > 0 else 0.0
-
-    # Baseline naive: predecir siempre retorno 0 (sin movimiento)
-    naive_accuracy = float(
-        np.mean(np.sign(np.zeros_like(true_flat)) == np.sign(true_flat))
-    )
+    naive_accuracy = float(np.mean(true_dir == int(true_dir.mean() > 0.5)))
 
     return {
+        "directional_accuracy": accuracy,
+        "precision_up": precision,
+        "recall_up": recall,
         "mae": mae,
         "rmse": rmse,
-        "directional_accuracy": directional_accuracy,
-        "precision_up": precision_up,
-        "recall_up": recall_up,
         "naive_baseline_accuracy": naive_accuracy,
-        "n_samples_test": len(true_flat),
+        "n_samples_test": len(y_true),
     }
