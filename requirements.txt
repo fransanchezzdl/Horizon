@@ -3,7 +3,7 @@ supabase
 python-dotenv
 pydantic[email]
 uvicorn
-google.genai
+google-genai
 
 # Data Science & Machine Learning
 torch>=2.0.0
