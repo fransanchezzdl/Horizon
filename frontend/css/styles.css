@@ -1438,7 +1438,7 @@ body > section {
 }
 
 /* Botones */
-.btn-primary, .btn-secondary, .btn-upgrade {
+.btn-primary, .btn-secondary {
     padding: var(--spacing-md) var(--spacing-xl);
     border: none;
     border-radius: var(--radius-md);
@@ -1472,18 +1472,6 @@ body > section {
 
 .btn-secondary:hover {
     background: var(--color-border);
-    transform: translateY(-2px);
-}
-
-.btn-upgrade {
-    background: var(--color-primary);
-    color: white;
-    width: 100%;
-    margin-top: var(--spacing-lg);
-}
-
-.btn-upgrade:hover {
-    background: var(--color-secondary);
     transform: translateY(-2px);
 }
 
@@ -1542,10 +1530,6 @@ body > section {
         flex-direction: column;
     }
 
-    .profile-actions .btn-primary,
-    .profile-actions .btn-secondary {
-        width: 100%;
-    }
 }
 
 @media (max-width: 768px) {
@@ -1825,6 +1809,7 @@ body > section {
     body > main,
     body > section {
         padding: var(--spacing-md);
+        padding-bottom: 25%;
     }
 
     .opts-section {
