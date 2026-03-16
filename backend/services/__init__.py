@@ -8,6 +8,7 @@ from .gemini_service import GeminiService, gemini_service
 from .chat_service import ChatService, chat_service
 from .activo_service import ActivoService, activo_service
 from .reflexion_service import ReflexionService, reflexion_service
+from .activo_update_service import ActivoUpdateService, activo_update_service
 
 __all__ = [
     "AuthService", 
@@ -26,4 +27,6 @@ __all__ = [
     "activo_service",
     "ReflexionService",
     "reflexion_service",
+    "ActivoUpdateService",
+    "activo_update_service",
 ]

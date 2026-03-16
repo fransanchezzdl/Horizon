@@ -79,10 +79,15 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list) -> dict:
     X_val   = build_xgb_features(data["X_val"])
     X_test  = build_xgb_features(data["X_test"])
 
-    # y son clases enteras (0=BAJISTA, 1=LATERAL, 2=ALCISTA)
-    y_train = data["y_train"].numpy().ravel()
-    y_val   = data["y_val"].numpy().ravel()
-    y_test  = data["y_test"].numpy().ravel()
+    # Convertir retornos continuos (y) a clases binarias
+    # 1 si retorno > 0 (sube), 0 si retorno <= 0 (baja o lateral)
+    y_train_continuous = data["y_train"].numpy().ravel()
+    y_val_continuous = data["y_val"].numpy().ravel()
+    y_test_continuous = data["y_test"].numpy().ravel()
+    
+    y_train = (y_train_continuous > 0).astype(int)
+    y_val = (y_val_continuous > 0).astype(int)
+    y_test = (y_test_continuous > 0).astype(int)
 
     cfg = XGBOOST_CONFIG
     model = XGBClassifier(
@@ -92,9 +97,8 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list) -> dict:
         subsample=cfg["subsample"],
         colsample_bytree=cfg["colsample_bytree"],
         early_stopping_rounds=cfg["early_stopping_rounds"],
-        eval_metric="mlogloss",
-        objective="multi:softprob",
-        num_class=3,
+        eval_metric="logloss",
+        objective="binary:logistic",
         verbosity=0,
         random_state=42,
     )
@@ -108,14 +112,14 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list) -> dict:
 
     # ── Métricas en test ───────────────────────────────────────────────────────
     y_pred = model.predict(X_test)
-    y_prob = model.predict_proba(X_test)[:, 2]  # probabilidad clase ALCISTA (2)
+    y_prob = model.predict_proba(X_test)[:, 1]  # probabilidad de clase 1 (ALCISTA)
 
     dir_acc = float(np.mean(y_pred == y_test))
 
-    # Precision y recall para clase 2 (ALCISTA)
-    tp = int(np.sum((y_pred == 2) & (y_test == 2)))
-    fp = int(np.sum((y_pred == 2) & (y_test != 2)))
-    fn = int(np.sum((y_pred != 2) & (y_test == 2)))
+    # Precision y recall para clase 1 (ALCISTA)
+    tp = int(np.sum((y_pred == 1) & (y_test == 1)))
+    fp = int(np.sum((y_pred == 1) & (y_test != 1)))
+    fn = int(np.sum((y_pred != 1) & (y_test == 1)))
 
     precision_up = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall_up = tp / (tp + fn) if (tp + fn) > 0 else 0.0
@@ -182,9 +186,9 @@ def predict_xgboost(ticker: str, features: np.ndarray) -> Dict:
             arr = arr.reshape(1, -1)
 
         direction = int(model.predict(arr)[0])
-        # En clasificación 3 clases: 0=BAJISTA, 1=LATERAL, 2=ALCISTA
+        # En clasificación binaria: 0=BAJISTA, 1=ALCISTA
         probs = model.predict_proba(arr)[0]
-        probability = float(probs[2]) if len(probs) == 3 else float(probs[-1])
+        probability = float(probs[1]) if len(probs) > 1 else 0.5
 
         return {"direction": direction, "probability": probability}
 
