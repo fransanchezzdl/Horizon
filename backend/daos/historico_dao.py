@@ -39,7 +39,7 @@ class HistoricoActivoDAO:
         """
         try:
             if "ticker" not in historico_data or "fecha" not in historico_data or "precio_cierre" not in historico_data:
-                print("❌ Error: ticker, fecha y precio_cierre son requeridos")
+                print("Error: ticker, fecha y precio_cierre son requeridos")
                 return None
             
             # Convertir date a string si es necesario
@@ -54,12 +54,12 @@ class HistoricoActivoDAO:
             
             if response.data:
                 id_historico = response.data[0].get("id_historico")
-                print(f"✅ Histórico {id_historico} creado para {historico_data.get('ticker')}")
+                print(f"Histórico {id_historico} creado para {historico_data.get('ticker')}")
                 return id_historico
             return None
         
         except Exception as e:
-            print(f"❌ Error creando histórico: {e}")
+            print(f"Error creando histórico: {e}")
             return None
     
     @staticmethod
@@ -86,7 +86,7 @@ class HistoricoActivoDAO:
             return None
         
         except Exception as e:
-            print(f"❌ Error obteniendo histórico {id_historico}: {e}")
+            print(f"Error obteniendo histórico {id_historico}: {e}")
             return None
     
     @staticmethod
@@ -120,7 +120,7 @@ class HistoricoActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error obteniendo histórico de {ticker}: {e}")
+            print(f"Error obteniendo histórico de {ticker}: {e}")
             return []
     
     @staticmethod
@@ -152,7 +152,7 @@ class HistoricoActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error obteniendo histórico de {ticker} en rango: {e}")
+            print(f"Error obteniendo histórico de {ticker} en rango: {e}")
             return []
     
     @staticmethod
@@ -184,7 +184,7 @@ class HistoricoActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error obteniendo últimos {dias} días de {ticker}: {e}")
+            print(f"Error obteniendo últimos {dias} días de {ticker}: {e}")
             return []
     
     @staticmethod
@@ -208,12 +208,12 @@ class HistoricoActivoDAO:
             )
             
             if response.data:
-                print(f"✅ Histórico {id_historico} actualizado")
+                print(f"Histórico {id_historico} actualizado")
                 return True
             return False
         
         except Exception as e:
-            print(f"❌ Error actualizando histórico {id_historico}: {e}")
+            print(f"Error actualizando histórico {id_historico}: {e}")
             return False
     
     @staticmethod
@@ -236,12 +236,12 @@ class HistoricoActivoDAO:
             )
             
             if response.data or response.status_code == 204:
-                print(f"✅ Histórico {id_historico} eliminado")
+                print(f"Histórico {id_historico} eliminado")
                 return True
             return False
         
         except Exception as e:
-            print(f"❌ Error eliminando histórico {id_historico}: {e}")
+            print(f"Error eliminando histórico {id_historico}: {e}")
             return False
     
     @staticmethod
@@ -265,11 +265,11 @@ class HistoricoActivoDAO:
                 .execute()
             )
             
-            print(f"✅ Históricos de {ticker} eliminados")
+            print(f"Históricos de {ticker} eliminados")
             return True
         
         except Exception as e:
-            print(f"❌ Error eliminando históricos de {ticker}: {e}")
+            print(f"Error eliminando históricos de {ticker}: {e}")
             return False
     
     # ==========================================
@@ -300,7 +300,7 @@ class HistoricoActivoDAO:
             return round(promedio, 2)
         
         except Exception as e:
-            print(f"❌ Error calculando precio promedio de {ticker}: {e}")
+            print(f"Error calculando precio promedio de {ticker}: {e}")
             return None
     
     @staticmethod
@@ -330,7 +330,7 @@ class HistoricoActivoDAO:
             }
         
         except Exception as e:
-            print(f"❌ Error calculando mín/máx de {ticker}: {e}")
+            print(f"Error calculando mín/máx de {ticker}: {e}")
             return None
     
     @staticmethod
@@ -355,7 +355,7 @@ class HistoricoActivoDAO:
             return response.count if hasattr(response, "count") else 0
         
         except Exception as e:
-            print(f"❌ Error contando históricos de {ticker}: {e}")
+            print(f"Error contando históricos de {ticker}: {e}")
             return 0
 
 

@@ -46,7 +46,7 @@ class ActivoDAO:
         try:
             # Asegurar que tiene campos obligatorios
             if "ticker" not in activo_data or "nombre_completo" not in activo_data:
-                print("❌ Error: ticker y nombre_completo son requeridos")
+                print("Error: ticker y nombre_completo son requeridos")
                 return None
             
             response = (
@@ -57,12 +57,12 @@ class ActivoDAO:
             
             if response.data:
                 ticker = activo_data.get("ticker")
-                print(f"✅ Activo {ticker} creado")
+                print(f"Activo {ticker} creado")
                 return ticker
             return None
         
         except Exception as e:
-            print(f"❌ Error creando activo: {e}")
+            print(f"Error creando activo: {e}")
             return None
     
     @staticmethod
@@ -89,7 +89,7 @@ class ActivoDAO:
             return None
         
         except Exception as e:
-            print(f"❌ Error obteniendo activo {ticker}: {e}")
+            print(f"Error obteniendo activo {ticker}: {e}")
             return None
     
     @staticmethod
@@ -117,7 +117,7 @@ class ActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error obteniendo activos: {e}")
+            print(f"Error obteniendo activos: {e}")
             return []
     
     @staticmethod
@@ -146,7 +146,7 @@ class ActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error buscando activos por nombre: {e}")
+            print(f"Error buscando activos por nombre: {e}")
             return []
     
     @staticmethod
@@ -171,7 +171,7 @@ class ActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error obteniendo activos con señal IA: {e}")
+            print(f"Error obteniendo activos con señal IA: {e}")
             return []
     
     @staticmethod
@@ -203,7 +203,7 @@ class ActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error obteniendo activos por señal: {e}")
+            print(f"Error obteniendo activos por señal: {e}")
             return []
     
     @staticmethod
@@ -230,12 +230,12 @@ class ActivoDAO:
             )
             
             if response.data:
-                print(f"✅ Activo {ticker} actualizado")
+                print(f"Activo {ticker} actualizado")
                 return True
             return False
         
         except Exception as e:
-            print(f"❌ Error actualizando activo {ticker}: {e}")
+            print(f"Error actualizando activo {ticker}: {e}")
             return False
     
     @staticmethod
@@ -254,7 +254,7 @@ class ActivoDAO:
             return ActivoDAO.actualizar(ticker, {"precio": precio})
         
         except Exception as e:
-            print(f"❌ Error actualizando precio de {ticker}: {e}")
+            print(f"Error actualizando precio de {ticker}: {e}")
             return False
     
     @staticmethod
@@ -272,7 +272,7 @@ class ActivoDAO:
         """
         try:
             if senal not in [None, "ALCISTA", "BAJISTA", "LATERAL"]:
-                print(f"❌ Señal inválida: {senal}")
+                print(f"Señal inválida: {senal}")
                 return False
             
             update_data = {"senal_ia": senal}
@@ -282,7 +282,7 @@ class ActivoDAO:
             return ActivoDAO.actualizar(ticker, update_data)
         
         except Exception as e:
-            print(f"❌ Error actualizando señal IA de {ticker}: {e}")
+            print(f"Error actualizando señal IA de {ticker}: {e}")
             return False
     
     @staticmethod
@@ -301,7 +301,7 @@ class ActivoDAO:
             return ActivoDAO.actualizar(ticker, {"noticias": noticias})
         
         except Exception as e:
-            print(f"❌ Error actualizando noticias de {ticker}: {e}")
+            print(f"Error actualizando noticias de {ticker}: {e}")
             return False
     
     @staticmethod
@@ -320,7 +320,7 @@ class ActivoDAO:
             return ActivoDAO.actualizar(ticker, {"grafico_prediccion": grafico_data})
         
         except Exception as e:
-            print(f"❌ Error actualizando gráfico de {ticker}: {e}")
+            print(f"Error actualizando gráfico de {ticker}: {e}")
             return False
     
     @staticmethod
@@ -346,12 +346,12 @@ class ActivoDAO:
             )
             
             if response.data or response.status_code == 204:
-                print(f"✅ Activo {ticker} eliminado")
+                print(f"Activo {ticker} eliminado")
                 return True
             return False
         
         except Exception as e:
-            print(f"❌ Error eliminando activo {ticker}: {e}")
+            print(f"Error eliminando activo {ticker}: {e}")
             return False
     
     # ==========================================
@@ -384,7 +384,7 @@ class ActivoDAO:
             return []
         
         except Exception as e:
-            print(f"❌ Error obteniendo activos más confiables: {e}")
+            print(f"Error obteniendo activos más confiables: {e}")
             return []
     
     @staticmethod
@@ -405,7 +405,7 @@ class ActivoDAO:
             return response.count if hasattr(response, "count") else 0
         
         except Exception as e:
-            print(f"❌ Error contando activos: {e}")
+            print(f"Error contando activos: {e}")
             return 0
 
 
