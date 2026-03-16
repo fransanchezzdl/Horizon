@@ -38,6 +38,10 @@ from .chat_dto import (
     ChatMessageRequest,
     ChatMessageResponse,
 )
+from .reflexion_dto import (
+    ReflexionCardResponse,
+    ReflexionArticuloResponse,
+)
 
 __all__ = [
     "UsuarioResponse",
@@ -77,4 +81,7 @@ __all__ = [
     # Chat DTOs
     "ChatMessageRequest",
     "ChatMessageResponse",
+    # Reflexión DTOs
+    "ReflexionCardResponse",
+    "ReflexionArticuloResponse",
 ]
