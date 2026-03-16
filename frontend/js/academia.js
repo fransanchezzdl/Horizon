@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:8000";
+const API_BASE = window.API_BASE;
 
 checkLogin();
 
@@ -63,7 +63,7 @@ async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
     const loadingBubble = agregarMensajeCargando(chatContainer);
 
     try {
-        const response = await fetch(`${API_URL}/chat`, {
+        const response = await fetch(`${API_BASE}/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -118,7 +118,7 @@ async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
         loadingBubble.remove();
         
         console.error('[CHAT] Error de conexión:', err);
-        mostrarError(chatContainer, '❌ Error de conexión con el servidor. Verifica que el backend esté ejecutándose en http://localhost:8000');
+        mostrarError(chatContainer, `❌ Error de conexión con el servidor. Verifica que el backend esté ejecutándose en ${API_BASE}`);
     } finally {
         // Restaurar input y botón
         inputElement.disabled = false;

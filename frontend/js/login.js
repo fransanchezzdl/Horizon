@@ -4,7 +4,7 @@
  */
 
 // URL del Backend (usar localhost en desarrollo)
-const API_URL = "http://localhost:8000";
+const API_BASE = window.API_BASE;
 
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Verificación rápida de sesión local
@@ -57,7 +57,7 @@ async function handleLogin(e) {
 
     try {
         //Llamamos a la API en lugar de supabase directamente
-        const response = await fetch(`${API_URL}/login`, {
+        const response = await fetch(`${API_BASE}/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

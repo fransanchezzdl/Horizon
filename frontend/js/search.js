@@ -1,5 +1,5 @@
 // Búsqueda de activos contra la API del backend
-const API_BASE = 'http://localhost:8000';
+const API_BASE = window.API_BASE;
 
 function initSearch() {
     const input = document.getElementById('tickerSearch');
