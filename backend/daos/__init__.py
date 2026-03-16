@@ -10,6 +10,7 @@ from .historico_dao import HistoricoActivoDAO, historico_dao
 from .portfolio_dao import PortfolioDAO, portfolio_dao
 from .prediction_dao import PredictionDAO, prediction_dao
 from .chat_dao import ChatDAO, chat_dao
+from .reflexion_dao import ReflexionDAO, reflexion_dao
 
 __all__ = [
     "UsuarioDAO", 
@@ -24,4 +25,6 @@ __all__ = [
     "prediction_dao",
     "ChatDAO",
     "chat_dao",
+    "ReflexionDAO",
+    "reflexion_dao",
 ]
