@@ -61,7 +61,7 @@ function initSidebar() {
 
         <div class="sidebar-footer">
             <div class="user-profile">
-                <div class="user-avatar">A</div>
+                <div class="user-avatar" id="user-avatar">A</div>
                 <div class="user-info">
                     <p class="user-name" id="user-name">Cargando...</p>
                     <p class="user-plan" id="user-plan">Cargando...</p>
@@ -120,8 +120,10 @@ function initSidebar() {
     // Inyectar el HTML al inicio del body
     document.body.insertAdjacentHTML('afterbegin', sidebarHTML);
 
-    initNombreUsuario();
-    initMembresia();
+    const currentUser = getCurrentUserData();
+    initNombreUsuario(currentUser);
+    initAvatar(currentUser);
+    initMembresia(currentUser);
 
     // Inicializar event listeners
     initSidebarEvents();
@@ -217,46 +219,96 @@ if (document.readyState === 'loading') {
     initSidebar();
 }
 
-// Muestra el nombre del usuario abajo en la sidebar
-function initNombreUsuario(token){
+let cachedCurrentUser = undefined;
+
+function getCurrentUserData() {
+    if (cachedCurrentUser !== undefined) {
+        return cachedCurrentUser;
+    }
+
     const userDataString = localStorage.getItem('user_data');
-    if (userDataString) {
-        try {
-            const user = JSON.parse(userDataString);
-            
-            // Usamos el nombre si existe, si no, la primera parte de su email
-            const nombreMostrar = user.nombre || user.email.split('@')[0] || 'Inversor';
-            
-            // Actualizamos el H1 en el HTML
-            const user_name = document.getElementById('user-name');
-            if (user_name) {
-                user_name.textContent = `${nombreMostrar}`;
-            }
-            
-        } catch (e) {
-            console.error('Error leyendo los datos del usuario:', e);
-        }
+    if (!userDataString) {
+        cachedCurrentUser = null;
+        return null;
+    }
+
+    try {
+        cachedCurrentUser = JSON.parse(userDataString);
+        return cachedCurrentUser;
+    } catch (e) {
+        console.error('Error leyendo los datos del usuario:', e);
+        cachedCurrentUser = null;
+        return null;
+    }
+}
+
+function getNombreMostrar(user) {
+    if (!user) {
+        return 'Inversor';
+    }
+    return user.nombre || user.email?.split('@')[0] || 'Inversor';
+}
+
+// Carga la foto de perfil del usuario en el avatar del sidebar.
+function initAvatar(user = getCurrentUserData()) {
+    const avatar = document.getElementById('user-avatar');
+    if (!avatar) {
+        return;
+    }
+
+    const nombreMostrar = getNombreMostrar(user);
+    const inicial = nombreMostrar.charAt(0).toUpperCase();
+    const fotoPerfil = (user?.foto_perfil || '').trim();
+
+    // Estado base: mostrar inicial con fondo por defecto.
+    avatar.textContent = inicial;
+    avatar.style.backgroundImage = '';
+    avatar.style.backgroundSize = '';
+    avatar.style.backgroundPosition = '';
+    avatar.style.backgroundRepeat = '';
+
+    if (!fotoPerfil || fotoPerfil === '-') {
+        return;
+    }
+
+    const testImage = new Image();
+    testImage.onload = () => {
+        avatar.textContent = '';
+        avatar.style.backgroundImage = `url('${fotoPerfil}')`;
+        avatar.style.backgroundSize = 'cover';
+        avatar.style.backgroundPosition = 'center';
+        avatar.style.backgroundRepeat = 'no-repeat';
+    };
+
+    testImage.onerror = () => {
+        avatar.textContent = inicial;
+        avatar.style.backgroundImage = '';
+        avatar.style.backgroundSize = '';
+        avatar.style.backgroundPosition = '';
+        avatar.style.backgroundRepeat = '';
+    };
+
+    testImage.src = fotoPerfil;
+}
+
+// Muestra el nombre del usuario abajo en la sidebar
+function initNombreUsuario(user = getCurrentUserData()){
+    const nombreMostrar = getNombreMostrar(user);
+
+    // Actualizamos el nombre en el HTML
+    const user_name = document.getElementById('user-name');
+    if (user_name) {
+        user_name.textContent = `${nombreMostrar}`;
     }
 }
 
 // Muestra el plan de membresia del usuario logeado
-function initMembresia(){
-    const userDataString = localStorage.getItem('user_data');
-    if (userDataString) {
-        try {
-            const user = JSON.parse(userDataString);
-            
-            // Usamos el nombre si existe, si no, la primera parte de su email
-            const planMostrar = user.membresia;
-            
-            // Actualizamos el H1 en el HTML
-            const user_plan = document.getElementById('user-plan');
-            if (user_plan) {
-                user_plan.textContent = `Plan ${planMostrar}`;
-            }
-            
-        } catch (e) {
-            console.error('Error leyendo los datos del usuario:', e);
-        }
+function initMembresia(user = getCurrentUserData()){
+    const planMostrar = user?.membresia || 'Gratis';
+
+    // Actualizamos el plan en el HTML
+    const user_plan = document.getElementById('user-plan');
+    if (user_plan) {
+        user_plan.textContent = `Plan ${planMostrar}`;
     }
 }
