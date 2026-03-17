@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
+from datetime import datetime
 
 # DTO de salida que refleja la tabla `usuarios`
 class UsuarioResponse(BaseModel):
@@ -9,3 +10,4 @@ class UsuarioResponse(BaseModel):
     email: EmailStr
     membresia: Optional[str] = None
     foto_perfil: Optional[str] = None
+    created_at: Optional[datetime] = None
