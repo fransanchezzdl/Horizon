@@ -18,7 +18,7 @@ class ActivoService:
         Devuelve todos los activos disponibles como lista de dicts.
         """
         activos = self.activo_dao.obtener_todos()
-        return [a.to_dict() for a in activos]
+        return [a.model_dump() for a in activos]
 
     def buscar_activos(self, query: str) -> list[dict]:
         """
@@ -31,14 +31,14 @@ class ActivoService:
             a for a in todos
             if q in a.ticker.lower() or q in a.nombre_completo.lower()
         ]
-        return [a.to_dict() for a in resultados]
+        return [a.model_dump() for a in resultados]
 
     def obtener_activo(self, ticker: str) -> dict | None:
         """
         Devuelve un activo concreto por su ticker, o None si no existe.
         """
-        activo = self.activo_dao.buscar_por_ticker(ticker.upper())
-        return activo.to_dict() if activo else None
+        activo = self.activo_dao.obtener_por_ticker(ticker.upper())
+        return activo.model_dump() if activo else None
 
 
 # Instancia global del servicio para uso en rutas

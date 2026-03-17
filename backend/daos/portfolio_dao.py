@@ -16,27 +16,26 @@ class PortfolioDAO:
     """Acceso a datos de portfolios."""
     
     PORTFOLIOS_TABLE = "portfolios"
-    PORTFOLIO_STOCKS_TABLE = "portfolio_stocks"
+    PORTFOLIO_STOCKS_TABLE = "portfolio_activo"
     
     # ==========================================
     # OPERACIONES CON PORTFOLIOS
     # ==========================================
     
     @staticmethod
-    def crear(portfolio_data: Dict) -> Optional[str]:
+    def crear(portfolio_data: Dict) -> Optional[int]:
         """
         Crea un nuevo portfolio.
         
         Args:
             portfolio_data: Dict con datos
-                - usuario_id: str (UUID)
-                - nombre: str
+                - id_usuario: str (UUID)
+                - nombre_portfolio: str
                 - descripcion: str (opcional)
-                - aversion_riesgo: float (0-1)
-                - capital_inicial: float
+                - riesgo: float (0-1)
         
         Returns:
-            str: ID del portfolio creado o None
+            int: ID del portfolio creado o None
         """
         try:
             response = (
@@ -46,7 +45,7 @@ class PortfolioDAO:
             )
             
             if response.data:
-                portfolio_id = response.data[0].get('id')
+                portfolio_id = response.data[0].get('id_portfolio')
                 print(f"✅ Portfolio {portfolio_id} creado")
                 return portfolio_id
             return None
@@ -56,7 +55,7 @@ class PortfolioDAO:
             return None
     
     @staticmethod
-    def obtener_por_id(portfolio_id: str) -> Optional[Dict]:
+    def obtener_por_id(portfolio_id: int) -> Optional[Dict]:
         """
         Obtiene un portfolio por ID.
         
@@ -70,7 +69,7 @@ class PortfolioDAO:
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIOS_TABLE)
                 .select("*")
-                .eq("id", portfolio_id)
+                .eq("id_portfolio", portfolio_id)
                 .execute()
             )
             return response.data[0] if response.data else None
@@ -94,7 +93,7 @@ class PortfolioDAO:
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIOS_TABLE)
                 .select("*")
-                .eq("usuario_id", usuario_id)
+                .eq("id_usuario", usuario_id)
                 .order("created_at", desc=True)
                 .execute()
             )
@@ -105,7 +104,7 @@ class PortfolioDAO:
             return None
     
     @staticmethod
-    def actualizar(portfolio_id: str, update_data: Dict) -> bool:
+    def actualizar(portfolio_id: int, update_data: Dict) -> bool:
         """
         Actualiza un portfolio existente.
         
@@ -121,7 +120,7 @@ class PortfolioDAO:
             
             supabase.table(PortfolioDAO.PORTFOLIOS_TABLE).update(
                 update_data
-            ).eq("id", portfolio_id).execute()
+            ).eq("id_portfolio", portfolio_id).execute()
             
             print(f"✅ Portfolio {portfolio_id} actualizado")
             return True
@@ -131,7 +130,7 @@ class PortfolioDAO:
             return False
     
     @staticmethod
-    def eliminar(portfolio_id: str) -> bool:
+    def eliminar(portfolio_id: int) -> bool:
         """
         Elimina un portfolio y todas sus acciones.
         
@@ -145,7 +144,7 @@ class PortfolioDAO:
         """
         try:
             supabase.table(PortfolioDAO.PORTFOLIOS_TABLE).delete().eq(
-                "id", portfolio_id
+                "id_portfolio", portfolio_id
             ).execute()
             
             print(f"✅ Portfolio {portfolio_id} eliminado")
@@ -160,31 +159,33 @@ class PortfolioDAO:
     # ==========================================
     
     @staticmethod
-    def crear_stock(stock_data: Dict) -> Optional[str]:
+    def crear_stock(stock_data: Dict) -> Optional[int]:
         """
         Añade una acción al portfolio.
         
         Args:
             stock_data: Dict con datos
-                - portfolio_id: str (UUID)
+                - id_portfolio: int
                 - ticker: str
-                - shares: float
-                - buy_price: float
-                - buy_date: str (YYYY-MM-DD)
         
         Returns:
-            str: ID de la acción o None
+            int: ID de la posición o None
         """
         try:
+            payload = {
+                "id_portfolio": stock_data.get("id_portfolio") or stock_data.get("portfolio_id"),
+                "ticker": stock_data.get("ticker"),
+            }
+
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE)
-                .insert(stock_data)
+                .insert(payload)
                 .execute()
             )
             
             if response.data:
-                stock_id = response.data[0].get('id')
-                print(f"✅ Acción {stock_data['ticker']} añadida al portfolio")
+                stock_id = response.data[0].get('id_posicion')
+                print(f"✅ Activo {payload['ticker']} añadido al portfolio")
                 return stock_id
             return None
         
@@ -193,7 +194,7 @@ class PortfolioDAO:
             return None
     
     @staticmethod
-    def obtener_stocks(portfolio_id: str) -> List[Dict]:
+    def obtener_stocks(portfolio_id: int) -> List[Dict]:
         """
         Obtiene todas las acciones de un portfolio.
         
@@ -207,7 +208,7 @@ class PortfolioDAO:
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE)
                 .select("*")
-                .eq("portfolio_id", portfolio_id)
+                .eq("id_portfolio", portfolio_id)
                 .execute()
             )
             return response.data if response.data else []
@@ -217,7 +218,7 @@ class PortfolioDAO:
             return []
     
     @staticmethod
-    def obtener_stock(stock_id: str) -> Optional[Dict]:
+    def obtener_stock(stock_id: int) -> Optional[Dict]:
         """
         Obtiene una acción específica.
         
@@ -231,7 +232,7 @@ class PortfolioDAO:
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE)
                 .select("*")
-                .eq("id", stock_id)
+                .eq("id_posicion", stock_id)
                 .execute()
             )
             return response.data[0] if response.data else None
@@ -241,7 +242,7 @@ class PortfolioDAO:
             return None
     
     @staticmethod
-    def actualizar_stock(stock_id: str, update_data: Dict) -> bool:
+    def actualizar_stock(stock_id: int, update_data: Dict) -> bool:
         """
         Actualiza una acción.
         
@@ -253,9 +254,11 @@ class PortfolioDAO:
             bool: True si exitoso
         """
         try:
+            if "portfolio_id" in update_data:
+                update_data["id_portfolio"] = update_data.pop("portfolio_id")
             supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE).update(
                 update_data
-            ).eq("id", stock_id).execute()
+            ).eq("id_posicion", stock_id).execute()
             
             print(f"✅ Acción {stock_id} actualizada")
             return True
@@ -265,7 +268,7 @@ class PortfolioDAO:
             return False
     
     @staticmethod
-    def eliminar_stock(stock_id: str) -> bool:
+    def eliminar_stock(stock_id: int) -> bool:
         """
         Elimina una acción del portfolio.
         
@@ -277,7 +280,7 @@ class PortfolioDAO:
         """
         try:
             supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE).delete().eq(
-                "id", stock_id
+                "id_posicion", stock_id
             ).execute()
             
             print(f"✅ Acción {stock_id} eliminada")
@@ -292,7 +295,7 @@ class PortfolioDAO:
     # ==========================================
     
     @staticmethod
-    def obtener_stocks_por_ticker(portfolio_id: str, ticker: str) -> List[Dict]:
+    def obtener_stocks_por_ticker(portfolio_id: int, ticker: str) -> List[Dict]:
         """
         Obtiene todas las posiciones de un ticker en un portfolio.
         
@@ -309,7 +312,7 @@ class PortfolioDAO:
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE)
                 .select("*")
-                .eq("portfolio_id", portfolio_id)
+                .eq("id_portfolio", portfolio_id)
                 .eq("ticker", ticker)
                 .execute()
             )
@@ -320,7 +323,7 @@ class PortfolioDAO:
             return []
     
     @staticmethod
-    def obtener_tickers_unicos(portfolio_id: str) -> List[str]:
+    def obtener_tickers_unicos(portfolio_id: int) -> List[str]:
         """
         Obtiene lista de tickers únicos en el portfolio.
         
