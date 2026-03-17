@@ -35,6 +35,7 @@ function setupProfilePhotoSelector() {
         option.addEventListener('click', () => {
             // Remover selección anterior
             photoOptions.forEach(opt => opt.classList.remove('selected'));
+            uploadOption.classList.remove('selected');
             // Marcar como seleccionada
             option.classList.add('selected');
             // Guardar URL
@@ -42,6 +43,14 @@ function setupProfilePhotoSelector() {
             fotoPerfilUrl.value = photoUrl;
         });
     });
+
+    // Seleccionar por defecto la primera foto predeterminada
+    const defaultOption = photoOptions[0];
+    if (defaultOption) {
+        defaultOption.classList.add('selected');
+        const defaultPhotoUrl = defaultOption.getAttribute('data-photo') || '';
+        fotoPerfilUrl.value = defaultPhotoUrl;
+    }
 
     // Manejar carga de foto personalizada
     uploadInput.addEventListener('change', async (e) => {
