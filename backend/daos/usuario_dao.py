@@ -12,7 +12,7 @@ class UsuarioDAO:
         Trae todos los usuarios desde la tabla `usuarios`.
         Se seleccionan los campos que existen según el esquema de la DB.
         """
-        response = self.db.table("usuarios").select("id_usuario,nombre,apellidos,email,membresia").execute()
+        response = self.db.table("usuarios").select("id_usuario,nombre,apellidos,email,membresia,foto_perfil").execute()
         data = getattr(response, "data", None) or (response.get("data") if isinstance(response, dict) else None)
         # Convertir cada dict a UsuarioResponse
         items = data or []
@@ -26,7 +26,7 @@ class UsuarioDAO:
             return UsuarioResponse(**data[0])
         return None
 
-    def crear_perfil(self, user_id: str, email: str, nombre: str | None = None, apellidos: str | None = None) -> None:
+    def crear_perfil(self, user_id: str, email: str, nombre: str | None = None, apellidos: str | None = None, foto_perfil: str | None = None) -> None:
         """Inserta un nuevo registro en la tabla `usuarios` para el perfil del usuario."""
         self.db.table("usuarios").insert({
             "id_usuario": user_id,
@@ -34,6 +34,7 @@ class UsuarioDAO:
             "nombre": nombre,
             "apellidos": apellidos,
             "membresia": "Gratis",
+            "foto_perfil": foto_perfil,
         }).execute()
 
 
