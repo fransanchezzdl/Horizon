@@ -12,7 +12,7 @@ class UsuarioDAO:
         Trae todos los usuarios desde la tabla `usuarios`.
         Se seleccionan los campos que existen según el esquema de la DB.
         """
-        response = self.db.table("usuarios").select("id_usuario,nombre,apellidos,email,membresia,foto_perfil").execute()
+        response = self.db.table("usuarios").select("id_usuario,nombre,apellidos,email,membresia,foto_perfil,created_at").execute()
         data = getattr(response, "data", None) or (response.get("data") if isinstance(response, dict) else None)
         # Convertir cada dict a UsuarioResponse
         items = data or []
@@ -20,7 +20,7 @@ class UsuarioDAO:
 
     def obtener_por_id(self, user_id: str) -> UsuarioResponse | None:
         """Devuelve el perfil del usuario por su id (id_usuario) o None."""
-        resp = self.db.table("usuarios").select("*").eq("id_usuario", user_id).execute()
+        resp = self.db.table("usuarios").select("id_usuario,nombre,apellidos,email,membresia,foto_perfil,created_at").eq("id_usuario", user_id).execute()
         data = getattr(resp, "data", None) or (resp.get("data") if isinstance(resp, dict) else None)
         if data and len(data) > 0:
             return UsuarioResponse(**data[0])
