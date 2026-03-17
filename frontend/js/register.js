@@ -16,8 +16,90 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister);
     }
+
+    // Configurar selector de fotos de perfil
+    setupProfilePhotoSelector();
 });
 
+/**
+ * Configura el selector de fotos de perfil
+ */
+function setupProfilePhotoSelector() {
+    const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
+    const uploadOption = document.querySelector('.profile-photo-option.upload');
+    const uploadInput = document.getElementById('profilePhotoUpload');
+    const fotoPerfilUrl = document.getElementById('fotoPerfilUrl');
+
+    // Seleccionar foto predeterminada
+    photoOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remover selección anterior
+            photoOptions.forEach(opt => opt.classList.remove('selected'));
+            // Marcar como seleccionada
+            option.classList.add('selected');
+            // Guardar URL
+            const photoUrl = option.getAttribute('data-photo');
+            fotoPerfilUrl.value = photoUrl;
+        });
+    });
+
+    // Manejar carga de foto personalizada
+    uploadInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Validar que sea imagen
+        if (!file.type.startsWith('image/')) {
+            alert('Por favor selecciona una imagen válida');
+            uploadInput.value = '';
+            return;
+        }
+
+        // Validar tamaño (máx 5MB)
+        const maxSize = 5 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('La imagen no debe superar 5MB');
+            uploadInput.value = '';
+            return;
+        }
+
+        try {
+            // Mostrar preview mientras se carga
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                // Remover selección anterior
+                photoOptions.forEach(opt => opt.classList.remove('selected'));
+                // Marcar upload como seleccionado
+                uploadOption.classList.add('selected');
+                
+                // Crear preview temporal
+                const uploadLabel = uploadOption.querySelector('.upload-label');
+                uploadLabel.innerHTML = '';
+                
+                const previewImg = document.createElement('img');
+                previewImg.src = event.target.result;
+                uploadLabel.appendChild(previewImg);
+
+                // Guardar la foto en base64 o URL blob
+                // NOTA: Para producción, deberías usar Supabase Storage
+                // Por ahora guardaremos la URL blob
+                fotoPerfilUrl.value = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Error al procesar imagen:', error);
+            alert('Error al procesar la imagen');
+        }
+    });
+
+    // Hacer el label clickeable para el input file
+    const uploadLabel = uploadOption.querySelector('.upload-label');
+    uploadLabel.style.cursor = 'pointer';
+}
+
+/**
+ * Maneja el envío del formulario de registro
+ */
 async function handleRegister(e) {
     e.preventDefault();
 
@@ -25,6 +107,7 @@ async function handleRegister(e) {
     const apellidos = document.getElementById('apellidos').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
+    const fotoPerfil = document.getElementById('fotoPerfilUrl').value.trim();
     const errorMsg = document.getElementById('errorMessage');
     const btn = e.target.querySelector('button');
 
@@ -55,7 +138,8 @@ async function handleRegister(e) {
                 nombre: nombre || null,
                 apellidos: apellidos || null,
                 email: email, 
-                password: password 
+                password: password,
+                foto_perfil: fotoPerfil || null
             })
         });
 

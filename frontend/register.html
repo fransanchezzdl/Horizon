@@ -19,6 +19,38 @@
         <div id="errorMessage" class="error-message"></div>
 
         <form id="registerForm">
+            <!-- Selector de foto de perfil -->
+            <div class="form-group">
+                <label>Foto de perfil</label>
+                <div class="profile-photo-selector">
+                    <div class="profile-photos-grid">
+                        <!-- Opción 1: Foto predeterminada -->
+                        <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-1.jpeg" title="Opción 1">
+                            <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-1.jpeg" alt="Foto 1">
+                        </div>
+
+                        <!-- Opción 2: Foto predeterminada -->
+                        <div class="profile-photo-option" data-photo="-" title="Opción 2">
+                            <img src="-" alt="Foto 2">
+                        </div>
+
+                        <!-- Opción 3: Foto predeterminada -->
+                        <div class="profile-photo-option" data-photo="-" title="Opción 3">
+                            <img src="-" alt="Foto 3">
+                        </div>
+
+                        <!-- Opción 4: Subir foto personalizada -->
+                        <div class="profile-photo-option upload" title="Sube tu foto">
+                            <label for="profilePhotoUpload" class="upload-label">
+                                <span class="plus-icon">+</span>
+                            </label>
+                            <input type="file" id="profilePhotoUpload" name="profilePhotoUpload" accept="image/*" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+                <input type="hidden" id="fotoPerfilUrl" name="foto_perfil" value="">
+            </div>
+
             <div class="form-group">
                 <label for="nombre">Nombre</label>
                 <input type="text" id="nombre" name="nombre" placeholder="Tu nombre">

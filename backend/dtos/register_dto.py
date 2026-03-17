@@ -8,6 +8,7 @@ class RegisterRequest(BaseModel):
     password: str
     nombre: Optional[str] = None
     apellidos: Optional[str] = None
+    foto_perfil: Optional[str] = None
 
 
 class RegisterResponse(BaseModel):
