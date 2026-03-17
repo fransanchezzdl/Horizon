@@ -2256,4 +2256,8 @@ body > section {
         grid-template-columns: repeat(3, 1fr);
         gap: var(--spacing-md);
     }
+
+    .profile-photos-grid .profile-photo-option:nth-child(3) {
+        display: none;
+    }
 }
