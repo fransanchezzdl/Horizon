@@ -8,3 +8,4 @@ class UsuarioResponse(BaseModel):
     apellidos: Optional[str] = None
     email: EmailStr
     membresia: Optional[str] = None
+    foto_perfil: Optional[str] = None

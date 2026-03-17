@@ -59,6 +59,7 @@ def register(datos: RegisterRequest):
         password=datos.password,
         nombre=datos.nombre,
         apellidos=datos.apellidos,
+        foto_perfil=datos.foto_perfil,
     )
 
     # Si no hay perfil o fallo, lanzamos error

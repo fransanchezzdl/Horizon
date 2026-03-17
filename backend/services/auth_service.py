@@ -47,7 +47,7 @@ class AuthService:
         except Exception:
             raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
 
-    def registrar_usuario(self, email: str, password: str, nombre: str | None = None, apellidos: str | None = None) -> tuple[str | None, UsuarioResponse | None]:
+    def registrar_usuario(self, email: str, password: str, nombre: str | None = None, apellidos: str | None = None, foto_perfil: str | None = None) -> tuple[str | None, UsuarioResponse | None]:
         try:
             sign_response = self.db.auth.sign_up({"email": email, "password": password})
 
@@ -64,7 +64,7 @@ class AuthService:
             user_id = user.get("id") if isinstance(user, dict) else getattr(user, "id", None)
 
             try:
-                self.usuario_dao.crear_perfil(user_id=user_id, email=email, nombre=nombre, apellidos=apellidos)
+                self.usuario_dao.crear_perfil(user_id=user_id, email=email, nombre=nombre, apellidos=apellidos, foto_perfil=foto_perfil)
             except Exception:
                 raise HTTPException(status_code=400, detail="Error al crear el perfil de usuario")
 
