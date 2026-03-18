@@ -172,13 +172,6 @@ class PortfolioService:
             raise HTTPException(status_code=500, detail="No se pudo eliminar la posición")
         return {"detail": "Posición eliminada"}
 
-    # Endpoint legacy: valida que el usuario del path coincide con el
-    # autenticado y reutiliza el listado estándar.
-    def listar_portfolios_usuario_legacy(self, id_usuario: str, user_id: str) -> List[PortfolioListResponse]:
-        if id_usuario != user_id:
-            raise HTTPException(status_code=403, detail="No autorizado para consultar portfolios de otro usuario")
-        return self.listar_portfolios_usuario(user_id)
-
     # -----------------------------------------------------------------
     # BLOQUE 3: ANÁLISIS Y RECOMENDACIÓN (NO USADO EN MAIN POR AHORA)
     # -----------------------------------------------------------------

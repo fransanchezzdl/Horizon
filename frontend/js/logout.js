@@ -30,8 +30,7 @@ function handleLogout() {
         }
 
         // 2. LA MAGIA REAL: Destruir los datos de sesión local
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user_data');
+        window.clearAuthSession();
         
         // Por si acaso tu compañero usó sessionStorage en algún momento, lo limpiamos también
         sessionStorage.clear();

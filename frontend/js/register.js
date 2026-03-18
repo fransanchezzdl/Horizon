@@ -6,7 +6,7 @@
 const API_BASE = window.API_BASE;
 
 document.addEventListener('DOMContentLoaded', () => {
-    const token = localStorage.getItem('access_token');
+    const token = window.getAccessToken();
     if (token) {
         window.location.href = 'index.html';
         return;
@@ -160,10 +160,10 @@ async function handleRegister(e) {
 
         // Guardar token y datos de usuario si vienen
         if (data.access_token) {
-            localStorage.setItem('access_token', data.access_token);
+            window.setAccessToken(data.access_token);
         }
         if (data.user) {
-            localStorage.setItem('user_data', JSON.stringify(data.user));
+            window.setCurrentUserData(data.user);
         }
 
         window.location.href = 'index.html';
