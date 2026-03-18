@@ -156,135 +156,44 @@ def obtener_reflexion(id_reflexion: int, user_id: str = Depends(auth_service.get
 
 @app.get("/portfolios", response_model=list[PortfolioListResponse])
 def listar_portfolios(user_id: str = Depends(auth_service.get_current_user)):
-    portfolios = portfolio_dao.obtener_por_usuario(user_id) or []
-    return [PortfolioListResponse(**item) for item in portfolios]
+    return portfolio_service.listar_portfolios_usuario(user_id)
 
 
 @app.post("/portfolios", response_model=PortfolioResponse)
 def crear_portfolio(datos: PortfolioCreateRequest, user_id: str = Depends(auth_service.get_current_user)):
-    payload = {
-        "id_usuario": user_id,
-        "nombre_portfolio": datos.nombre_portfolio,
-        "descripcion": datos.descripcion,
-        "riesgo": datos.riesgo,
-    }
-    portfolio_id = portfolio_dao.crear(payload)
-    if not portfolio_id:
-        raise HTTPException(status_code=500, detail="No se pudo crear el portfolio")
-
-    portfolio = portfolio_dao.obtener_por_id(portfolio_id)
-    if not portfolio:
-        raise HTTPException(status_code=500, detail="Portfolio creado pero no recuperable")
-
-    acciones = portfolio_dao.obtener_stocks(portfolio_id)
-    return PortfolioResponse(
-        **portfolio,
-        acciones=[StockInPortfolioResponse(**item) for item in acciones]
-    )
+    return portfolio_service.crear_portfolio_usuario(user_id, datos)
 
 
 @app.get("/portfolios/{id_portfolio}", response_model=PortfolioResponse)
 def obtener_portfolio(id_portfolio: int, user_id: str = Depends(auth_service.get_current_user)):
-    portfolio = portfolio_dao.obtener_por_id(id_portfolio)
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio no encontrado")
-    if portfolio["id_usuario"] != user_id:
-        raise HTTPException(status_code=403, detail="No autorizado para este portfolio")
-
-    acciones = portfolio_dao.obtener_stocks(id_portfolio)
-    return PortfolioResponse(
-        **portfolio,
-        acciones=[StockInPortfolioResponse(**item) for item in acciones]
-    )
+    return portfolio_service.obtener_portfolio_usuario(user_id, id_portfolio)
 
 
 @app.put("/portfolios/{id_portfolio}", response_model=PortfolioResponse)
 def actualizar_portfolio(id_portfolio: int, datos: PortfolioUpdateRequest, user_id: str = Depends(auth_service.get_current_user)):
-    portfolio = portfolio_dao.obtener_por_id(id_portfolio)
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio no encontrado")
-    if portfolio["id_usuario"] != user_id:
-        raise HTTPException(status_code=403, detail="No autorizado para este portfolio")
-
-    update_data = datos.model_dump(exclude_none=True)
-    if update_data:
-        ok = portfolio_dao.actualizar(id_portfolio, update_data)
-        if not ok:
-            raise HTTPException(status_code=500, detail="No se pudo actualizar el portfolio")
-
-    actualizado = portfolio_dao.obtener_por_id(id_portfolio)
-    acciones = portfolio_dao.obtener_stocks(id_portfolio)
-    return PortfolioResponse(
-        **actualizado,
-        acciones=[StockInPortfolioResponse(**item) for item in acciones]
-    )
+    return portfolio_service.actualizar_portfolio_usuario(user_id, id_portfolio, datos)
 
 
 @app.delete("/portfolios/{id_portfolio}")
 def eliminar_portfolio(id_portfolio: int, user_id: str = Depends(auth_service.get_current_user)):
-    portfolio = portfolio_dao.obtener_por_id(id_portfolio)
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio no encontrado")
-    if portfolio["id_usuario"] != user_id:
-        raise HTTPException(status_code=403, detail="No autorizado para este portfolio")
-
-    ok = portfolio_dao.eliminar(id_portfolio)
-    if not ok:
-        raise HTTPException(status_code=500, detail="No se pudo eliminar el portfolio")
-    return {"detail": "Portfolio eliminado"}
+    return portfolio_service.eliminar_portfolio_usuario(user_id, id_portfolio)
 
 
 @app.get("/portfolios/{id_portfolio}/activos", response_model=list[StockInPortfolioResponse])
 def listar_activos_portfolio(id_portfolio: int, user_id: str = Depends(auth_service.get_current_user)):
-    portfolio = portfolio_dao.obtener_por_id(id_portfolio)
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio no encontrado")
-    if portfolio["id_usuario"] != user_id:
-        raise HTTPException(status_code=403, detail="No autorizado para este portfolio")
-
-    acciones = portfolio_dao.obtener_stocks(id_portfolio)
-    return [StockInPortfolioResponse(**item) for item in acciones]
+    return portfolio_service.listar_activos_portfolio_usuario(user_id, id_portfolio)
 
 
 @app.post("/portfolios/{id_portfolio}/activos", response_model=StockInPortfolioResponse)
 def agregar_activo_portfolio(id_portfolio: int, datos: StockInPortfolioRequest, user_id: str = Depends(auth_service.get_current_user)):
-    portfolio = portfolio_dao.obtener_por_id(id_portfolio)
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio no encontrado")
-    if portfolio["id_usuario"] != user_id:
-        raise HTTPException(status_code=403, detail="No autorizado para este portfolio")
-
-    stock_id = portfolio_dao.crear_stock({"id_portfolio": id_portfolio, "ticker": datos.ticker.upper()})
-    if not stock_id:
-        raise HTTPException(status_code=500, detail="No se pudo añadir el activo al portfolio")
-
-    stock = portfolio_dao.obtener_stock(stock_id)
-    if not stock:
-        raise HTTPException(status_code=500, detail="Activo creado pero no recuperable")
-    return StockInPortfolioResponse(**stock)
+    return portfolio_service.agregar_activo_portfolio_usuario(user_id, id_portfolio, datos)
 
 
 @app.delete("/portfolios/{id_portfolio}/activos/{id_posicion}")
 def eliminar_activo_portfolio(id_portfolio: int, id_posicion: int, user_id: str = Depends(auth_service.get_current_user)):
-    portfolio = portfolio_dao.obtener_por_id(id_portfolio)
-    if not portfolio:
-        raise HTTPException(status_code=404, detail="Portfolio no encontrado")
-    if portfolio["id_usuario"] != user_id:
-        raise HTTPException(status_code=403, detail="No autorizado para este portfolio")
-
-    posicion = portfolio_dao.obtener_stock(id_posicion)
-    if not posicion or posicion["id_portfolio"] != id_portfolio:
-        raise HTTPException(status_code=404, detail="Posición no encontrada en este portfolio")
-
-    ok = portfolio_dao.eliminar_stock(id_posicion)
-    if not ok:
-        raise HTTPException(status_code=500, detail="No se pudo eliminar la posición")
-    return {"detail": "Posición eliminada"}
+    return portfolio_service.eliminar_activo_portfolio_usuario(user_id, id_portfolio, id_posicion)
 
 
 @app.get("/api/portfolio/{id_usuario}", response_model=list[PortfolioListResponse])
 def listar_portfolios_api_legacy(id_usuario: str, user_id: str = Depends(auth_service.get_current_user)):
-    if id_usuario != user_id:
-        raise HTTPException(status_code=403, detail="No autorizado para consultar portfolios de otro usuario")
-    portfolios = portfolio_dao.obtener_por_usuario(user_id) or []
-    return [PortfolioListResponse(**item) for item in portfolios]
+    return portfolio_service.listar_portfolios_usuario_legacy(id_usuario, user_id)
