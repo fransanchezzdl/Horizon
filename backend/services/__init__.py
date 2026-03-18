@@ -3,7 +3,7 @@
 from .auth_service import AuthService, auth_service
 from .finance_service import FinanceService, get_finance_service
 from .prediction_service import PredictionService, get_prediction_service
-from .portfolio_service import PortfolioService, get_portfolio_service
+from .portfolio_service import PortfolioService, get_portfolio_service, portfolio_service
 from .gemini_service import GeminiService, gemini_service
 from .chat_service import ChatService, chat_service
 from .activo_service import ActivoService, activo_service
@@ -19,6 +19,7 @@ __all__ = [
     "get_prediction_service",
     "PortfolioService",
     "get_portfolio_service",
+    "portfolio_service",
     "GeminiService",
     "gemini_service",
     "ChatService",
