@@ -159,6 +159,26 @@ def listar_portfolios(user_id: str = Depends(auth_service.get_current_user)):
     return portfolio_service.listar_portfolios_usuario(user_id)
 
 
+@app.get("/portfolios/{user_id}", response_model=list[PortfolioListResponse])
+def obtener_portfolios_usuario(user_id: str, authenticated_user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Obtiene los portfolios de un usuario específico.
+    
+    El usuario autenticado solo puede ver sus propios portfolios.
+    
+    Args:
+        user_id: UUID del usuario del que se quieren obtener portfolios
+        authenticated_user_id: UUID del usuario autenticado (inyectado automáticamente)
+    
+    Returns:
+        Lista de portfolios del usuario
+    """
+    if authenticated_user_id != user_id:
+        raise HTTPException(status_code=403, detail="No autorizado para ver los portfolios de otro usuario")
+    
+    return portfolio_service.listar_portfolios_usuario(user_id)
+
+
 @app.post("/portfolios", response_model=PortfolioResponse)
 def crear_portfolio(datos: PortfolioCreateRequest, user_id: str = Depends(auth_service.get_current_user)):
     return portfolio_service.crear_portfolio_usuario(user_id, datos)

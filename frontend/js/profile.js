@@ -34,7 +34,7 @@ function loadProfileData() {
 
         // Información de membresía
         document.getElementById('membershipPlan').textContent = plan;
-        document.getElementById('membershipDate').textContent = formatDate(user.created_at || user.fecha_registro || new Date().toISOString());
+        document.getElementById('membershipDate').textContent = formatDate(user.created_at || new Date().toISOString());
 
         // Cargar estadísticas (llamar a la API si es necesario)
         const userId = user.id_usuario || user.id;
