@@ -7,33 +7,20 @@ checkLogin();
 const API_BASE = window.API_BASE;
 
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 2. Si hay token, intentamos mostrar su nombre en la bienvenida
-    const userDataString = localStorage.getItem('user_data');
-    if (userDataString) {
-        try {
-            const user = JSON.parse(userDataString);
-            
-            // Usamos el nombre si existe, si no, la primera parte de su email
-            const nombreMostrar = user.nombre || user.email.split('@')[0] || 'Inversor';
-            
-            // Actualizamos el H1 en el HTML
-            const mensajeBienvenida = document.getElementById('mensaje-bienvenida');
-            if (mensajeBienvenida) {
-                mensajeBienvenida.textContent = `¡Bienvenido ${nombreMostrar}!`;
-            }
-            
-        } catch (e) {
-            console.error('Error leyendo los datos del usuario:', e);
-        }
+    const user = window.getCurrentUserData();
+    const nombreMostrar = window.getUserDisplayName(user, 'Inversor');
+
+    const mensajeBienvenida = document.getElementById('mensaje-bienvenida');
+    if (mensajeBienvenida) {
+        mensajeBienvenida.textContent = `¡Bienvenido ${nombreMostrar}!`;
     }
 
-    // 3. Cargar reflexión aleatoria desde el backend
+    // Cargar reflexión aleatoria desde el backend
     cargarReflexion();
 });
 
 async function cargarReflexion() {
-    const token = localStorage.getItem('access_token');
+    const token = window.getAccessToken();
     if (!token) return;
 
     try {
@@ -45,13 +32,13 @@ async function cargarReflexion() {
 
         const data = await response.json();
 
-        const quoteEl  = document.getElementById('reflexion-quote');
+        const quoteEl = document.getElementById('reflexion-quote');
         const authorEl = document.getElementById('reflexion-author');
-        const btnEl    = document.getElementById('reflexion-btn');
+        const btnEl = document.getElementById('reflexion-btn');
 
-        if (quoteEl)  quoteEl.textContent  = `“${data.cita}”`;
+        if (quoteEl) quoteEl.textContent = `“${data.cita}”`;
         if (authorEl) authorEl.textContent = `— ${data.autor}`;
-        if (btnEl)    btnEl.href           = `reflexion.html?id=${data.id_reflexion}`;
+        if (btnEl) btnEl.href = `reflexion.html?id=${data.id_reflexion}`;
 
     } catch (err) {
         // Red caída u otro error: la cita hardcoded permanece visible
@@ -59,13 +46,11 @@ async function cargarReflexion() {
     }
 }
 
-function checkLogin(){
-    // 1. Verificar si existe el token en el almacenamiento local
-    const token = localStorage.getItem('access_token');
-    
+function checkLogin() {
+    const token = window.getAccessToken();
+
     // Si no hay token, redirigimos al login inmediatamente
     if (!token) {
-        window.location.replace('login.html'); // Usamos replace para que no puedan volver atrás con el botón del navegador
-        return; 
+        window.location.replace('login.html');
     }
 }

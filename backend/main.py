@@ -192,8 +192,3 @@ def agregar_activo_portfolio(id_portfolio: int, datos: StockInPortfolioRequest, 
 @app.delete("/portfolios/{id_portfolio}/activos/{id_posicion}")
 def eliminar_activo_portfolio(id_portfolio: int, id_posicion: int, user_id: str = Depends(auth_service.get_current_user)):
     return portfolio_service.eliminar_activo_portfolio_usuario(user_id, id_portfolio, id_posicion)
-
-
-@app.get("/api/portfolio/{id_usuario}", response_model=list[PortfolioListResponse])
-def listar_portfolios_api_legacy(id_usuario: str, user_id: str = Depends(auth_service.get_current_user)):
-    return portfolio_service.listar_portfolios_usuario_legacy(id_usuario, user_id)
