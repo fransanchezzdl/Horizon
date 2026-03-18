@@ -9,9 +9,9 @@ const API_BASE = window.API_BASE;
 document.addEventListener('DOMContentLoaded', () => {
     // 1. Verificación rápida de sesión local
     // Si ya tenemos token, no deberíamos estar en el login
-    const token = localStorage.getItem('access_token');
+    const token = window.getAccessToken();
     if (token) {
-        window.location.href = 'index.html'; 
+        window.location.href = 'index.html';
         return;
     }
 
@@ -80,11 +80,11 @@ async function handleLogin(e) {
         console.log('[LOGIN] Login exitoso via API');
         
         // 1. Guardamos el token que nos devolvió FastAPI
-        localStorage.setItem('access_token', data.access_token);
-        
-        // 2. (Opcional) Guardar datos del usuario si el backend los envía
+        window.setAccessToken(data.access_token);
+
+        // 2. Guardar datos del usuario si el backend los envía
         if (data.user) {
-            localStorage.setItem('user_data', JSON.stringify(data.user));
+            window.setCurrentUserData(data.user);
         }
 
         // 3. Redirigir
