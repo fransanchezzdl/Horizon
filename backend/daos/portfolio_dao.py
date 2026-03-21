@@ -25,7 +25,7 @@ class PortfolioDAO:
     @staticmethod
     def crear(portfolio_data: Dict) -> Optional[int]:
         """
-        Crea un nuevo portfolio.
+        Crea un nuevo portfolio usando INSERT y registra la relación en usuarios_portfolios.
         
         Args:
             portfolio_data: Dict con datos
@@ -38,20 +38,53 @@ class PortfolioDAO:
             int: ID del portfolio creado o None
         """
         try:
+            # Asegurar timestamps
+            if "created_at" not in portfolio_data:
+                portfolio_data["created_at"] = datetime.now().isoformat()
+            if "updated_at" not in portfolio_data:
+                portfolio_data["updated_at"] = datetime.now().isoformat()
+            
+            # INSERT para crear nuevo portfolio (no UPSERT, porque id_portfolio es autoincrement)
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIOS_TABLE)
                 .insert(portfolio_data)
                 .execute()
             )
             
+            print(f"📤 INSERT Response: {response.data}")
+            
             if response.data:
                 portfolio_id = response.data[0].get('id_portfolio')
-                print(f"✅ Portfolio {portfolio_id} creado")
+                id_usuario = response.data[0].get('id_usuario')
+                
+                # Guardar la relación en usuarios_portfolios
+                try:
+                    relacion = {
+                        "id_usuario": id_usuario,
+                        "id_portfolio": portfolio_id,
+                        "created_at": datetime.now().isoformat()
+                    }
+                    
+                    relacion_response = (
+                        supabase.table("usuarios_portfolios")
+                        .insert(relacion)
+                        .execute()
+                    )
+                    
+                    print(f"✅ Relación guardada en usuarios_portfolios: {relacion_response.data}")
+                    
+                except Exception as e:
+                    print(f"⚠️  Advertencia: No se pudo guardar relación en usuarios_portfolios: {e}")
+                    # No lanzamos error aquí, el portfolio ya se creó
+                
+                print(f"✅ Portfolio {portfolio_id} creado para usuario {id_usuario}")
                 return portfolio_id
             return None
         
         except Exception as e:
             print(f"❌ Error creando portfolio: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     @staticmethod
@@ -72,7 +105,18 @@ class PortfolioDAO:
                 .eq("id_portfolio", portfolio_id)
                 .execute()
             )
-            return response.data[0] if response.data else None
+            
+            print(f"🔍 SELECT portfolios WHERE id_portfolio={portfolio_id}")
+            print(f"📥 Response: {response.data}")
+            
+            portfolio = response.data[0] if response.data else None
+            
+            if portfolio:
+                print(f"✅ Portfolio encontrado: {portfolio}")
+            else:
+                print(f"❌ Portfolio {portfolio_id} no encontrado en BD")
+            
+            return portfolio
         
         except Exception as e:
             print(f"❌ Error obteniendo portfolio: {e}")
@@ -97,16 +141,24 @@ class PortfolioDAO:
                 .order("created_at", desc=True)
                 .execute()
             )
+            
+            print(f"🔍 SELECT portfolios WHERE id_usuario='{usuario_id}'")
+            print(f"📥 Response: Encontrados {len(response.data) if response.data else 0} portfolios")
+            if response.data:
+                print(f"   Datos: {response.data}")
+            
             return response.data if response.data else []
         
         except Exception as e:
             print(f"❌ Error obteniendo portfolios del usuario: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     @staticmethod
     def actualizar(portfolio_id: int, update_data: Dict) -> bool:
         """
-        Actualiza un portfolio existente.
+        Actualiza un portfolio existente usando UPDATE.
         
         Args:
             portfolio_id: ID del portfolio
@@ -118,12 +170,16 @@ class PortfolioDAO:
         try:
             update_data['updated_at'] = datetime.now().isoformat()
             
-            supabase.table(PortfolioDAO.PORTFOLIOS_TABLE).update(
-                update_data
-            ).eq("id_portfolio", portfolio_id).execute()
+            # UPDATE para modificar un portfolio existente
+            response = (
+                supabase.table(PortfolioDAO.PORTFOLIOS_TABLE)
+                .update(update_data)
+                .eq("id_portfolio", portfolio_id)
+                .execute()
+            )
             
             print(f"✅ Portfolio {portfolio_id} actualizado")
-            return True
+            return response.data and len(response.data) > 0
         
         except Exception as e:
             print(f"❌ Error actualizando portfolio: {e}")
@@ -161,7 +217,7 @@ class PortfolioDAO:
     @staticmethod
     def crear_stock(stock_data: Dict) -> Optional[int]:
         """
-        Añade una acción al portfolio.
+        Añade una acción al portfolio usando INSERT.
         
         Args:
             stock_data: Dict con datos
@@ -175,8 +231,11 @@ class PortfolioDAO:
             payload = {
                 "id_portfolio": stock_data.get("id_portfolio") or stock_data.get("portfolio_id"),
                 "ticker": stock_data.get("ticker"),
+                "created_at": datetime.now().isoformat(),
+                "updated_at": datetime.now().isoformat(),
             }
 
+            # INSERT para crear nueva posición (no UPSERT, porque id_posicion es autoincrement)
             response = (
                 supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE)
                 .insert(payload)
@@ -185,12 +244,14 @@ class PortfolioDAO:
             
             if response.data:
                 stock_id = response.data[0].get('id_posicion')
-                print(f"✅ Activo {payload['ticker']} añadido al portfolio")
+                print(f"✅ Activo {payload['ticker']} añadido al portfolio {payload['id_portfolio']}")
                 return stock_id
             return None
         
         except Exception as e:
             print(f"❌ Error creando acción: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     @staticmethod

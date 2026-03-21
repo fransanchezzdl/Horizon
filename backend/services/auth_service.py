@@ -163,16 +163,29 @@ class AuthService:
                 # user_id contiene el ID del usuario autenticado
                 ...
         """
+        print(f"\n🔐 AUTH: Validando token")
+        print(f"   Authorization header recibido: {bool(authorization)}")
+        
         if not authorization or not authorization.startswith("Bearer "):
+            print(f"❌ AUTH: Token falta o formato incorrecto")
             raise HTTPException(
                 status_code=401, 
                 detail="Token de autenticación requerido. Usa el formato 'Bearer <token>'"
             )
         
         token = authorization.replace("Bearer ", "")
-        user_id = self.validar_token(token)  # Lanza HTTPException(401) si es inválido
+        print(f"   Token extraído: {token[:20]}...")
         
-        return user_id
+        try:
+            user_id = self.validar_token(token)  # Lanza HTTPException(401) si es inválido
+            print(f"✅ AUTH: Token válido, user_id: {user_id}")
+            return user_id
+        except HTTPException as e:
+            print(f"❌ AUTH: Error en validar_token: {e.status_code} - {e.detail}")
+            raise
+        except Exception as e:
+            print(f"❌ AUTH: Error inesperado: {e}")
+            raise HTTPException(status_code=401, detail="Error validando token")
 
 
 # Instanciamos el servicio listo para inyectar en controladores
