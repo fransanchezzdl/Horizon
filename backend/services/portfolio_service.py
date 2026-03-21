@@ -59,10 +59,22 @@ class PortfolioService:
     # Si no cumple, corta flujo con HTTP 404/403.
     def _obtener_portfolio_si_es_propietario(self, user_id: str, id_portfolio: int) -> Dict:
         portfolio = self.portfolio_dao.obtener_por_id(id_portfolio)
+        print(f"🔍 DEBUG: Buscando portfolio {id_portfolio}")
+        print(f"🔍 DEBUG: Usuario autenticado: {user_id}")
+        print(f"🔍 DEBUG: Portfolio encontrado: {portfolio}")
+        
         if not portfolio:
+            print(f"❌ Portfolio {id_portfolio} no encontrado")
             raise HTTPException(status_code=404, detail="Portfolio no encontrado")
-        if portfolio["id_usuario"] != user_id:
+        
+        portfolio_user = portfolio.get("id_usuario")
+        print(f"🔍 DEBUG: ID usuario del portfolio: {portfolio_user}")
+        print(f"🔍 DEBUG: ¿Tipos iguales?: {type(portfolio_user)} vs {type(user_id)}")
+        
+        if portfolio_user != user_id:
+            print(f"❌ Usuario {user_id} no es propietario del portfolio (propietario: {portfolio_user})")
             raise HTTPException(status_code=403, detail="No autorizado para este portfolio")
+        
         return portfolio
 
     # -----------------------------------------------------------------
@@ -80,25 +92,56 @@ class PortfolioService:
     # Crea un portfolio nuevo para el usuario y devuelve el recurso
     # completo ya persistido en base de datos.
     def crear_portfolio_usuario(self, user_id: str, datos: PortfolioCreateRequest) -> PortfolioResponse:
+        print(f"\n📝 Creando portfolio para usuario {user_id}")
+        print(f"   Datos: nombre={datos.nombre_portfolio}, desc={datos.descripcion}, riesgo={datos.riesgo}")
+        
         payload = {
             "id_usuario": user_id,
             "nombre_portfolio": datos.nombre_portfolio,
-            "descripcion": datos.descripcion,
+            "descripcion": datos.descripcion or "",  # Si es None, enviar string vacío
             "riesgo": datos.riesgo,
         }
+        
+        print(f"   Payload final: {payload}")
 
-        portfolio_id = self.portfolio_dao.crear(payload)
-        if not portfolio_id:
-            raise HTTPException(status_code=500, detail="No se pudo crear el portfolio")
+        try:
+            portfolio_id = self.portfolio_dao.crear(payload)
+            if not portfolio_id:
+                print(f"❌ DAO retornó portfolio_id=None")
+                raise HTTPException(status_code=500, detail="No se pudo crear el portfolio (DAO retornó None)")
 
-        return self.obtener_portfolio_usuario(user_id, portfolio_id)
+            print(f"✅ Portfolio creado con ID {portfolio_id}")
+            return self.obtener_portfolio_usuario(user_id, portfolio_id)
+        
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"❌ Error inesperado: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Error creando portfolio: {str(e)}")
 
     # Obtiene el detalle de un portfolio del usuario, incluyendo
     # sus posiciones de portfolio_activo.
     def obtener_portfolio_usuario(self, user_id: str, id_portfolio: int) -> PortfolioResponse:
+        print(f"\n🔍 OBTENER: Buscando portfolio {id_portfolio} para usuario {user_id}")
+        
         portfolio = self._obtener_portfolio_si_es_propietario(user_id, id_portfolio)
-        acciones = self.portfolio_dao.obtener_stocks(id_portfolio)
-        return self._build_portfolio_response(portfolio, acciones)
+        print(f"✅ Portfolio autorizado para el usuario")
+        
+        try:
+            acciones = self.portfolio_dao.obtener_stocks(id_portfolio)
+            print(f"📊 Stocks obtenidos: {len(acciones)} activos")
+            
+            response = self._build_portfolio_response(portfolio, acciones)
+            print(f"✅ Response construido exitosamente")
+            return response
+        
+        except Exception as e:
+            print(f"❌ Error construyendo response: {e}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Error obteniendo portfolio: {str(e)}")
 
     # Actualiza campos editables del portfolio y devuelve el estado final
     # tras persistir los cambios.
