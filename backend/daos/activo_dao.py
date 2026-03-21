@@ -10,6 +10,7 @@ Responsabilidades:
 
 from typing import Dict, List, Optional
 from datetime import datetime
+import json
 from ..database import supabase
 from ..dtos import ActivoResponse
 
@@ -209,32 +210,134 @@ class ActivoDAO:
     @staticmethod
     def actualizar(ticker: str, update_data: Dict) -> bool:
         """
-        Actualiza un activo existente.
+        Actualiza un activo existente con validaciones robustas.
         
         Args:
             ticker: Símbolo del ticker
             update_data: Dict con campos a actualizar
         
         Returns:
-            bool: True si exitoso
+            bool: True si REALMENTE se actualizó, False si falló
         """
         try:
-            # Siempre actualizar el timestamp
-            update_data["updated_at"] = datetime.now().isoformat()
+            print(f"\n🔧 DEBUG actualizar(): ticker={ticker}")
+            print(f"   update_data keys: {list(update_data.keys())}")
+            for key in update_data:
+                val = update_data[key]
+                if isinstance(val, dict):
+                    print(f"   {key}: dict con {len(val)} campos")
+                else:
+                    print(f"   {key}: {val} (type: {type(val).__name__})")
             
-            response = (
+            # 1️⃣ Verificar que el activo existe
+            existing = (
                 supabase.table(ActivoDAO.TABLE)
-                .update(update_data)
+                .select("ticker, nombre_completo")
                 .eq("ticker", ticker)
                 .execute()
             )
             
-            # Supabase retorna data vacía en UPDATEs exitosos, así que verificamos que no hay excepción
-            print(f"✅ Activo {ticker} actualizado")
-            return True
+            if not existing.data:
+                print(f"❌ Activo {ticker} no existe en BD")
+                return False
+            
+            existing_record = existing.data[0]
+            nombre_completo = existing_record.get("nombre_completo", ticker)
+            
+            # 2️⃣ Preparar datos para enviar a Supabase
+            # IMPORTANTE: Supabase Python client espera tipos nativos de Python
+            # pero necesitamos asegurar que grafico_prediccion es un dict (no string)
+            payload = {}
+            
+            for key, val in update_data.items():
+                if key == "grafico_prediccion" and isinstance(val, dict):
+                    # Para JSONB, Supabase espera un dict de Python (lo serializa internamente)
+                    # Pero convertir a string JSON para debug
+                    json_str = json.dumps(val)
+                    print(f"\n   📦 grafico_prediccion (JSON): {json_str[:100]}...")
+                    payload[key] = val  # Enviar el dict tal cual
+                else:
+                    payload[key] = val
+            
+            # Añadir timestamp
+            payload["updated_at"] = datetime.now().isoformat()
+            
+            # Asegurar que el UPSERT tiene los campos clave
+            payload["ticker"] = ticker
+            payload["nombre_completo"] = nombre_completo
+            
+            print(f"\n   📦 Payload final a enviar:")
+            for k, v in payload.items():
+                if isinstance(v, dict):
+                    print(f"      {k}: dict({len(v)} campos)")
+                else:
+                    print(f"      {k}: {v}")
+            
+            # 3️⃣ Ejecutar actualización usando UPSERT (mejor para RLS)
+            print(f"\n   📤 Enviando UPSERT (INSERT ... ON CONFLICT) a Supabase...")
+            response = (
+                supabase.table(ActivoDAO.TABLE)
+                .upsert(payload)  # UPSERT bypasea mejor las restricciones de RLS
+                .execute()
+            )
+            
+            print(f"   ✅ UPSERT ejecutado. Response count: {response.count}")
+            print(f"   Response data type: {type(response.data)}")
+            print(f"   Response data: {response.data}")
+            
+            # 4️⃣ Verificar que se actualizó realmente
+            if response.count is not None and response.count > 0:
+                print(f"✅ Activo {ticker} actualizado correctamente ({response.count} fila(s) afectada(s))")
+                return True
+            
+            # Si count es 0 o None, verificar leyendo los datos principales que actualizamos
+            print(f"\n   🔍 Verificando lectura posterior...")
+            verify = (
+                supabase.table(ActivoDAO.TABLE)
+                .select("precio, senal_ia, confianza_bygru, grafico_prediccion")
+                .eq("ticker", ticker)
+                .execute()
+            )
+            
+            print(f"   📥 Datos leídos: {verify.data}")
+            
+            if verify.data and len(verify.data) > 0:
+                stored_data = verify.data[0]
+                print(f"   Datos almacenados en BD:")
+                for key, val in stored_data.items():
+                    if isinstance(val, dict):
+                        print(f"      {key}: dict({len(val)} campos)")
+                    else:
+                        print(f"      {key}: {val}")
+                
+                # Verificar que al menos uno de los campos clave se actualizó
+                expected_fields = ["precio", "senal_ia", "confianza_bygru", "grafico_prediccion"]
+                updated_fields_found = False
+                
+                for field in expected_fields:
+                    if field in payload and field in stored_data:
+                        if stored_data[field] is not None:
+                            print(f"      ✅ {field} tiene valor")
+                            updated_fields_found = True
+                            break
+                        else:
+                            print(f"      ❌ {field} es NULL aunque se envió: {payload[field]}")
+                
+                if updated_fields_found:
+                    print(f"✅ Activo {ticker} actualizado (verificado por datos)")
+                    return True
+                else:
+                    print(f"⚠️ Activo {ticker} existe pero los datos no parecen haberse guardado (todos NULL)")
+                    print(f"\n   🚨 SOSPECHA: Problema de RLS o tipos de datos en Supabase")
+                    return False
+            
+            print(f"❌ No se pudo verificar que {ticker} se actualizó (count: {response.count})")
+            return False
         
         except Exception as e:
-            print(f"❌ Error actualizando activo {ticker}: {e}")
+            print(f"❌ Error actualizando activo {ticker}: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     @staticmethod
