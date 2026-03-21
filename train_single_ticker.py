@@ -1,11 +1,3 @@
-python train_single_ticker.py KO 2>&1 | tail -100#!/usr/bin/env python3
-"""
-Script para entrenar un único ticker manualmente.
-
-Uso:
-    python train_single_ticker.py KO
-    python train_single_ticker.py AAPL
-"""
 
 import sys
 import time
