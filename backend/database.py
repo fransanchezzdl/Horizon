@@ -26,7 +26,7 @@ key: Optional[str] = _get_env_var("SUPABASE_KEY", "SUPABASE_ANON_KEY")
 if not url or not key:
     raise ValueError(
         "Faltan las credenciales de Supabase en las variables de entorno.\n"
-        "Define SUPABASE_URL y SUPABASE_KEY (o SUPABASE_SERVICE_ROLE_KEY) en un .env"
+        "Define SUPABASE_URL y SUPABASE_KEY (o SUPABASE_ANON_KEY) en un .env"
     )
 
 

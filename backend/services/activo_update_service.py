@@ -10,11 +10,42 @@ Responsabilidades:
 
 from typing import Optional, Dict, List
 import numpy as np
+import json
+import math
 from ..daos import activo_dao, historico_dao
 
 
 class ActivoUpdateService:
     """Servicio para actualizar activos con datos de modelos y predicciones."""
+    
+    @staticmethod
+    def _sanitizar_json_para_supabase(obj) -> dict:
+        """
+        Convierte dict a JSON seguro para Supabase (sin NaN, Infinity, etc).
+        
+        Args:
+            obj: Objeto a sanitizar
+        
+        Returns:
+            Dict serializable a JSON limpio
+        """
+        def converter(o):
+            if isinstance(o, float):
+                # NaN e Infinity no son válidos en JSON
+                if math.isnan(o):
+                    return None
+                elif math.isinf(o):
+                    return 999999.99 if o > 0 else -999999.99
+                return o
+            raise TypeError(f"No serializable: {type(o)}")
+        
+        try:
+            # Serializar y deserializar para asegurar validez
+            json_str = json.dumps(obj, default=converter)
+            return json.loads(json_str)
+        except Exception as e:
+            print(f"⚠️ Error sanitizando JSON: {e}. Retornando objeto original.")
+            return obj
     
     @staticmethod
     def actualizar_activo_con_prediccion(
@@ -242,18 +273,45 @@ class ActivoUpdateService:
             bool: True si la actualización fue exitosa
         """
         try:
-            # Extraer datos del ensemble_prediction
-            precio_actual = float(ensemble_prediction.get("current_price", 0))
-            senal_ia = ensemble_prediction.get("trend", "LATERAL")
-            confianza = float(ensemble_prediction.get("confidence", 0))
+            # 1️⃣ Validaciones básicas
+            if not ticker or not isinstance(ticker, str):
+                print(f"❌ Ticker inválido: {ticker}")
+                return False
             
-            # Validar señal
+            if not isinstance(ensemble_prediction, dict):
+                print(f"❌ ensemble_prediction debe ser un dict, recibido {type(ensemble_prediction)}")
+                return False
+            
+            # 2️⃣ Extraer y validar precio
+            precio_actual = ensemble_prediction.get("current_price")
+            if precio_actual is None or not isinstance(precio_actual, (int, float)):
+                print(f"❌ Precio inválido o faltante: {precio_actual}")
+                return False
+            precio_actual = float(precio_actual)
+            
+            if precio_actual <= 0:
+                print(f"⚠️ Precio negativo o cero: {precio_actual}, usando |valor|")
+                precio_actual = abs(precio_actual)
+            
+            # 3️⃣ Validar señal
+            senal_ia = ensemble_prediction.get("trend", "LATERAL")
             if senal_ia not in ["ALCISTA", "BAJISTA", "LATERAL"]:
-                print(f"⚠️ Señal inválida: {senal_ia}, usando LATERAL")
+                print(f"⚠️ Señal inválida '{senal_ia}', usando LATERAL")
                 senal_ia = "LATERAL"
             
-            # Construir grafico_prediccion como "cajon desastre" con todas las métricas
-            grafico_prediccion = {
+            # 4️⃣ Validar confianza
+            confianza = ensemble_prediction.get("confidence", 0)
+            if not isinstance(confianza, (int, float)):
+                print(f"⚠️ Confianza inválida (tipo): {type(confianza)}, usando 0")
+                confianza = 0
+            else:
+                confianza = float(confianza)
+                if confianza < 0 or confianza > 1:
+                    print(f"⚠️ Confianza fuera de rango [0,1]: {confianza}, clipeando")
+                    confianza = max(0, min(1, confianza))
+            
+            # 5️⃣ Construir y sanitizar grafico_prediccion
+            grafico_raw = {
                 "predicted_price": float(ensemble_prediction.get("predicted_price", 0)),
                 "price_upper": float(ensemble_prediction.get("price_upper", 0)),
                 "price_lower": float(ensemble_prediction.get("price_lower", 0)),
@@ -266,9 +324,8 @@ class ActivoUpdateService:
                 "n_individual_models": len(ensemble_prediction.get("individual_predictions", [])),
             }
             
-            # Agregar métricas de entrenamiento si están disponibles
-            if training_metrics:
-                grafico_prediccion["training_metrics"] = {
+            if training_metrics and isinstance(training_metrics, dict):
+                grafico_raw["training_metrics"] = {
                     "avg_val_loss": float(training_metrics.get("avg_val_loss", 0)),
                     "avg_directional_accuracy": float(training_metrics.get("avg_directional_accuracy", 0)),
                     "avg_mae": float(training_metrics.get("avg_mae", 0)),
@@ -277,7 +334,10 @@ class ActivoUpdateService:
                     "xgb_directional_accuracy": training_metrics.get("xgb_directional_accuracy"),
                 }
             
-            # Preparar datos para actualizar
+            # Sanitizar para JSON safety (quitar NaN, Infinity, etc)
+            grafico_prediccion = ActivoUpdateService._sanitizar_json_para_supabase(grafico_raw)
+            
+            # 6️⃣ Preparar datos para actualizar
             update_data = {
                 "precio": precio_actual,
                 "senal_ia": senal_ia,
@@ -285,21 +345,26 @@ class ActivoUpdateService:
                 "grafico_prediccion": grafico_prediccion
             }
             
-            # Actualizar en la BD
+            # 7️⃣ Intentar actualizar
             success = activo_dao.actualizar(ticker, update_data)
             
             if success:
-                print(f"✅ {ticker} actualizado post-entrenamiento:")
-                print(f"   - Precio: {precio_actual}")
-                print(f"   - Señal: {senal_ia}")
-                print(f"   - Confianza: {confianza:.4f}")
+                print(f"\n✅ {ticker} actualizado exitosamente post-entrenamiento:")
+                print(f"   • Precio: ${precio_actual:.2f}")
+                print(f"   • Señal: {senal_ia}")
+                print(f"   • Confianza: {confianza:.2%}")
+                print(f"   • Gráfico/Métricas: guardadas ({len(grafico_prediccion)} campos)")
             else:
-                print(f"⚠️ No se pudo actualizar {ticker} en la BD")
+                print(f"\n❌ No se pudo actualizar {ticker} en la BD")
             
             return success
         
         except Exception as e:
-            print(f"❌ Error guardando datos post-entrenamiento para {ticker}: {e}")
+            print(f"\n❌ Excepción en guardar_datos_post_entrenamiento:")
+            print(f"   Ticker: {ticker}")
+            print(f"   Error: {type(e).__name__}: {e}")
+            import traceback
+            traceback.print_exc()
             return False
 
 

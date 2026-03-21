@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+python train_single_ticker.py KO 2>&1 | tail -100#!/usr/bin/env python3
 """
 Script para entrenar un único ticker manualmente.
 
@@ -66,12 +66,34 @@ def train_single(ticker: str) -> None:
                 
                 if success:
                     print(f"\n✅ ¡Datos guardados exitosamente en BD para {ticker}!")
+                    
+                    # Verificación adicional: leer de la BD para confirmar
+                    try:
+                        print(f"\n📋 Paso 4: Verificando datos en BD...\n")
+                        from backend.services.activo_service import activo_service
+                        activo_guardado = activo_service.obtener_activo(ticker)
+                        
+                        if activo_guardado:
+                            print(f"✅ Verificación exitosa - Datos confirmados en BD:")
+                            print(f"   • Precio: ${activo_guardado.get('precio', 'N/A')}")
+                            print(f"   • Señal: {activo_guardado.get('senal_ia', 'N/A')}")
+                            print(f"   • Confianza: {activo_guardado.get('confianza_bygru', 'N/A')}")
+                            
+                            grafico = activo_guardado.get('grafico_prediccion')
+                            if grafico:
+                                print(f"   • Gráfico/Métricas: guardado ({len(grafico)} campos)")
+                        else:
+                            print(f"⚠️ No se pudo leer {ticker} de BD después de guardar")
+                    except Exception as e:
+                        print(f"⚠️ Error verificando datos: {e}")
                 else:
-                    print(f"\n⚠️  Error al guardar en BD, pero el modelo se entrenó OK")
+                    print(f"\n❌ Error al guardar en BD para {ticker}")
             
             except Exception as e:
-                print(f"\n⚠️  Error en predicción/guardado: {e}")
+                print(f"\n❌ Error en predicción/guardado: {e}")
                 print("   El modelo se entrenó OK, pero no se guardó en BD")
+                import traceback
+                traceback.print_exc()
         
         total_elapsed = time.time() - start_time
         print("\n" + "=" * 70)
