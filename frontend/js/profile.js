@@ -73,33 +73,46 @@ function loadProfileData() {
 // Cargar estadísticas del usuario desde la API
 async function loadUserStats(userId) {
     try {
-        // Obtener datos del portfolio
-        const portfolioRes = await window.fetchWithAuth(`${API_BASE}/portfolios/${userId}`);
+        // Obtener todos los portfolios del usuario
+        console.log('[INFO] Cargando estadisticas del usuario...');
+        const portfolioRes = await window.fetchWithAuth(`${API_BASE}/portfolios`);
 
         if (portfolioRes.ok) {
-            const portfolioData = await portfolioRes.json();
-            const activosCount = portfolioData.length || 0;
-            document.getElementById('statPortfolio').textContent = activosCount;
-        }
-
-        // Obtener datos de predicciones
-        const predictionsRes = await window.fetchWithAuth(`${API_BASE}/api/predictions/${userId}`);
-
-        if (predictionsRes.ok) {
-            const predictionsData = await predictionsRes.json();
-            const predictionsCount = predictionsData.length || 0;
-            document.getElementById('statPredictions').textContent = predictionsCount;
-
-            // Calcular precisión promedio
-            if (predictionsCount > 0) {
-                const accuracyPromedio = (predictionsData.reduce((sum, p) => sum + (p.accuracy || 0), 0) / predictionsCount).toFixed(2);
-                document.getElementById('statAccuracy').textContent = `${accuracyPromedio}%`;
+            const portfolios = await portfolioRes.json();
+            console.log('[OK] Portfolios cargados:', portfolios);
+            
+            // Mostrar total de portfolios
+            const totalPortfolios = Array.isArray(portfolios) ? portfolios.length : 0;
+            document.getElementById('statPredictions').textContent = totalPortfolios;
+            console.log('[OK] Total portfolios:', totalPortfolios);
+            
+            // Contar total de activos en todos los portfolios
+            let totalActivos = 0;
+            
+            for (const portfolio of portfolios) {
+                const portfolioId = portfolio.id_portfolio;
+                // Obtener detalles del portfolio con activos
+                const detailRes = await window.fetchWithAuth(`${API_BASE}/portfolios/${portfolioId}`);
+                if (detailRes.ok) {
+                    const detail = await detailRes.json();
+                    if (detail.acciones && Array.isArray(detail.acciones)) {
+                        totalActivos += detail.acciones.length;
+                    }
+                }
             }
+            
+            console.log('[OK] Total activos encontrados:', totalActivos);
+            document.getElementById('statPortfolio').textContent = totalActivos;
+        } else {
+            console.warn('[WARN] Error cargando portfolios:', portfolioRes.status);
+            document.getElementById('statPortfolio').textContent = '0';
+            document.getElementById('statPredictions').textContent = '0';
         }
 
     } catch (e) {
-        console.warn('No se pudieron cargar las estadísticas:', e);
-        // Mantener valores por defecto
+        console.warn('[ERROR] No se pudieron cargar las estadisticas:', e);
+        document.getElementById('statPortfolio').textContent = '0';
+        document.getElementById('statPredictions').textContent = '0';
     }
 }
 
