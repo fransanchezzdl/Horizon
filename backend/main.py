@@ -1,10 +1,19 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from .database import supabase
 
 # Entidades
 from .dtos import *
-from .daos import *
-from .services import *
+from .daos import usuario_dao, ActivoDAO, ReflexionDAO, ChatDAO, PortfolioDAO
+from .services import (
+    AuthService,
+    GeminiService,
+    ChatService,
+    ActivoService,
+    ReflexionService,
+    PortfolioService,
+    UserService,
+)
 
 # Exception handlers
 from .exceptions import register_exception_handlers
@@ -22,6 +31,17 @@ app.add_middleware(
 
 # Registrar exception handlers globales
 register_exception_handlers(app)
+
+
+# Wiring explícito de dependencias (evita singletons innecesarios)
+auth_service = AuthService(supabase, usuario_dao)
+gemini_service = GeminiService()
+chat_dao = ChatDAO()
+chat_service = ChatService(usuario_dao, chat_dao, gemini_service)
+activo_service = ActivoService(ActivoDAO)
+reflexion_service = ReflexionService(ReflexionDAO)
+portfolio_service = PortfolioService(portfolio_dao=PortfolioDAO)
+user_service = UserService(usuario_dao)
 
 
 @app.get("/usuarios", response_model=list[UsuarioResponse])

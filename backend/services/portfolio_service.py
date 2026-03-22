@@ -8,7 +8,7 @@ from fastapi import HTTPException
 from ..models import optimize_portfolio
 from ..services.finance_service import FinanceService
 from ..services.prediction_service import PredictionService
-from ..daos.portfolio_dao import portfolio_dao as default_portfolio_dao
+from ..daos.portfolio_dao import PortfolioDAO
 from ..dtos.portfolio_dto import (
     PortfolioCreateRequest,
     PortfolioUpdateRequest,
@@ -43,7 +43,7 @@ class PortfolioService:
             portfolio_dao: DAO para acceder a BD
             prediction_service: Servicio de predicciones
         """
-        self.portfolio_dao = portfolio_dao or default_portfolio_dao
+        self.portfolio_dao = portfolio_dao or PortfolioDAO
         self.prediction_service = prediction_service or PredictionService()
         self.finance_service = FinanceService()
 
@@ -424,6 +424,3 @@ def get_portfolio_service(portfolio_dao=None, prediction_service: PredictionServ
     """Helper para obtener instancia del servicio."""
     return PortfolioService(portfolio_dao, prediction_service)
 
-
-# Instancia singleton usada por endpoints en main.py.
-portfolio_service = PortfolioService(portfolio_dao=default_portfolio_dao)

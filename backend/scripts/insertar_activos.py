@@ -1,4 +1,4 @@
-from ..daos.activo_dao import activo_dao
+from ..daos.activo_dao import ActivoDAO
 
 def insertar_activos_iniciales():
     lista = [
@@ -14,7 +14,7 @@ def insertar_activos_iniciales():
         {"ticker": "INTC", "nombre_completo": "Intel Corp.", "estabilidad": "Media", "tamano": "Grande"},
     ]
     for activo in lista:
-        activo_dao.crear_activo(**activo)
+        ActivoDAO.crear_activo(**activo)
 
 if __name__ == "__main__":
     insertar_activos_iniciales()
