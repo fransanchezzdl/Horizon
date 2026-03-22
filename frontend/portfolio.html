@@ -32,6 +32,22 @@
             </button>
         </header>
 
+        <!-- Portfolio Selector -->
+        <section class="card portfolio-selector" id="portfolioSelectorContainer">
+            <div class="portfolio-selector-content">
+                <label for="portfolioSelector" class="portfolio-selector-label">Mis Portfolios</label>
+                <div class="portfolio-selector-controls">
+                    <select id="portfolioSelector" class="portfolio-selector-select">
+                        <option value="">Cargando...</option>
+                    </select>
+                    <span id="portfolioRiskBadge" class="badge badge-blue"></span>
+                    <button class="btn-primary" onclick="createNewPortfolio()" style="padding: 8px 16px; font-size: 13px;">
+                        + Nuevo Portfolio
+                    </button>
+                </div>
+            </div>
+        </section>
+
         <section class="metrics-grid">
             <div class="card metric-card">
                 <div class="metric-header">
@@ -104,6 +120,50 @@
                 </table>
             </div>
         </section>
+
+        <!-- Modal: Añadir Activo al Portfolio -->
+        <div id="assetModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Añadir Activo al Portfolio</h3>
+                    <button class="btn-close" onclick="closeAddAssetModal()">×</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Búsqueda de Activos -->
+                    <div class="form-group">
+                        <label for="assetSearch">Buscar Activo</label>
+                        <div class="input-wrap" style="position: relative;">
+                            <span class="search-icon" aria-hidden="true">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            </span>
+                            <input 
+                                id="assetSearch" 
+                                class="search-input" 
+                                type="text" 
+                                placeholder="Ingresa ticker o nombre (ej: AAPL, Apple, MSFT...)"
+                                autocomplete="off"
+                                style="text-transform: uppercase;"
+                            >
+                            <ul id="assetSuggestions" class="suggestions" hidden></ul>
+                        </div>
+                        <small style="color: #999; margin-top: 8px; display: block;">Ejemplos: AAPL, MSFT, GOOGL, AMZN, TSLA</small>
+                    </div>
+                    
+                    <!-- Activo Seleccionado -->
+                    <div id="selectedAssetInfo" style="display: none; margin-top: 16px; padding: 12px; background: #f0f9ff; border: 1px solid #bfdbfe; border-radius: 8px; color: #1e40af;">
+                        <strong id="selectedAssetName"></strong>
+                        <p id="selectedAssetTicker" style="font-size: 12px; margin-top: 4px;"></p>
+                    </div>
+                    
+                    <!-- Errores -->
+                    <div id="tickerError" style="display: none; color: #dc2626; font-size: 13px; margin-top: 10px;"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" onclick="closeAddAssetModal()">Cancelar</button>
+                    <button id="addAssetBtn" class="btn-primary" onclick="addAssetToPortfolio()" disabled>Añadir Activo</button>
+                </div>
+            </div>
+        </div>
 
     </div>
 </body>
