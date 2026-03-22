@@ -38,7 +38,7 @@ class UsuarioDAO:
         }).execute()
 
     # Función para actualizar el perfil del usuario
-    def actualizar_perfil(self, user_id: str, nombre: str | None = None, apellidos: str | None = None, foto_perfil: str | None = None) -> None:
+    def actualizar_perfil(self, user_id: str, nombre: str | None = None, apellidos: str | None = None, foto_perfil: str | None = None, email: str | None = None) -> None:
         """Actualiza el perfil del usuario con los campos proporcionados."""
         update_data = {}
         if nombre is not None:
@@ -47,6 +47,8 @@ class UsuarioDAO:
             update_data["apellidos"] = apellidos
         if foto_perfil is not None:
             update_data["foto_perfil"] = foto_perfil
+        if email is not None: 
+            update_data["email"] = email
 
         if update_data:
             self.db.table("usuarios").update(update_data).eq("id_usuario", user_id).execute()
