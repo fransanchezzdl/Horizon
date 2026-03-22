@@ -53,5 +53,3 @@ class ReflexionDAO:
         return None
 
 
-# Instancia global reutilizable en servicios y rutas
-reflexion_dao = ReflexionDAO()

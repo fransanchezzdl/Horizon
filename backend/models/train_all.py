@@ -34,7 +34,7 @@ def main() -> None:
     # Importar el servicio de actualización solo si NO estamos usando sentimiento
     if not USE_SENTIMENT:
         try:
-            from ..services import activo_update_service
+            from ..services import ActivoUpdateService
             use_db = True
             print("✅ Guardado en BD activado (sentiment=false)")
         except Exception as e:
@@ -75,7 +75,7 @@ def main() -> None:
                         "xgb_directional_accuracy": metrics.get("xgb_directional_accuracy"),
                     }
                     
-                    success = activo_update_service.guardar_datos_post_entrenamiento(
+                    success = ActivoUpdateService.guardar_datos_post_entrenamiento(
                         ticker,
                         ensemble_pred,
                         training_metrics_to_save

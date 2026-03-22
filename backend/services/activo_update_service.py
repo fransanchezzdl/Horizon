@@ -12,7 +12,7 @@ from typing import Optional, Dict, List
 import numpy as np
 import json
 import math
-from ..daos import activo_dao, historico_dao
+from ..daos import ActivoDAO, HistoricoActivoDAO
 
 
 class ActivoUpdateService:
@@ -78,7 +78,7 @@ class ActivoUpdateService:
             }
             
             # Actualizar activo
-            return activo_dao.actualizar(ticker, update_data)
+            return ActivoDAO.actualizar(ticker, update_data)
         
         except Exception as e:
             print(f"Error actualizando activo {ticker}: {e}")
@@ -108,8 +108,8 @@ class ActivoUpdateService:
                 print(f"Señal inválida: {senal}")
                 return False
             
-            return activo_dao.actualizar_senal_ia(ticker, senal, accuracy) and \
-                   activo_dao.actualizar_precio(ticker, precio_actual)
+            return ActivoDAO.actualizar_senal_ia(ticker, senal, accuracy) and \
+                   ActivoDAO.actualizar_precio(ticker, precio_actual)
         
         except Exception as e:
             print(f"Error actualizando activo {ticker}: {e}")
@@ -158,7 +158,7 @@ class ActivoUpdateService:
         Extrae el último precio disponible del histórico.
         """
         try:
-            historicos = historico_dao.obtener_ultimos_dias(ticker, dias)
+            historicos = HistoricoActivoDAO.obtener_ultimos_dias(ticker, dias)
             
             if historicos and len(historicos) > 0:
                 return float(historicos[0].precio_cierre)
@@ -221,7 +221,7 @@ class ActivoUpdateService:
                     print("⚠️  Activo sin ticker, saltando...")
                     continue
                 
-                exito = activo_dao.actualizar(ticker, activo_data)
+                exito = ActivoDAO.actualizar(ticker, activo_data)
                 resultados[ticker] = exito
                 
                 if exito:
@@ -346,7 +346,7 @@ class ActivoUpdateService:
             }
             
             # 7️⃣ Intentar actualizar
-            success = activo_dao.actualizar(ticker, update_data)
+            success = ActivoDAO.actualizar(ticker, update_data)
             
             if success:
                 print(f"\n✅ {ticker} actualizado exitosamente post-entrenamiento:")
@@ -366,7 +366,3 @@ class ActivoUpdateService:
             import traceback
             traceback.print_exc()
             return False
-
-
-# Instancia singleton
-activo_update_service = ActivoUpdateService()

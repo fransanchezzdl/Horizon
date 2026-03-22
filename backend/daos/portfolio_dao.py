@@ -410,5 +410,3 @@ class PortfolioDAO:
             return []
 
 
-# Instancia global
-portfolio_dao = PortfolioDAO()

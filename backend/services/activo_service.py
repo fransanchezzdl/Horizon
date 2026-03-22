@@ -1,7 +1,6 @@
 """Servicio de activos – lógica de negocio para la gestión de activos (tickers)."""
 
-from ..daos.activo_dao import activo_dao
-from ..dtos.activo_dto import ActivoResponse
+from ..daos.activo_dao import ActivoDAO
 
 
 class ActivoService:
@@ -10,8 +9,8 @@ class ActivoService:
     Orquesta el DAO de activos para listar y buscar tickers.
     """
 
-    def __init__(self, activo_dao_instance):
-        self.activo_dao = activo_dao_instance
+    def __init__(self, activo_dao_cls=ActivoDAO):
+        self.activo_dao = activo_dao_cls
 
     def listar_activos(self) -> list[dict]:
         """
@@ -40,6 +39,3 @@ class ActivoService:
         activo = self.activo_dao.obtener_por_ticker(ticker.upper())
         return activo.model_dump() if activo else None
 
-
-# Instancia global del servicio para uso en rutas
-activo_service = ActivoService(activo_dao)

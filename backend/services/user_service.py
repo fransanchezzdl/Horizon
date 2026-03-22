@@ -1,5 +1,4 @@
 from fastapi import HTTPException
-from ..daos.usuario_dao import usuario_dao
 from ..dtos.usuario_dto import PerfilUpdateDTO
 
 class UserService:
@@ -7,6 +6,9 @@ class UserService:
     Servicio que contiene la lógica de negocio para la gestión de usuarios.
     Actúa como intermediario entre los endpoints (main.py) y el acceso a datos (DAO).
     """
+
+    def __init__(self, usuario_dao_instance):
+        self.usuario_dao = usuario_dao_instance
 
     def actualizar_perfil(self, user_id: str, datos_actualizacion: PerfilUpdateDTO) -> dict:
         # 1. Convertir el DTO validado a un diccionario de Python.
@@ -19,7 +21,7 @@ class UserService:
         # 3. Extraer los datos y pasárselos a tu DAO existente
         try:
             # Intentamos guardar en la base de datos
-            usuario_dao.actualizar_perfil(
+            self.usuario_dao.actualizar_perfil(
                 user_id=user_id,
                 nombre=datos_dict.get("nombre"),
                 apellidos=datos_dict.get("apellidos"),
@@ -38,6 +40,3 @@ class UserService:
             "mensaje": "Perfil actualizado correctamente.",
             "datos_actualizados": datos_dict
         }
-
-# Instanciamos el servicio con su nuevo nombre
-user_service = UserService()
