@@ -511,5 +511,3 @@ class ActivoDAO:
             return 0
 
 
-# Instancia global del DAO para uso en servicios y rutas
-activo_dao = ActivoDAO()

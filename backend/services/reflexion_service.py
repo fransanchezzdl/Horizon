@@ -1,7 +1,6 @@
 """Servicio de reflexiones – lógica de negocio para las reflexiones financieras."""
 
-from ..daos.reflexion_dao import reflexion_dao
-from ..dtos.reflexion_dto import ReflexionArticuloResponse
+from ..daos.reflexion_dao import ReflexionDAO
 from ..exceptions.exceptions import ReflexionNoEncontradaError
 
 
@@ -12,8 +11,8 @@ class ReflexionService:
     no se encuentran resultados.
     """
 
-    def __init__(self, reflexion_dao_instance):
-        self.reflexion_dao = reflexion_dao_instance
+    def __init__(self, reflexion_dao_cls=ReflexionDAO):
+        self.reflexion_dao = reflexion_dao_cls
 
     def obtener_aleatoria(self) -> dict:
         """
@@ -43,6 +42,3 @@ class ReflexionService:
             raise ReflexionNoEncontradaError(id_reflexion=id_reflexion)
         return reflexion.model_dump()
 
-
-# Instancia global del servicio para uso en rutas
-reflexion_service = ReflexionService(reflexion_dao)

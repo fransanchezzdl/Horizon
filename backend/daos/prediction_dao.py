@@ -234,5 +234,3 @@ class PredictionDAO:
             return None
 
 
-# Instancia global
-prediction_dao = PredictionDAO()

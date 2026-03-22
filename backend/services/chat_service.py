@@ -1,9 +1,6 @@
 """Servicio de chat que orquesta la lógica de negocio del chatbot."""
 
-from ..dtos.chat_dto import ChatMessageRequest, ChatMessageResponse
-from ..daos.usuario_dao import usuario_dao
-from ..daos.chat_dao import chat_dao
-from .gemini_service import gemini_service
+from ..dtos.chat_dto import ChatMessageResponse
 from ..exceptions import (
     RateLimitExceededError,
     MessageTooLongError,
@@ -91,6 +88,3 @@ class ChatService:
         if longitud == 0:
             raise EmptyMessageError()
 
-
-# Instancia singleton del servicio
-chat_service = ChatService(usuario_dao, chat_dao, gemini_service)

@@ -66,6 +66,3 @@ class ChatDAO:
         
         self.mensajes_por_usuario[id_usuario].append(datetime.now())
 
-
-# Instancia singleton del DAO
-chat_dao = ChatDAO()
