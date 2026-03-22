@@ -14,6 +14,7 @@ class UsuarioResponse(BaseModel):
 
 # DTO de entrada para actualizar el perfil (Seguridad: solo campos permitidos)
 class PerfilUpdateDTO(BaseModel):
+    email: Optional[str] = None
     nombre: Optional[str] = None
     apellidos: Optional[str] = None
     # Descomentar cuando esté preparado para manejarlo:
