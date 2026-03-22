@@ -1,16 +1,6 @@
 const API_BASE = window.API_BASE;
 
-// VALIDAR AUTENTICACIÓN CENTRALIZADA
-(async () => {
-    const result = await window.validateAuthToken();
-    if (!result.valid) {
-        window.clearAuthSession();
-        window.location.replace('login.html');
-        return;
-    }
-})();
-
-document.addEventListener('DOMContentLoaded', () => {
+function initAcademiaPage() {
     const chatAsesor = document.getElementById('chatAsesor');
     const chatHeader = chatAsesor.querySelector('.advisor-header');
     const sendBtn = document.getElementById('sendMsg');
@@ -43,7 +33,25 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-});
+}
+
+// VALIDAR AUTENTICACIÓN CENTRALIZADA
+(async () => {
+    const result = await window.validateAuthToken();
+    if (!result.valid) {
+        window.clearAuthSession();
+        window.location.replace('login.html');
+        return;
+    }
+
+    window.setCurrentUserData(result.user);
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initAcademiaPage, { once: true });
+    } else {
+        initAcademiaPage();
+    }
+})();
 
 /**
  * Envía un mensaje al chatbot y muestra la respuesta
