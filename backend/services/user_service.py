@@ -1,3 +1,4 @@
+from fastapi import HTTPException
 from ..daos.usuario_dao import usuario_dao
 from ..dtos.usuario_dto import PerfilUpdateDTO
 
@@ -16,12 +17,21 @@ class UserService:
             return {"status": "sin_cambios", "mensaje": "No se enviaron datos nuevos para actualizar."}
 
         # 3. Extraer los datos y pasárselos a tu DAO existente
-        usuario_dao.actualizar_perfil(
-            user_id=user_id,
-            nombre=datos_dict.get("nombre"),
-            apellidos=datos_dict.get("apellidos"),
-            foto_perfil=datos_dict.get("foto_perfil")
-        )
+        try:
+            # Intentamos guardar en la base de datos
+            usuario_dao.actualizar_perfil(
+                user_id=user_id,
+                nombre=datos_dict.get("nombre"),
+                apellidos=datos_dict.get("apellidos"),
+                foto_perfil=datos_dict.get("foto_perfil")
+            )
+        except Exception as e:
+            # Si el DAO o Supabase fallan, lanzamos la excepción que el main.py atrapará
+            print(f"[USER SERVICE] Error al actualizar perfil: {str(e)}")
+            raise HTTPException(
+                status_code=500, 
+                detail="Ocurrió un error al intentar guardar los cambios en la base de datos."
+            )
         
         return {
             "status": "exito", 
