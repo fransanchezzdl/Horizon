@@ -1,4 +1,7 @@
-from .usuario_dto import UsuarioResponse
+from .usuario_dto import (
+    UsuarioResponse, 
+    PerfilUpdateDTO,
+)
 from .activo_dto import (
     ActivoCreateRequest,
     ActivoUpdateRequest,
@@ -45,6 +48,7 @@ from .reflexion_dto import (
 
 __all__ = [
     "UsuarioResponse",
+    "PerfilUpdateDTO",
     # Activo DTOs
     "ActivoCreateRequest",
     "ActivoUpdateRequest",
