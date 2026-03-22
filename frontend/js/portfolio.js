@@ -7,7 +7,7 @@ let currentPortfolioId = null;
 let currentPortfolios = [];
 
 // Cargar estado y renderizar al abrir la página
-document.addEventListener('DOMContentLoaded', async () => {
+async function initPortfolioPage() {
     // VALIDAR AUTENTICACIÓN CENTRALIZADA
     const result = await window.validateAuthToken();
     
@@ -19,7 +19,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     window.setCurrentUserData(result.user);
     await loadPortfolios();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPortfolioPage, { once: true });
+} else {
+    initPortfolioPage();
+}
 
 // ============================================================
 // CARGAR PORTFOLIOS Y ACTIVOS

@@ -5,6 +5,18 @@
 
 const API_BASE = window.API_BASE;
 
+function initReflexionPage() {
+    const params = new URLSearchParams(window.location.search);
+    const idReflexion = params.get('id');
+
+    if (!idReflexion) {
+        window.location.replace('index.html');
+        return;
+    }
+
+    cargarArticulo(idReflexion);
+}
+
 // VALIDAR AUTENTICACIÓN CENTRALIZADA
 (async () => {
     const result = await window.validateAuthToken();
@@ -14,17 +26,14 @@ const API_BASE = window.API_BASE;
         return;
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-        const params = new URLSearchParams(window.location.search);
-        const idReflexion = params.get('id');
+    window.setCurrentUserData(result.user);
 
-        if (!idReflexion) {
-            window.location.replace('index.html');
-            return;
-        }
-
-        cargarArticulo(idReflexion);
-    });
+    // Evita perder DOMContentLoaded si /auth/me responde después de que el DOM ya está listo.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initReflexionPage, { once: true });
+    } else {
+        initReflexionPage();
+    }
 })();
 
 async function cargarArticulo(id) {

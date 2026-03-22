@@ -1,3 +1,10 @@
+const API_BASE = window.API_BASE;
+
+function initProfilePage() {
+    loadProfileData();
+    initProfileEvents();
+}
+
 // VALIDAR AUTENTICACIÓN CENTRALIZADA
 (async () => {
     const result = await window.validateAuthToken();
@@ -6,12 +13,15 @@
         window.location.replace('login.html');
         return;
     }
-    
-    window.setCurrentUserData(result.user);
-    loadProfileData();
-})();
 
-const API_BASE = window.API_BASE;
+    window.setCurrentUserData(result.user);
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initProfilePage, { once: true });
+    } else {
+        initProfilePage();
+    }
+})();
 
 // Cargar datos del perfil del usuario
 function loadProfileData() {
@@ -225,17 +235,6 @@ function initProfileEvents() {
             alert('Próximamente podrás mejorar tu plan');
         });
     }
-}
-
-// Inicializar cuando el DOM esté listo
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        loadProfileData();
-        initProfileEvents();
-    });
-} else {
-    loadProfileData();
-    initProfileEvents();
 }
 
 function checkLogin() {

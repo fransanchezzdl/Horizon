@@ -5,7 +5,7 @@
 
 const API_BASE = window.API_BASE;
 
-document.addEventListener('DOMContentLoaded', async () => {
+async function initDashboardPage() {
     // ✅ VALIDAR AUTENTICACIÓN CENTRALIZADA
     const result = await window.validateAuthToken();
     
@@ -28,7 +28,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Cargar reflexión aleatoria desde el backend
     cargarReflexion();
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initDashboardPage, { once: true });
+} else {
+    initDashboardPage();
+}
 
 async function cargarReflexion() {
     try {
