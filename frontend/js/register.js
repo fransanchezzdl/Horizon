@@ -166,6 +166,19 @@ async function handleRegister(e) {
             window.setCurrentUserData(data.user);
         }
 
+        // VALIDAR TOKEN CONTRA BACKEND (CENTRALIZADO)
+        console.log('[REGISTER] Validando token contra /auth/me...');
+        const validateResult = await window.validateAuthToken();
+        
+        if (!validateResult.valid) {
+            console.error('[REGISTER] Token validation failed');
+            throw new Error('Token validation failed');
+        }
+        
+        // Token válido, usar datos validados
+        window.setCurrentUserData(validateResult.user);
+        console.log('[REGISTER] Token validado correctamente ✓');
+
         window.location.href = 'index.html';
 
     } catch (err) {

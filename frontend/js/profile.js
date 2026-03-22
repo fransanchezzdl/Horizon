@@ -1,4 +1,16 @@
-checkLogin();
+// VALIDAR AUTENTICACIÓN CENTRALIZADA
+(async () => {
+    const result = await window.validateAuthToken();
+    if (!result.valid) {
+        window.clearAuthSession();
+        window.location.replace('login.html');
+        return;
+    }
+    
+    window.setCurrentUserData(result.user);
+    loadProfileData();
+})();
+
 const API_BASE = window.API_BASE;
 
 // Cargar datos del perfil del usuario
@@ -51,17 +63,8 @@ function loadProfileData() {
 // Cargar estadísticas del usuario desde la API
 async function loadUserStats(userId) {
     try {
-        const token = window.getAccessToken();
-        if (!token) {
-            return;
-        }
-
         // Obtener datos del portfolio
-        const portfolioRes = await fetch(`${API_BASE}/portfolios/${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const portfolioRes = await window.fetchWithAuth(`${API_BASE}/portfolios/${userId}`);
 
         if (portfolioRes.ok) {
             const portfolioData = await portfolioRes.json();
@@ -70,11 +73,7 @@ async function loadUserStats(userId) {
         }
 
         // Obtener datos de predicciones
-        const predictionsRes = await fetch(`${API_BASE}/api/predictions/${userId}`, {
-            headers: {
-                'Authorization': `Bearer ${token}`
-            }
-        });
+        const predictionsRes = await window.fetchWithAuth(`${API_BASE}/api/predictions/${userId}`);
 
         if (predictionsRes.ok) {
             const predictionsData = await predictionsRes.json();

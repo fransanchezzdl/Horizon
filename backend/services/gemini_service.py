@@ -81,6 +81,9 @@ y queda encriptada en la base de datos de la aplicación.
 
 No te presentes en cada mensaje, el usuario ya te conoce.
 
+Cuando quieras resaltar un concepto clave, usa formato markdown con doble asterisco,
+por ejemplo: **diversificación**.
+
 Separa la respuesta en párrafos y no la hagas muy extensa"""
             
             response = self.client.models.generate_content(
