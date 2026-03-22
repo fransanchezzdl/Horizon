@@ -1,5 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 
+/* #region VARIABLES Y ESTILOS BASE */
+/* #region VARIABLES Y ESTILOS BASE - CONTENIDO */
 /* ==================== VARIABLES Y ESTILOS BASE ==================== */
 :root {
     /* Fuente */
@@ -42,7 +44,13 @@ body {
     padding: 0;
 }
 
-/* ==================== TIPOGRAFÍA ==================== */
+/* #endregion VARIABLES Y ESTILOS BASE - CONTENIDO */
+
+/* #endregion VARIABLES Y ESTILOS BASE */
+
+/* #region TIPOGRAFIA */
+/* #region TIPOGRAFIA - CONTENIDO */
+/* ==================== TIPOGRAFIA ==================== */
 h1 {
     font-weight: 700;
     font-size: 32px;
@@ -80,6 +88,12 @@ p {
     margin-bottom: var(--spacing-xl);
 }
 
+/* #endregion TIPOGRAFIA - CONTENIDO */
+
+/* #endregion TIPOGRAFIA */
+
+/* #region CARDS (ESTANDARIZADAS) */
+/* #region CARDS (ESTANDARIZADAS) - CONTENIDO */
 /* ==================== CARDS (ESTANDARIZADAS) ==================== */
 .opts-section {
     display: grid;
@@ -160,7 +174,13 @@ p {
     color: var(--color-secondary);
 }
 
-/* ==================== CARD ESPECIAL: REFLEXIÓN ==================== */
+/* #endregion CARDS (ESTANDARIZADAS) - CONTENIDO */
+
+/* #endregion CARDS (ESTANDARIZADAS) */
+
+/* #region CARD ESPECIAL: REFLEXION */
+/* #region CARD ESPECIAL: REFLEXION - CONTENIDO */
+/* ==================== CARD ESPECIAL: REFLEXION ==================== */
 .reflexion-card, .card-large {
     grid-column: span 2;
     background: linear-gradient(35deg, var(--color-secondary) 0%, var(--color-primary) 100%);
@@ -206,7 +226,14 @@ p {
     margin: 0 0 var(--spacing-lg) 0;
 }
 
+/* #endregion CARD ESPECIAL: REFLEXION - CONTENIDO */
+
+/* #endregion CARD ESPECIAL: REFLEXION */
+
+/* #region BOTONES (ESTANDARIZADOS) */
+/* #region BOTONES (ESTANDARIZADOS) - CONTENIDO */
 /* ==================== BOTONES (ESTANDARIZADOS) ==================== */
+/* #region BOTONES BASE */
 .btn, .btn-primary, .reflexion-button, .reflexion-button.primary {
     display: inline-flex;
     align-items: center;
@@ -231,6 +258,9 @@ p {
     background: linear-gradient(0deg, var(--color-secondary), var(--color-primary));
     transform: translateY(-2px);
 }
+/* #endregion BOTONES BASE */
+
+/* #region BOTONES ICONO Y OUTLINE */
 /* Button Icon */
 .btn-icon {
     background: none;
@@ -245,6 +275,88 @@ p {
     color: #4b5563;
 }
 
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    background: white;
+    color: var(--color-text-primary);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-outline:hover {
+    border-color: #d1d5db;
+    background: var(--color-bg-light);
+}
+
+/* #endregion BOTONES ICONO Y OUTLINE */
+
+/* #region BOTON LOGOUT */
+/* ==================== BOTON LOGOUT ==================== */
+.btn-logout {
+    width: 100%;
+    padding: 10px 12px;
+    margin-top: 12px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 6px;
+    color: #991b1b;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.btn-logout:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(156, 39, 39, 0.1);
+}
+
+.btn-logout:active {
+    transform: translateY(0);
+}
+
+.btn-logout:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-logout svg {
+    flex-shrink: 0;
+}
+
+/* Ocultar texto del boton cuando la sidebar esta colapsada */
+.sidebar.collapsed .btn-logout span {
+    display: none;
+}
+
+.sidebar.collapsed .btn-logout {
+    justify-content: center;
+    padding: 12px;
+}
+
+/* #endregion BOTON LOGOUT */
+
+/* #endregion BOTONES (ESTANDARIZADOS) - CONTENIDO */
+
+/* #endregion BOTONES (ESTANDARIZADOS) */
+
+/* #region UTILIDADES */
+/* #region UTILIDADES - CONTENIDO */
 /* ==================== UTILIDADES ==================== */
 .text-success { color: #10b981; }
 .text-danger { color: #ef4444; }
@@ -252,10 +364,17 @@ p {
 .text-right { text-align: right; }
 .text-left { text-align: left; }
 .text-bold { font-weight: 700; }
+.uppercase { text-transform: uppercase; }
 
 .icon-trend-up { color: #10b981; }
 .icon-shield { color: var(--color-primary); }
 
+/* #endregion UTILIDADES - CONTENIDO */
+
+/* #endregion UTILIDADES */
+
+/* #region BADGES */
+/* #region BADGES - CONTENIDO */
 /* ==================== BADGES ==================== */
 .badge {
     display: inline-flex;
@@ -304,7 +423,13 @@ p {
     color: #15803d; 
 }
 
-/* ==================== PÁGINA PORTFOLIO ==================== */
+/* #endregion BADGES - CONTENIDO */
+
+/* #endregion BADGES */
+
+/* #region PAGINA PORTFOLIO */
+/* #region PAGINA PORTFOLIO - CONTENIDO */
+/* ==================== PAGINA PORTFOLIO ==================== */
 .page-header {
     display: flex;
     justify-content: space-between;
@@ -332,7 +457,13 @@ p {
     font-size: 18px;
 }
 
-/* ==================== MÉTRICAS ==================== */
+/* #endregion PAGINA PORTFOLIO - CONTENIDO */
+
+/* #endregion PAGINA PORTFOLIO */
+
+/* #region METRICAS */
+/* #region METRICAS - CONTENIDO */
+/* ==================== METRICAS ==================== */
 .metrics-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -373,6 +504,12 @@ p {
     font-weight: 600;
 }
 
+/* #endregion METRICAS - CONTENIDO */
+
+/* #endregion METRICAS */
+
+/* #region TABLAS */
+/* #region TABLAS - CONTENIDO */
 /* ==================== TABLAS ==================== */
 .table-section {
     padding: 0;
@@ -654,11 +791,14 @@ p {
     gap: 12px;
     padding: 12px;
     border-radius: 8px;
+    cursor: pointer;
     transition: all 0.3s ease;
 }
 
 .user-profile:hover {
     background: #f3f4f6;
+    opacity: 0.8;
+    transform: scale(1.02);
 }
 
 .user-avatar {
@@ -684,7 +824,7 @@ p {
     display: none;
 }
 
-/* Centrar avatar cuando la sidebar está colapsada */
+/* Centrar avatar cuando la sidebar esta colapsada */
 .sidebar.collapsed .user-profile {
     justify-content: center;
     padding: 12px 0;
@@ -724,7 +864,13 @@ p {
     visibility: visible;
 }
 
-/* ==================== BARRA INFERIOR MÓVIL ==================== */
+/* #endregion TABLAS - CONTENIDO */
+
+/* #endregion TABLAS */
+
+/* #region BARRA INFERIOR MOVIL */
+/* #region BARRA INFERIOR MOVIL - CONTENIDO */
+/* ==================== BARRA INFERIOR MOVIL ==================== */
 .bottom-navbar {
     display: none;
     position: fixed;
@@ -793,141 +939,13 @@ body > section {
     margin-left: var(--sidebar-width-collapsed);
 }
 
-/* ==================== ESTILOS PÁGINA PORTFOLIO ==================== */
-.page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    margin-bottom: var(--spacing-2xl);
-    flex-wrap: wrap;
-    gap: var(--spacing-lg);
-}
+/* #endregion BARRA INFERIOR MOVIL - CONTENIDO */
 
-.header-titles h1 {
-    margin-bottom: var(--spacing-sm);
-}
+/* #endregion BARRA INFERIOR MOVIL */
 
-.balance-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    color: var(--color-tertiary);
-    font-size: 15px;
-}
-
-.balance-amount {
-    font-weight: 700;
-    color: var(--color-text-primary);
-    font-size: 18px;
-}
-
-/* --- Tabla de Activos --- */
-.table-section {
-    padding: 0; /* Quitamos padding del card para que la tabla llene todo */
-    overflow: hidden; /* Para las esquinas redondeadas */
-}
-
-.table-toolbar {
-    padding: 20px 24px;
-    border-bottom: 1px solid #f3f4f6;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.table-toolbar h2 {
-    font-size: 18px;
-    font-weight: 700;
-    margin: 0;
-}
-
-.table-responsive {
-    overflow-x: auto;
-}
-
-.custom-table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 800px;
-}
-
-.custom-table th {
-    background: #f9fafb;
-    padding: 12px 24px;
-    font-size: 11px;
-    text-transform: uppercase;
-    color: #6b7280;
-    font-weight: 600;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid #f3f4f6;
-}
-
-.custom-table td {
-    padding: 16px 24px;
-    border-bottom: 1px solid #f3f4f6;
-    vertical-align: middle;
-}
-
-.custom-table tr:last-child td {
-    border-bottom: none;
-}
-
-.custom-table tr:hover {
-    background-color: #fcfcfc;
-}
-
-/* Elementos dentro de la tabla */
-.asset-item {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-}
-
-.asset-icon {
-    width: 40px;
-    height: 40px;
-    background: #ffffff;
-    border: 1px solid #e5e7eb;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.asset-info {
-    display: flex;
-    flex-direction: column;
-}
-
-.asset-symbol {
-    font-weight: 700;
-    color: #1f2937;
-    font-size: 14px;
-}
-
-.asset-name {
-    font-size: 12px;
-    color: #9ca3af;
-}
-
-.price-cell {
-    display: flex;
-    flex-direction: column;
-}
-
-.price-val {
-    font-weight: 600;
-    color: #1f2937;
-    font-size: 14px;
-}
-
-.price-change {
-    font-size: 12px;
-    font-weight: 500;
-}
-
-/* ==================== ESTILOS PÁGINA ACADEMY ==================== */
+/* #region ESTILOS PAGINA ACADEMY */
+/* #region ESTILOS PAGINA ACADEMY - CONTENIDO */
+/* ==================== ESTILOS PAGINA ACADEMY ==================== */
 /* Contenedor principal: Solo el contenido principal (el chat es flotante) */
 .academy-layout {
     display: block;
@@ -951,7 +969,7 @@ body > section {
     border-radius: var(--radius-xl);
 }
 
-/* ESTADO COLAPSADO: Botón flotante circular en esquina inferior derecha */
+/* ESTADO COLAPSADO: Boton flotante circular en esquina inferior derecha */
 .advisor-sidebar.collapsed {
     width: 72px !important;
     height: 72px !important;
@@ -969,7 +987,7 @@ body > section {
     transform: scale(1.05);
 }
 
-/* Cabecera del chat (actúa como botón de toggle) */
+/* Cabecera del chat (actua como boton de toggle) */
 .advisor-header {
     padding: var(--spacing-lg);
     border-bottom: 1px solid var(--color-border);
@@ -990,7 +1008,7 @@ body > section {
     background: var(--color-bg-lighter);
 }
 
-/* Ocultar elementos cuando está colapsado */
+/* Ocultar elementos cuando esta colapsado */
 .advisor-sidebar.collapsed .chat-container,
 .advisor-sidebar.collapsed .chat-input-wrapper,
 .advisor-sidebar.collapsed .user-info,
@@ -999,7 +1017,7 @@ body > section {
     opacity: 0;
 }
 
-/* Centrar el avatar/icono cuando es un círculo */
+/* Centrar el avatar/icono cuando es un crculo */
 .advisor-sidebar.collapsed .advisor-header {
     border: none;
     padding: 0;
@@ -1011,14 +1029,14 @@ body > section {
     background: transparent;
 }
 
-/* Aumentar tamaño del avatar cuando el chat está colapsado */
+/* Aumentar tamano del avatar cuando el chat esta colapsado */
 .advisor-sidebar.collapsed .user-avatar {
     width: 60px;
     height: 60px;
     padding: 0;
 }
 
-/* SVG del ícono de estrellas */
+/* SVG del cono de estrellas */
 .chat-icon-svg {
     width: 28px;
     height: 28px;
@@ -1031,7 +1049,7 @@ body > section {
     display: block;
 }
 
-/* Ajustar indicador de estado cuando está colapsado */
+/* Ajustar indicador de estado cuando esta colapsado */
 .advisor-sidebar.collapsed .status-indicator {
     bottom: 2px;
     right: 2px;
@@ -1066,7 +1084,7 @@ body > section {
     border-radius: 50%;
 }
 
-/* Área de mensajes con scroll automático */
+/* rea de mensajes con scroll automtico */
 .chat-container {
     flex: 1; 
     padding: var(--spacing-lg);
@@ -1105,7 +1123,7 @@ body > section {
     border-left: 3px solid #dc2626;
 }
 
-/* Animación de puntitos */
+/* Animacin de puntitos */
 .chat-bubble.typing {
     display: inline-flex;
     gap: 4px;
@@ -1144,7 +1162,7 @@ body > section {
     }
 }
 
-/* Input y botón inferior */
+/* Input y boton inferior */
 .chat-input-wrapper {
     padding: var(--spacing-lg);
     border-top: 1px solid var(--color-border);
@@ -1192,7 +1210,13 @@ body > section {
     font-size: 22px;
 }
 
-/* ==================== PÁGINA DE PERFIL ==================== */
+/* #endregion ESTILOS PAGINA ACADEMY - CONTENIDO */
+
+/* #endregion ESTILOS PAGINA ACADEMY */
+
+/* #region PAGINA DE PERFIL */
+/* #region PAGINA DE PERFIL - CONTENIDO */
+/* ==================== PAGINA DE PERFIL ==================== */
 .main-content {
     margin-left: var(--sidebar-width);
     padding: var(--spacing-2xl);
@@ -1306,7 +1330,7 @@ body > section {
     color: var(--color-text-primary);
 }
 
-/* Lista de Información */
+/* Lista de Informacin */
 .info-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -1333,7 +1357,7 @@ body > section {
     color: var(--color-text-primary);
 }
 
-/* Tarjetas de Estadísticas */
+/* Tarjetas de Estadsticas */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1361,7 +1385,7 @@ body > section {
     font-weight: 500;
 }
 
-/* Información de Membresía */
+/* Informacin de Membresa */
 .membership-info {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -1473,104 +1497,12 @@ body > section {
     flex: 1;
 }
 
-/* Adaptación para usuario en sidebar */
-.user-profile {
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
+/* #endregion PAGINA DE PERFIL - CONTENIDO */
 
-.user-profile:hover {
-    opacity: 0.8;
-    transform: scale(1.02);
-}
+/* #endregion PAGINA DE PERFIL */
 
-/* Adaptación para tablets y móviles */
-@media (max-width: 1024px) {
-    .profile-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .profile-card {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-    }
-
-    .membership-info,
-    .info-list {
-        grid-template-columns: 1fr;
-    }
-
-    .stats-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
-    .security-item {
-        flex-direction: column;
-        gap: var(--spacing-md);
-    }
-
-    .profile-actions {
-        flex-direction: column;
-    }
-
-}
-
-@media (max-width: 768px) {
-    .main-content {
-        margin-left: 0;
-        padding: var(--spacing-lg);
-    }
-
-    .profile-banner {
-        height: 120px;
-    }
-
-    .profile-avatar {
-        width: 80px;
-        height: 80px;
-        font-size: 32px;
-    }
-
-    .profile-card {
-        padding: var(--spacing-lg);
-        gap: var(--spacing-lg);
-    }
-
-    .profile-basic-info h1 {
-        font-size: 20px;
-    }
-
-    .stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .membership-info {
-        grid-template-columns: 1fr;
-    }
-}
-
-/* Adaptación para Desktop con Sidebar colapsada */
-@media (max-width: 1024px) {
-
-    .advisor-sidebar {
-        width: 320px;
-        max-height: 500px;
-        bottom: 100px;
-        right: 16px;
-    }
-    
-    .advisor-sidebar.collapsed .user-avatar {
-        width: 56px;
-        height: 56px;
-    }
-    
-    .advisor-sidebar.collapsed .chat-icon-svg {
-        width: 24px;
-        height: 24px;
-    }
-}
-
+/* #region BUSCADOR (ANALYSIS) */
+/* #region BUSCADOR (ANALYSIS) - CONTENIDO */
 /* ==================== BUSCADOR (ANALYSIS) ==================== */
 .search-section.card {
     min-height: auto;
@@ -1703,6 +1635,12 @@ body > section {
     color: #374151; 
 }
 
+/* #endregion BUSCADOR (ANALYSIS) - CONTENIDO */
+
+/* #endregion BUSCADOR (ANALYSIS) */
+
+/* #region MEDIA QUERIES (RESPONSIVE DESIGN) */
+/* #region MEDIA QUERIES (RESPONSIVE DESIGN) - CONTENIDO */
 /* ==================== MEDIA QUERIES (RESPONSIVE DESIGN) ==================== */
 @media (max-width: 1200px) {
     .opts-section {
@@ -1719,18 +1657,65 @@ body > section {
     }
 }
 
+@media (max-width: 1024px) {
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .profile-card {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .membership-info,
+    .info-list {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .security-item {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .profile-actions {
+        flex-direction: column;
+    }
+
+    .advisor-sidebar {
+        width: 320px;
+        max-height: 500px;
+        bottom: 100px;
+        right: 16px;
+    }
+
+    .advisor-sidebar.collapsed .user-avatar {
+        width: 56px;
+        height: 56px;
+    }
+
+    .advisor-sidebar.collapsed .chat-icon-svg {
+        width: 24px;
+        height: 24px;
+    }
+}
+
 @media (max-width: 768px) {
-    /* Mostrar barra inferior en móvil */
+    /* Mostrar barra inferior en movil */
     .bottom-navbar {
         display: flex;
     }
 
-    /* Ocultar sidebar en móvil */
+    /* Ocultar sidebar en movil */
     .sidebar {
         display: none;
     }
 
-    /* Ocultar toggle de sidebar en móvil */
+    /* Ocultar toggle de sidebar en movil */
     .sidebar-toggle {
         display: none;
     }
@@ -1771,6 +1756,35 @@ body > section {
         grid-template-columns: 1fr;
     }
 
+    .main-content {
+        margin-left: 0;
+        padding: var(--spacing-lg);
+    }
+
+    .profile-banner {
+        height: 120px;
+    }
+
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        font-size: 32px;
+    }
+
+    .profile-card {
+        padding: var(--spacing-lg);
+        gap: var(--spacing-lg);
+    }
+
+    .profile-basic-info h1 {
+        font-size: 20px;
+    }
+
+    .stats-grid,
+    .membership-info {
+        grid-template-columns: 1fr;
+    }
+
     /* Buscador */
     .search-row {
         flex-direction: column;
@@ -1787,6 +1801,25 @@ body > section {
         flex-direction: column;
         align-items: flex-start;
         gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 600px) {
+    .articulo-hero {
+        padding: var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .articulo-titulo {
+        font-size: 22px;
+    }
+
+    .articulo-cuerpo-section {
+        padding: var(--spacing-xl) var(--spacing-lg);
+    }
+
+    .articulo-cita {
+        font-size: 16px;
+        padding: var(--spacing-md) var(--spacing-lg);
     }
 }
 
@@ -1811,9 +1844,42 @@ body > section {
         font-size: 20px;
     }
 
+    .login-page {
+        padding: var(--spacing-md);
+    }
+
+    .login-container {
+        padding: var(--spacing-xl);
+        max-width: 100%;
+    }
+
+    .login-header h1 {
+        font-size: 24px;
+    }
+
+    .login-btn {
+        font-size: 13px;
+        height: 44px;
+    }
+
+    .profile-photos-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--spacing-md);
+    }
+
+    .profile-photos-grid .profile-photo-option:nth-child(3) {
+        display: none;
+    }
+
 }
 
-/* ==================== PÁGINA DE LOGIN Y REGISTER ==================== */
+/* #endregion MEDIA QUERIES (RESPONSIVE DESIGN) - CONTENIDO */
+
+/* #endregion MEDIA QUERIES (RESPONSIVE DESIGN) */
+
+/* #region PAGINA DE LOGIN Y REGISTER */
+/* #region PAGINA DE LOGIN Y REGISTER - CONTENIDO */
+/* ==================== PAGINA DE LOGIN Y REGISTER ==================== */
 .login-page {
     display: flex;
     align-items: center;
@@ -1963,77 +2029,15 @@ body > section {
     display: block;
 }
 
-@media (max-width: 480px) {
-    .login-page {
-        padding: var(--spacing-md);
-    }
+/* #endregion PAGINA DE LOGIN Y REGISTER - CONTENIDO */
 
-    .login-container {
-        padding: var(--spacing-xl);
-        max-width: 100%;
-    }
+/* #endregion PAGINA DE LOGIN Y REGISTER */
 
-    .login-header h1 {
-        font-size: 24px;
-    }
 
-    .login-btn {
-        font-size: 13px;
-        height: 44px;
-    }
-}
 
-/* ==================== BOTON LOGOUT ==================== */
-.btn-logout {
-    width: 100%;
-    padding: 10px 12px;
-    margin-top: 12px;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 6px;
-    color: #991b1b;
-    font-size: 13px;
-    font-weight: 500;
-    font-family: var(--font-sans);
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.btn-logout:hover {
-    background: #fee2e2;
-    border-color: #fca5a5;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(156, 39, 39, 0.1);
-}
-
-.btn-logout:active {
-    transform: translateY(0);
-}
-
-.btn-logout:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.btn-logout svg {
-    flex-shrink: 0;
-}
-
-/* Ocultar texto del botón cuando la sidebar está colapsada */
-.sidebar.collapsed .btn-logout span {
-    display: none;
-}
-
-.sidebar.collapsed .btn-logout {
-    justify-content: center;
-    padding: 12px;
-}
-
-/* ==================== PÁGINA: ARTÍCULO DE REFLEXIÓN ==================== */
+/* #region PAGINA: ARTICULO DE REFLEXION */
+/* #region PAGINA: ARTICULO DE REFLEXION - CONTENIDO */
+/* ==================== PAGINA: ARTICULO DE REFLEXION ==================== */
 
 /* Hero */
 .articulo-hero {
@@ -2153,27 +2157,12 @@ body > section {
     border-top: 1px solid var(--color-border);
 }
 
-/* Responsive */
-@media (max-width: 600px) {
+/* #endregion PAGINA: ARTICULO DE REFLEXION - CONTENIDO */
 
-    .articulo-hero {
-        padding: var(--spacing-xl) var(--spacing-lg);
-    }
+/* #endregion PAGINA: ARTICULO DE REFLEXION */
 
-    .articulo-titulo {
-        font-size: 22px;
-    }
-
-    .articulo-cuerpo-section {
-        padding: var(--spacing-xl) var(--spacing-lg);
-    }
-
-    .articulo-cita {
-        font-size: 16px;
-        padding: var(--spacing-md) var(--spacing-lg);
-    }
-}
-
+/* #region SELECTOR DE FOTO DE PERFIL EN REGISTRO */
+/* #region SELECTOR DE FOTO DE PERFIL EN REGISTRO - CONTENIDO */
 /* ==================== SELECTOR DE FOTO DE PERFIL EN REGISTRO ==================== */
 
 .profile-photo-selector {
@@ -2221,7 +2210,7 @@ body > section {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2), 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-/* Opción de subir foto personalizada */
+/* Opcin de subir foto personalizada */
 .profile-photo-option.upload {
     border: 2px dashed var(--color-border);
     background: var(--color-bg-lighter);
@@ -2264,18 +2253,12 @@ body > section {
     display: none;
 }
 
-/* Responsive para mobile */
-@media (max-width: 480px) {
-    .profile-photos-grid {
-        grid-template-columns: repeat(3, 1fr);
-        gap: var(--spacing-md);
-    }
+/* #endregion SELECTOR DE FOTO DE PERFIL EN REGISTRO - CONTENIDO */
 
-    .profile-photos-grid .profile-photo-option:nth-child(3) {
-        display: none;
-    }
-}
+/* #endregion SELECTOR DE FOTO DE PERFIL EN REGISTRO */
 
+/* #region MODALES Y FORMULARIOS */
+/* #region MODALES Y FORMULARIOS - CONTENIDO */
 /* ==================== MODALES Y FORMULARIOS ==================== */
 
 .modal {
@@ -2418,6 +2401,30 @@ body > section {
     font-weight: 500;
 }
 
+.alert-success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+}
+
+.alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert-warning {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1px solid #fde68a;
+}
+
+.alert-info {
+    background: #eff6ff;
+    color: #1e40af;
+    border: 1px solid #bfdbfe;
+}
+
 @keyframes slideInAlert {
     from {
         transform: translateX(400px);
@@ -2429,7 +2436,7 @@ body > section {
     }
 }
 
-/* Estilos específicos del formulario en modales */
+/* Estilos especficos del formulario en modales */
 .form-group small {
     display: block;
     margin-top: var(--spacing-sm);
@@ -2469,3 +2476,21 @@ body > section {
     border-color: var(--color-primary);
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+
+.shake {
+    animation: shakeX 0.28s ease-in-out;
+}
+
+@keyframes shakeX {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-4px); }
+    50% { transform: translateX(4px); }
+    75% { transform: translateX(-2px); }
+}
+
+/* #endregion MODALES Y FORMULARIOS - CONTENIDO */
+
+/* #endregion MODALES Y FORMULARIOS */
+
+
+
