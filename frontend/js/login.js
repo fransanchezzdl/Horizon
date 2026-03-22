@@ -87,7 +87,20 @@ async function handleLogin(e) {
             window.setCurrentUserData(data.user);
         }
 
-        // 3. Redirigir
+        // 3. VALIDAR TOKEN CONTRA BACKEND (CENTRALIZADO)
+        console.log('[LOGIN] Validando token contra /auth/me...');
+        const validateResult = await window.validateAuthToken();
+        
+        if (!validateResult.valid) {
+            console.error('[LOGIN] Token validation failed');
+            throw new Error('Token validation failed');
+        }
+        
+        // Token válido, usar datos validados
+        window.setCurrentUserData(validateResult.user);
+        console.log('[LOGIN] Token validado correctamente ✓');
+
+        // 4. Redirigir
         window.location.href = 'index.html';
 
     } catch (err) {

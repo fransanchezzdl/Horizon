@@ -8,17 +8,18 @@ let currentPortfolios = [];
 
 // Cargar estado y renderizar al abrir la página
 document.addEventListener('DOMContentLoaded', async () => {
-    checkLogin();
+    // VALIDAR AUTENTICACIÓN CENTRALIZADA
+    const result = await window.validateAuthToken();
+    
+    if (!result.valid) {
+        window.clearAuthSession();
+        window.location.replace('login.html');
+        return;
+    }
+    
+    window.setCurrentUserData(result.user);
     await loadPortfolios();
 });
-
-function checkLogin(){
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        window.location.replace('login.html');
-        return; 
-    }
-}
 
 // ============================================================
 // CARGAR PORTFOLIOS Y ACTIVOS
@@ -26,10 +27,7 @@ function checkLogin(){
 
 async function loadPortfolios() {
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE}/portfolios`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.fetchWithAuth(`${API_BASE}/portfolios`);
 
         if (!response.ok) {
             console.error('Error cargando portfolios:', response.status);
@@ -59,19 +57,9 @@ async function loadPortfolios() {
 
 async function loadPortfolioDetails(portfolioId) {
     try {
-        const token = localStorage.getItem('access_token');
         console.log(`🔐 Cargando portfolio ${portfolioId}`);
-        console.log(`   Token: ${token ? token.substring(0, 20) + '...' : 'NO ENCONTRADO'}`);
         
-        if (!token) {
-            console.error('❌ No hay token en localStorage');
-            showAlert('No hay token de autenticación', 'error');
-            return;
-        }
-        
-        const response = await fetch(`${API_BASE}/portfolios/${portfolioId}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${portfolioId}`);
 
         console.log(`   Response status: ${response.status}`);
 
@@ -287,10 +275,8 @@ async function deleteAsset(stockId) {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE}/portfolios/${currentPortfolioId}/activos/${stockId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
+        const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}/activos/${stockId}`, {
+            method: 'DELETE'
         });
 
         if (response.ok) {
@@ -326,7 +312,7 @@ function showAddAssetModal() {
                     <div id="tickerError" style="display: none; color: #dc2626; font-size: 13px; margin-top: 10px;"></div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-outline" onclick="closeAddAssetModal()">Cancelar</button>
+                    <button class="btn-secondary" onclick="closeAddAssetModal()">Cancelar</button>
                     <button class="btn-primary" onclick="addAssetToPortfolio()">Añadir Activo</button>
                 </div>
             </div>
@@ -382,14 +368,11 @@ async function addAssetToPortfolio() {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
-        
         console.log(`📝 Añadiendo activo ${ticker} al portfolio ${currentPortfolioId}`);
         
-        const response = await fetch(`${API_BASE}/portfolios/${currentPortfolioId}/activos`, {
+        const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}/activos`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ ticker })
@@ -446,7 +429,7 @@ function showCreatePortfolioModal() {
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn-outline" onclick="closeCreatePortfolioModal()">Cancelar</button>
+                    <button class="btn-secondary" onclick="closeCreatePortfolioModal()">Cancelar</button>
                     <button class="btn-primary" onclick="createPortfolio()">Crear</button>
                 </div>
             </div>
@@ -473,11 +456,9 @@ async function createPortfolio() {
     }
 
     try {
-        const token = localStorage.getItem('access_token');
-        const response = await fetch(`${API_BASE}/portfolios`, {
+        const response = await window.fetchWithAuth(`${API_BASE}/portfolios`, {
             method: 'POST',
             headers: {
-                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({

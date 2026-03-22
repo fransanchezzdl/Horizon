@@ -1,6 +1,14 @@
 const API_BASE = window.API_BASE;
 
-checkLogin();
+// VALIDAR AUTENTICACIÓN CENTRALIZADA
+(async () => {
+    const result = await window.validateAuthToken();
+    if (!result.valid) {
+        window.clearAuthSession();
+        window.location.replace('login.html');
+        return;
+    }
+})();
 
 document.addEventListener('DOMContentLoaded', () => {
     const chatAsesor = document.getElementById('chatAsesor');
@@ -41,33 +49,33 @@ document.addEventListener('DOMContentLoaded', () => {
  * Envía un mensaje al chatbot y muestra la respuesta
  */
 async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
-    // Obtener token de autenticación de localStorage
-    const token = localStorage.getItem('access_token');
+    // Verificar autenticación
+    console.log('[CHAT] Enviando mensaje...');
 
-    if (!token) {
-        mostrarError(chatContainer, '⚠️ Error: No estás autenticado. Por favor recarga la página y vuelve a iniciar sesión.');
-        return;
-    }
-
-    // Mostrar mensaje del usuario en el chat
-    agregarMensajeAlChat(chatContainer, mensaje, 'user');
-
-    // Limpiar input
-    inputElement.value = "";
+    if (!mensaje) return;
 
     // Bloquear input y botón durante la solicitud
     inputElement.disabled = true;
     sendBtn.disabled = true;
 
+    // Guardar placeholder original y mostrar estado de carga
+    const placeholderOriginal = inputElement.placeholder;
+    inputElement.placeholder = 'Escribiendo...';
+
+    // Mostrar el mensaje del usuario en el chat
+    agregarMensajeAlChat(chatContainer, mensaje, 'user');
+
+    // Limpiar el input inmediatamente después de mostrarlo
+    inputElement.value = '';
+
     // Mostrar bubble con puntitos animados
     const loadingBubble = agregarMensajeCargando(chatContainer);
 
     try {
-        const response = await fetch(`${API_BASE}/chat`, {
+        const response = await window.fetchWithAuth(`${API_BASE}/chat`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 message: mensaje
@@ -123,6 +131,8 @@ async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
         // Restaurar input y botón
         inputElement.disabled = false;
         sendBtn.disabled = false;
+        inputElement.placeholder = placeholderOriginal; // Restaurar placeholder original
+        inputElement.value = ''; // Limpiar el input después de enviar
         inputElement.focus();
     }
 }
@@ -133,7 +143,11 @@ async function enviarMensaje(mensaje, inputElement, chatContainer, sendBtn) {
 function agregarMensajeAlChat(chatContainer, mensaje, tipo) {
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${tipo}`;
-    bubble.textContent = mensaje;
+    if (tipo === 'ai') {
+        bubble.innerHTML = formatearMensajeIA(mensaje);
+    } else {
+        bubble.textContent = mensaje;
+    }
     chatContainer.appendChild(bubble);
 
     // Scroll hacia el último mensaje
@@ -175,13 +189,20 @@ function mostrarError(chatContainer, mensaje) {
     chatContainer.scrollTop = chatContainer.scrollHeight;
 }
 
-function checkLogin(){
-    // 1. Verificar si existe el token en el almacenamiento local
-    const token = localStorage.getItem('access_token');
-    
-    // Si no hay token, redirigimos al login inmediatamente
-    if (!token) {
-        window.location.replace('login.html'); // Usamos replace para que no puedan volver atrás con el botón del navegador
-        return; 
-    }
+/**
+ * Formatea respuesta del modelo con soporte de negritas en markdown (**texto**)
+ * y saltos de linea, escapando HTML para evitar inyecciones.
+ */
+function formatearMensajeIA(mensaje) {
+    const texto = String(mensaje ?? '');
+    const escapado = texto
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+
+    return escapado
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\n/g, '<br>');
 }
