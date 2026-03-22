@@ -656,14 +656,11 @@ p {
 .logo-icon {
     width: 32px;
     height: 32px;
-    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     border-radius: 8px;
-    font-weight: 700;
+    object-fit: cover;
+    display: block;
     flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2), 0 6px 14px rgba(37, 99, 235, 0.2);
 }
 
 .logo-text {
@@ -1922,15 +1919,11 @@ body > section {
 .login-header .logo-icon {
     width: 56px;
     height: 56px;
-    background: linear-gradient(135deg, #0B3D91, #2563EB);
-    color: white;
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 24px;
+    border-radius: 14px;
+    object-fit: cover;
+    display: block;
     margin: 0 auto var(--spacing-md);
+    box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.2), 0 10px 22px rgba(37, 99, 235, 0.22);
 }
 
 .login-header h1 {
