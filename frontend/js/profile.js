@@ -1,5 +1,7 @@
 const API_BASE = window.API_BASE;
 
+let fotoBase64Temporal = ""; // Guardará el texto de la imagen
+
 function initProfilePage() {
     loadProfileData();
     initProfileEvents();
@@ -51,8 +53,6 @@ function loadProfileData() {
         // Llenar formulario de información general
         document.getElementById('infoNombre').textContent = nombreCompleto;
         document.getElementById('infoEmail').textContent = user.email || 'Sin email';
-        document.getElementById('infoTelefono').textContent = user.telefono || 'No proporcionado';
-        document.getElementById('infoPais').textContent = user.pais || 'No especificado';
 
         // Información de membresía
         document.getElementById('membershipPlan').textContent = plan;
@@ -66,7 +66,9 @@ function loadProfileData() {
 
     } catch (e) {
         console.error('Error loading profile:', e);
-        window.location.href = 'login.html';
+        console.error('Stack:', e.stack);
+        // No redirigir automáticamente, mostrar el error en consola
+        // window.location.href = 'login.html';
     }
 }
 
@@ -124,62 +126,90 @@ function formatDate(dateString) {
 
 // Event Listeners
 function initProfileEvents() {
-    // --- 1. NUEVA LÓGICA: EDITAR PERFIL (Modal y API) ---
+    // --- 1. NUEVA LÓGICA: EDITAR PERFIL ---
     const btnEditProfile = document.getElementById('btnEditProfile');
     const modalEditProfile = document.getElementById('modalEditProfile');
     const btnCancelEdit = document.getElementById('btnCancelEdit');
     const formEditProfile = document.getElementById('formEditProfile');
 
     if (btnEditProfile) {
-        // Al hacer clic en "Editar Perfil", abrimos el modal y llenamos los datos
         btnEditProfile.addEventListener('click', () => {
             const user = window.getCurrentUserData();
             
+            // Llenamos los datos
             document.getElementById('editEmail').value = user.email || '';
             document.getElementById('editNombre').value = user.nombre || '';
             document.getElementById('editApellidos').value = user.apellidos || '';
-            document.getElementById('editFoto').value = user.foto_perfil || '';
             document.getElementById('editMessage').innerHTML = ''; 
+            
+            // Reseteamos y mostramos la foto actual si existe
+            fotoBase64Temporal = ""; 
+            const preview = document.getElementById('previewFoto');
+            if (user.foto_perfil) {
+                preview.src = user.foto_perfil;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
             
             modalEditProfile.style.display = 'flex'; 
         });
     }
 
+    // --- LEER LA IMAGEN CUANDO EL USUARIO LA SELECCIONA ---
+    const inputFoto = document.getElementById('profilePhotoUpload');
+    if (inputFoto) {
+        inputFoto.addEventListener('change', function(evento) {
+            const archivo = evento.target.files[0];
+            if (!archivo) return;
+
+            // Usamos FileReader para convertir la imagen a texto (Base64)
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                fotoBase64Temporal = e.target.result; // Guardamos el Base64
+                
+                // Actualizamos la miniatura para que el usuario vea su nueva foto
+                const preview = document.getElementById('previewFoto');
+                preview.src = fotoBase64Temporal;
+                preview.style.display = 'block';
+            };
+            lector.readAsDataURL(archivo);
+        });
+    }
+
     if (btnCancelEdit) {
-        // Al hacer clic en "Cancelar", ocultamos el modal
         btnCancelEdit.addEventListener('click', () => {
             modalEditProfile.style.display = 'none';
         });
     }
 
+    // --- ENVIAR LOS DATOS ---
     if (formEditProfile) {
-        // Al enviar el formulario (Guardar Cambios)
         formEditProfile.addEventListener('submit', async (e) => {
             e.preventDefault(); 
             
             const btnSave = document.getElementById('btnSaveEdit');
             const divMessage = document.getElementById('editMessage');
             
-            // Estado visual de "Cargando"
             btnSave.disabled = true;
             btnSave.textContent = 'Guardando...';
             divMessage.innerHTML = '';
 
-            // Armamos el Payload
-            const payload = {};
-            const nombre = document.getElementById('editNombre').value.trim();
-            const apellidos = document.getElementById('editApellidos').value.trim();
-            const foto = document.getElementById('editFoto').value.trim();
-            
-            if (nombre) payload.nombre = nombre;
-            if (apellidos) payload.apellidos = apellidos;
-            if (foto) payload.foto_perfil = foto;
+            // Armamos el Payload incluyendo el Email
+            const payload = {
+                nombre: document.getElementById('editNombre').value.trim(),
+                apellidos: document.getElementById('editApellidos').value.trim(),
+                email: document.getElementById('editEmail').value.trim()
+            };
+
+            // Solo mandamos la foto si el usuario subió una nueva
+            if (fotoBase64Temporal !== "") {
+                payload.foto_perfil = fotoBase64Temporal;
+            }
 
             try {
-                // Obtenemos tu token de seguridad
                 const token = window.getAccessToken(); 
                 
-                // Llamamos a nuestro nuevo endpoint del backend
                 const response = await fetch(`${API_BASE}/usuarios/me`, {
                     method: 'PATCH',
                     headers: {
@@ -192,16 +222,14 @@ function initProfileEvents() {
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Éxito: Mostramos mensaje verde
                     divMessage.innerHTML = `<span style="color: green;">${data.mensaje}</span>`;
                     
-                    // Actualizamos la memoria del frontend y la pantalla
+                    // Actualizamos memoria y pantalla
                     const user = window.getCurrentUserData();
                     const updatedUser = { ...user, ...payload }; 
                     window.setCurrentUserData(updatedUser);
                     loadProfileData(); 
                     
-                    // Cerramos el modal tras un breve retraso
                     setTimeout(() => {
                         modalEditProfile.style.display = 'none';
                         btnSave.disabled = false;
@@ -209,15 +237,13 @@ function initProfileEvents() {
                     }, 1500);
                     
                 } else {
-                    // Error de validación o del servidor
                     divMessage.innerHTML = `<span style="color: red;">Error: ${data.detail || 'No se pudo actualizar'}</span>`;
                     btnSave.disabled = false;
                     btnSave.textContent = 'Guardar Cambios';
                 }
             } catch (error) {
-                // Error de conexión a internet o backend apagado
                 console.error("Error al actualizar perfil:", error);
-                divMessage.innerHTML = `<span style="color: red;">Error de conexión con el servidor.</span>`;
+                divMessage.innerHTML = `<span style="color: red;">Error de conexión.</span>`;
                 btnSave.disabled = false;
                 btnSave.textContent = 'Guardar Cambios';
             }
