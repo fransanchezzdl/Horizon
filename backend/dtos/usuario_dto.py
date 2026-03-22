@@ -11,3 +11,10 @@ class UsuarioResponse(BaseModel):
     membresia: Optional[str] = None
     foto_perfil: Optional[str] = None
     created_at: Optional[datetime] = None
+
+# DTO de entrada para actualizar el perfil (Seguridad: solo campos permitidos)
+class PerfilUpdateDTO(BaseModel):
+    nombre: Optional[str] = None
+    apellidos: Optional[str] = None
+    # Descomentar cuando esté preparado para manejarlo:
+    #foto_perfil: Optional[str] = None

@@ -185,6 +185,20 @@ def get_current_user_info(user_id: str = Depends(auth_service.get_current_user))
     
     return user
 
+# ─── Endpoint de Editar Perfil ─────────────────────────────────────────
+@app.patch("/usuarios/me")
+def editar_mi_perfil(
+    datos: PerfilUpdateDTO, 
+    user_id: str = Depends(auth_service.get_current_user)
+):
+    try:
+        # AQUÍ: Cambiamos usuario_service por user_service
+        resultado = user_service.actualizar_perfil(user_id, datos)
+        return resultado
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al actualizar el perfil: {str(e)}")
+    
 
 # ─── Endpoints de Portfolios ─────────────────────────────────────────
 
