@@ -2,30 +2,34 @@
  * Lógica de la página de artículo de reflexión (reflexion.html)
  * Extrae el ?id= de la URL, carga el artículo desde el backend y puebla la página.
  */
-checkLogin();
 
 const API_BASE = window.API_BASE;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const params = new URLSearchParams(window.location.search);
-    const idReflexion = params.get('id');
-
-    if (!idReflexion) {
-        window.location.replace('index.html');
+// VALIDAR AUTENTICACIÓN CENTRALIZADA
+(async () => {
+    const result = await window.validateAuthToken();
+    if (!result.valid) {
+        window.clearAuthSession();
+        window.location.replace('login.html');
         return;
     }
 
-    cargarArticulo(idReflexion);
-});
+    document.addEventListener('DOMContentLoaded', () => {
+        const params = new URLSearchParams(window.location.search);
+        const idReflexion = params.get('id');
+
+        if (!idReflexion) {
+            window.location.replace('index.html');
+            return;
+        }
+
+        cargarArticulo(idReflexion);
+    });
+})();
 
 async function cargarArticulo(id) {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
-
     try {
-        const response = await fetch(`${API_BASE}/reflexion/${id}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const response = await window.fetchWithAuth(`${API_BASE}/reflexion/${id}`);
 
         if (response.status === 404 || response.status === 401) {
             window.location.replace('index.html');
@@ -82,11 +86,4 @@ function poblarPagina(data) {
 function setTexto(id, texto) {
     const el = document.getElementById(id);
     if (el) el.textContent = texto;
-}
-
-function checkLogin() {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-        window.location.replace('login.html');
-    }
 }

@@ -152,6 +152,40 @@ def obtener_reflexion(id_reflexion: int, user_id: str = Depends(auth_service.get
     return reflexion_service.obtener_por_id(id_reflexion)
 
 
+# ─── Endpoint de Autenticación ──────────────────────────────────────
+
+@app.get("/auth/me", response_model=UsuarioResponse)
+def get_current_user_info(user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Endpoint para validar la autenticación del usuario.
+    
+    El frontend llama a este endpoint para:
+    1. Validar que el token es auténtico contra Supabase Auth
+    2. Obtener los datos actualizados del usuario autenticado
+    
+    Reutiliza auth_service.get_current_user() que:
+    - Extrae el token del header Authorization
+    - Valida el token contra Supabase Auth
+    - Verifica firma criptográfica, expiración y revocación
+    - Extrae y devuelve el user_id
+    
+    Header requerido:
+    - Authorization: Bearer <JWT_TOKEN>
+    
+    Returns:
+    - 200 OK: {UsuarioResponse} - Token válido y auténtico
+    - 401 Unauthorized: Token inválido, expirado o revocado
+    - 401 Unauthorized: Header Authorization falta o está mal formateado
+    """
+    user = usuario_dao.obtener_por_id(user_id)
+    if not user:
+        # Caso raro: token válido pero usuario no existe
+        # Podría ocurrir si se eliminó el usuario después de login
+        raise HTTPException(status_code=401, detail="Usuario no encontrado")
+    
+    return user
+
+
 # ─── Endpoints de Portfolios ─────────────────────────────────────────
 
 @app.get("/portfolios", response_model=list[PortfolioListResponse])

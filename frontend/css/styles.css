@@ -729,13 +729,13 @@ p {
     display: none;
     position: fixed;
     bottom: 1%;
-    left: 1%;
-    right: 1%;
+    left: 5%;
+    right: 5%;
     height: 70px;
     background: white;
     box-shadow: 0 0px 10px var(--color-primary);
     z-index: 1000;
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
 }
 
 .bottom-navbar-items {
@@ -1628,13 +1628,15 @@ body > section {
 
 .search-input-chat {
     width: 100%;
-    height: 30px;
+    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 10px;
+    height: 40px;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
     background: var(--color-bg-lighter);
     font-family: var(--font-sans);
     font-weight: 500;
     font-size: 12px;
+    
 }
 
 .search-input::placeholder {
@@ -2366,57 +2368,6 @@ body > section {
     border-top: 1px solid var(--color-border);
 }
 
-/* Botones genéricos */
-.btn-primary,
-.btn-outline {
-    padding: var(--spacing-md) var(--spacing-lg);
-    font-family: var(--font-sans);
-    font-size: 14px;
-    font-weight: 600;
-    border-radius: var(--radius-md);
-    border: none;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    min-height: 40px;
-}
-
-.btn-primary {
-    background: var(--color-primary);
-    color: white;
-    border: 1px solid var(--color-primary);
-}
-
-.btn-primary:hover {
-    background: #1d4ed8;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
-}
-
-.btn-primary:active {
-    transform: translateY(0);
-}
-
-.btn-outline {
-    background: white;
-    color: var(--color-primary);
-    border: 1px solid var(--color-border);
-}
-
-.btn-outline:hover {
-    background: var(--color-bg-light);
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-    transform: translateY(-1px);
-}
-
-.btn-outline:active {
-    transform: translateY(0);
-}
-
 /* Form groups dentro de modales */
 .form-group {
     margin-bottom: var(--spacing-lg);
@@ -2424,14 +2375,6 @@ body > section {
 
 .form-group:last-child {
     margin-bottom: 0;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: var(--spacing-sm);
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--color-text-primary);
 }
 
 .form-group input,
