@@ -23,7 +23,8 @@ class UserService:
                 user_id=user_id,
                 nombre=datos_dict.get("nombre"),
                 apellidos=datos_dict.get("apellidos"),
-                foto_perfil=datos_dict.get("foto_perfil")
+                foto_perfil=datos_dict.get("foto_perfil"),
+                email=datos_dict.get("email")
             )
         except Exception as e:
             # Si el DAO o Supabase fallan, lanzamos la excepción que el main.py atrapará
