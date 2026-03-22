@@ -37,6 +37,20 @@ class UsuarioDAO:
             "foto_perfil": foto_perfil,
         }).execute()
 
+    # Función para actualizar el perfil del usuario
+    def actualizar_perfil(self, user_id: str, nombre: str | None = None, apellidos: str | None = None, foto_perfil: str | None = None) -> None:
+        """Actualiza el perfil del usuario con los campos proporcionados."""
+        update_data = {}
+        if nombre is not None:
+            update_data["nombre"] = nombre
+        if apellidos is not None:
+            update_data["apellidos"] = apellidos
+        if foto_perfil is not None:
+            update_data["foto_perfil"] = foto_perfil
+
+        if update_data:
+            self.db.table("usuarios").update(update_data).eq("id_usuario", user_id).execute()
+
 
 # Instanciamos el DAO para usarlo en nuestras rutas
 usuario_dao = UsuarioDAO(supabase)

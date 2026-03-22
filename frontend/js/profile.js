@@ -101,21 +101,112 @@ function formatDate(dateString) {
 
 // Event Listeners
 function initProfileEvents() {
-    // Editar Perfil
+    // --- 1. NUEVA LÓGICA: EDITAR PERFIL (Modal y API) ---
     const btnEditProfile = document.getElementById('btnEditProfile');
+    const modalEditProfile = document.getElementById('modalEditProfile');
+    const btnCancelEdit = document.getElementById('btnCancelEdit');
+    const formEditProfile = document.getElementById('formEditProfile');
+
     if (btnEditProfile) {
+        // Al hacer clic en "Editar Perfil", abrimos el modal y llenamos los datos
         btnEditProfile.addEventListener('click', () => {
-            alert('Funcionalidad de edición en desarrollo');
-            // TODO: Abrir modal o página de edición
+            const user = window.getCurrentUserData();
+            
+            document.getElementById('editEmail').value = user.email || '';
+            document.getElementById('editNombre').value = user.nombre || '';
+            document.getElementById('editApellidos').value = user.apellidos || '';
+            document.getElementById('editFoto').value = user.foto_perfil || '';
+            document.getElementById('editMessage').innerHTML = ''; 
+            
+            modalEditProfile.style.display = 'flex'; 
         });
     }
 
+    if (btnCancelEdit) {
+        // Al hacer clic en "Cancelar", ocultamos el modal
+        btnCancelEdit.addEventListener('click', () => {
+            modalEditProfile.style.display = 'none';
+        });
+    }
+
+    if (formEditProfile) {
+        // Al enviar el formulario (Guardar Cambios)
+        formEditProfile.addEventListener('submit', async (e) => {
+            e.preventDefault(); 
+            
+            const btnSave = document.getElementById('btnSaveEdit');
+            const divMessage = document.getElementById('editMessage');
+            
+            // Estado visual de "Cargando"
+            btnSave.disabled = true;
+            btnSave.textContent = 'Guardando...';
+            divMessage.innerHTML = '';
+
+            // Armamos el Payload
+            const payload = {};
+            const nombre = document.getElementById('editNombre').value.trim();
+            const apellidos = document.getElementById('editApellidos').value.trim();
+            const foto = document.getElementById('editFoto').value.trim();
+            
+            if (nombre) payload.nombre = nombre;
+            if (apellidos) payload.apellidos = apellidos;
+            if (foto) payload.foto_perfil = foto;
+
+            try {
+                // Obtenemos tu token de seguridad
+                const token = window.getAccessToken(); 
+                
+                // Llamamos a nuestro nuevo endpoint del backend
+                const response = await fetch(`${API_BASE}/usuarios/me`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Éxito: Mostramos mensaje verde
+                    divMessage.innerHTML = `<span style="color: green;">${data.mensaje}</span>`;
+                    
+                    // Actualizamos la memoria del frontend y la pantalla
+                    const user = window.getCurrentUserData();
+                    const updatedUser = { ...user, ...payload }; 
+                    window.setCurrentUserData(updatedUser);
+                    loadProfileData(); 
+                    
+                    // Cerramos el modal tras un breve retraso
+                    setTimeout(() => {
+                        modalEditProfile.style.display = 'none';
+                        btnSave.disabled = false;
+                        btnSave.textContent = 'Guardar Cambios';
+                    }, 1500);
+                    
+                } else {
+                    // Error de validación o del servidor
+                    divMessage.innerHTML = `<span style="color: red;">Error: ${data.detail || 'No se pudo actualizar'}</span>`;
+                    btnSave.disabled = false;
+                    btnSave.textContent = 'Guardar Cambios';
+                }
+            } catch (error) {
+                // Error de conexión a internet o backend apagado
+                console.error("Error al actualizar perfil:", error);
+                divMessage.innerHTML = `<span style="color: red;">Error de conexión con el servidor.</span>`;
+                btnSave.disabled = false;
+                btnSave.textContent = 'Guardar Cambios';
+            }
+        });
+    }
+
+    // --- 2. LÓGICA PENDIENTE (Contraseña, 2FA, Planes) ---
     // Cambiar Contraseña
     const btnChangePassword = document.getElementById('btnChangePassword');
     if (btnChangePassword) {
         btnChangePassword.addEventListener('click', () => {
             alert('Funcionalidad de cambio de contraseña en desarrollo');
-            // TODO: Abrir modal para cambiar contraseña
         });
     }
 
@@ -124,7 +215,6 @@ function initProfileEvents() {
     if (btn2FA) {
         btn2FA.addEventListener('click', () => {
             alert('Funcionalidad de 2FA en desarrollo');
-            // TODO: Configurar 2FA
         });
     }
 
@@ -133,7 +223,6 @@ function initProfileEvents() {
     if (btnUpgrade) {
         btnUpgrade.addEventListener('click', () => {
             alert('Próximamente podrás mejorar tu plan');
-            // TODO: Mostrar opciones de planes
         });
     }
 }

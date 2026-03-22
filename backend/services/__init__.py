@@ -9,6 +9,7 @@ from .chat_service import ChatService, chat_service
 from .activo_service import ActivoService, activo_service
 from .reflexion_service import ReflexionService, reflexion_service
 from .activo_update_service import ActivoUpdateService, activo_update_service
+from .user_service import user_service
 
 __all__ = [
     "AuthService", 
@@ -30,4 +31,5 @@ __all__ = [
     "reflexion_service",
     "ActivoUpdateService",
     "activo_update_service",
+    "user_service",
 ]
