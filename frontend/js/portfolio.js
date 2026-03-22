@@ -93,67 +93,66 @@ async function loadPortfolioDetails(portfolioId) {
 
 function renderPortfolioSelector() {
     /**
-     * Muestra un selector de portfolios del usuario
-     * Se muestra siempre para permitir cambiar entre ellos
+     * Rellena el selector de portfolios con las opciones disponibles
+     * Usa el HTML del archivo portfolio.html (no lo genera)
      */
-    const container = document.querySelector('.page-header');
-    let selectorContainer = document.getElementById('portfolioSelectorContainer');
+    const selectorContainer = document.getElementById('portfolioSelectorContainer');
+    const portfolioSelector = document.getElementById('portfolioSelector');
+    const riskBadge = document.getElementById('portfolioRiskBadge');
     
-    if (!selectorContainer && currentPortfolios.length > 0) {
-        selectorContainer = document.createElement('div');
-        selectorContainer.id = 'portfolioSelectorContainer';
-        selectorContainer.style.cssText = `
-            margin-top: 15px;
-            padding: 15px;
-            background: #f9fafb;
-            border-radius: 8px;
-            border: 1px solid #e5e7eb;
-        `;
+    if (!selectorContainer || !portfolioSelector) {
+        console.warn('⚠️ Elementos del selector no encontrados en HTML');
+        return;
+    }
+    
+    // Mostrar/ocultar la sección basada en si hay portfolios
+    if (currentPortfolios.length === 0) {
+        selectorContainer.style.display = 'none';
+        return;
+    }
+    
+    selectorContainer.style.display = 'flex';
+    
+    // Limpiar opciones previas
+    portfolioSelector.innerHTML = '';
+    
+    // Agregar opciones con datos de portfolios
+    currentPortfolios.forEach(portfolio => {
+        const option = document.createElement('option');
+        option.value = portfolio.id_portfolio;
+        option.textContent = portfolio.nombre_portfolio;
         
-        let selectorHTML = `
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-                <label style="font-weight: 600; color: #333;">Mis Portfolios:</label>
-                <select id="portfolioSelector" style="
-                    padding: 8px 12px;
-                    border: 1px solid #e5e7eb;
-                    border-radius: 6px;
-                    font-family: inherit;
-                    cursor: pointer;
-                    min-width: 250px;
-                ">
-        `;
+        if (portfolio.id_portfolio === currentPortfolioId) {
+            option.selected = true;
+            // Actualizar badge de riesgo
+            const riskLevel = portfolio.riesgo < 0.35 ? 'Agresivo' : 
+                              portfolio.riesgo < 0.65 ? 'Moderado' : 'Conservador';
+            riskBadge.textContent = `${riskLevel} (${(portfolio.riesgo * 100).toFixed(0)}%)`;
+        }
         
-        currentPortfolios.forEach(portfolio => {
-            const selected = portfolio.id_portfolio === currentPortfolioId ? 'selected' : '';
-            const riskLevel = portfolio.riesgo < 0.35 ? '🔴 Agresivo' : 
-                              portfolio.riesgo < 0.65 ? '🟡 Moderado' : '🟢 Conservador';
-            selectorHTML += `
-                <option value="${portfolio.id_portfolio}" ${selected}>
-                    ${portfolio.nombre_portfolio} - ${riskLevel}
-                </option>
-            `;
-        });
-        
-        selectorHTML += `
-                </select>
-                <button class="btn-primary" onclick="createNewPortfolio()" style="padding: 8px 16px; font-size: 13px;">
-                    + Nuevo Portfolio
-                </button>
-            </div>
-        `;
-        
-        selectorContainer.innerHTML = selectorHTML;
-        container.parentNode.insertBefore(selectorContainer, container.nextSibling);
-        
-        console.log(`📊 Selector renderizado con ${currentPortfolios.length} portfolio(s)`);
-        
-        // Event listener para cambiar portfolio
-        document.getElementById('portfolioSelector').addEventListener('change', async (e) => {
+        portfolioSelector.appendChild(option);
+    });
+    
+    console.log(`📊 Selector rellenado con ${currentPortfolios.length} portfolio(s)`);
+    
+    // Event listener para cambiar portfolio (agregar solo si no existe)
+    if (!portfolioSelector.hasListener) {
+        portfolioSelector.addEventListener('change', async (e) => {
             const portfolioId = parseInt(e.target.value);
             console.log(`🔀 Cambiando a portfolio ${portfolioId}`);
             currentPortfolioId = portfolioId;
+            
+            // Actualizar badge de riesgo
+            const portfolio = currentPortfolios.find(p => p.id_portfolio === portfolioId);
+            if (portfolio) {
+                const riskLevel = portfolio.riesgo < 0.35 ? 'Agresivo' : 
+                                  portfolio.riesgo < 0.65 ? 'Moderado' : 'Conservador';
+                riskBadge.textContent = `${riskLevel} (${(portfolio.riesgo * 100).toFixed(0)}%)`;
+            }
+            
             await loadPortfolioDetails(portfolioId);
         });
+        portfolioSelector.hasListener = true;
     }
 }
 
@@ -302,68 +301,171 @@ async function deleteAsset(stockId) {
 // ============================================================
 
 function showAddAssetModal() {
-    const modal = `
-        <div id="assetModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Añadir Activo al Portfolio</h3>
-                    <button class="btn-close" onclick="closeAddAssetModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Ticker del Activo</label>
-                        <input type="text" id="tickerInput" placeholder="Ingresa el símbolo (ej: AAPL, MSFT, GOOGL, TSLA)" maxlength="10" style="text-transform: uppercase;">
-                        <small style="color: #999; margin-top: 5px; display: block;">Ejemplos de tickers válidos: AAPL, MSFT, GOOGL, AMZN, TSLA, NVDA, META, NFLX</small>
-                    </div>
-                    <div id="tickerError" style="display: none; color: #dc2626; font-size: 13px; margin-top: 10px;"></div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" onclick="closeAddAssetModal()">Cancelar</button>
-                    <button class="btn-primary" onclick="addAssetToPortfolio()">Añadir Activo</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modal);
-    const input = document.getElementById('tickerInput');
-    input.focus();
+    /**
+     * Muestra el modal de agregar activos (ya existe en portfolio.html)
+     * Configura la búsqueda dinámica de activos
+     */
+    const modal = document.getElementById('assetModal');
+    const searchInput = document.getElementById('assetSearch');
+    const suggestions = document.getElementById('assetSuggestions');
+    const errorDiv = document.getElementById('tickerError');
+    const selectedInfo = document.getElementById('selectedAssetInfo');
+    const addBtn = document.getElementById('addAssetBtn');
+    let selectedAsset = null;
+    let debounceTimer = null;
+    let activeIndex = -1;
     
-    // Enter para enviar
-    input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addAssetToPortfolio();
+    // Mostrar modal
+    modal.style.display = 'flex';
+    searchInput.value = '';
+    suggestions.hidden = true;
+    errorDiv.style.display = 'none';
+    selectedInfo.style.display = 'none';
+    addBtn.disabled = true;
+    searchInput.focus();
+    
+    // Buscar activos en la API
+    async function buscarActivos(query) {
+        try {
+            const resp = await window.fetchWithAuth(`${API_BASE}/activos?q=${encodeURIComponent(query)}`);
+            if (!resp.ok) return [];
+            return await resp.json();
+        } catch (err) {
+            console.error('Error buscando activos:', err);
+            return [];
+        }
+    }
+    
+    // Renderizar sugerencias
+    function renderSuggestions(list) {
+        suggestions.innerHTML = '';
+        if (list.length === 0) { 
+            suggestions.hidden = true; 
+            return; 
+        }
+        suggestions.hidden = false;
+        list.forEach((activo) => {
+            const li = document.createElement('li');
+            li.className = 'suggestion-item';
+            li.tabIndex = 0;
+            li.innerHTML = `<span><span class="suggestion-symbol">${activo.ticker}</span> <span class="suggestion-name">${activo.nombre_completo}</span></span>`;
+            li.addEventListener('click', () => {
+                seleccionarActivo(activo);
+            });
+            suggestions.appendChild(li);
+        });
+    }
+    
+    // Seleccionar un activo
+    function seleccionarActivo(activo) {
+        selectedAsset = activo;
+        searchInput.value = activo.ticker;
+        suggestions.hidden = true;
+        
+        // Mostrar información del activo seleccionado
+        document.getElementById('selectedAssetName').textContent = activo.nombre_completo;
+        document.getElementById('selectedAssetTicker').textContent = activo.ticker;
+        selectedInfo.style.display = 'block';
+        
+        // Habilitar botón de añadir
+        addBtn.disabled = false;
+        errorDiv.style.display = 'none';
+        
+        console.log('[OK] Activo seleccionado:', activo);
+    }
+    
+    // Evento de búsqueda con debounce
+    searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim();
+        if (q.length === 0) { 
+            suggestions.hidden = true; 
+            selectedAsset = null;
+            addBtn.disabled = true;
+            selectedInfo.style.display = 'none';
+            return; 
+        }
+        
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(async () => {
+            const results = await buscarActivos(q);
+            renderSuggestions(results);
+            activeIndex = -1;
+        }, 250);
     });
-
-    // Escape para cerrar
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') closeAddAssetModal();
-    }, { once: true });
+    
+    // Navegación con teclado
+    searchInput.addEventListener('keydown', (e) => {
+        const items = suggestions.querySelectorAll('.suggestion-item');
+        if (e.key === 'ArrowDown') { 
+            e.preventDefault(); 
+            activeIndex = Math.min(activeIndex + 1, items.length - 1); 
+        }
+        else if (e.key === 'ArrowUp') { 
+            e.preventDefault(); 
+            activeIndex = Math.max(activeIndex - 1, 0); 
+        }
+        else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeIndex >= 0 && items[activeIndex]) { 
+                items[activeIndex].click(); 
+            }
+            else if (selectedAsset) {
+                addAssetToPortfolio();
+            }
+        }
+        items.forEach((it, idx) => it.classList.toggle('active', idx === activeIndex));
+    });
+    
+    // Cerrar sugerencias al hacer click fuera
+    document.addEventListener('click', (ev) => {
+        if (!ev.target.closest('.input-wrap')) suggestions.hidden = true;
+    });
+    
+    // Escape para cerrar modal
+    const escapeHandler = (e) => {
+        if (e.key === 'Escape') {
+            closeAddAssetModal();
+            document.removeEventListener('keydown', escapeHandler);
+        }
+    };
+    document.addEventListener('keydown', escapeHandler);
 }
 
 function closeAddAssetModal() {
     const modal = document.getElementById('assetModal');
-    if (modal) modal.remove();
+    const searchInput = document.getElementById('assetSearch');
+    const suggestions = document.getElementById('assetSuggestions');
+    
+    modal.style.display = 'none';
+    suggestions.hidden = true;
+    searchInput.value = '';
+    
+    // Limpiar listeners escondiendo y mostrando modal vacío
+    document.getElementById('selectedAssetInfo').style.display = 'none';
+    document.getElementById('tickerError').style.display = 'none';
 }
 
 async function addAssetToPortfolio() {
-    const ticker = document.getElementById('tickerInput')?.value?.toUpperCase()?.trim();
+    const searchInput = document.getElementById('assetSearch');
     const errorDiv = document.getElementById('tickerError');
+    
+    let ticker = searchInput.value?.toUpperCase()?.trim();
     
     // Validación básica
     if (!ticker || ticker.length === 0) {
-        errorDiv.textContent = '⚠️ Por favor ingresa un ticker';
+        errorDiv.textContent = 'Por favor selecciona un activo de la lista';
         errorDiv.style.display = 'block';
         return;
     }
 
     if (ticker.length > 10) {
-        errorDiv.textContent = '⚠️ El ticker es muy largo (máximo 10 caracteres)';
+        errorDiv.textContent = 'El ticker es muy largo (máximo 10 caracteres)';
         errorDiv.style.display = 'block';
         return;
     }
 
     if (!/^[A-Z0-9]+$/.test(ticker)) {
-        errorDiv.textContent = '⚠️ El ticker solo debe contener letras y números';
+        errorDiv.textContent = 'El ticker solo debe contener letras y números';
         errorDiv.style.display = 'block';
         return;
     }
@@ -374,7 +476,7 @@ async function addAssetToPortfolio() {
     }
 
     try {
-        console.log(`📝 Añadiendo activo ${ticker} al portfolio ${currentPortfolioId}`);
+        console.log(`[INFO] Aniadiendo activo ${ticker} al portfolio ${currentPortfolioId}`);
         
         const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}/activos`, {
             method: 'POST',
@@ -388,23 +490,23 @@ async function addAssetToPortfolio() {
 
         if (response.ok) {
             const data = await response.json();
-            console.log(`✅ Activo añadido:`, data);
-            showAlert(`✅ Activo ${ticker} añadido correctamente`, 'success');
+            console.log(`[OK] Activo aniadido:`, data);
+            showAlert(`Activo ${ticker} aniadido correctamente`, 'success');
             closeAddAssetModal();
             await loadPortfolioDetails(currentPortfolioId);
         } else if (response.status === 400) {
             const error = await response.json().catch(() => ({}));
-            console.error('❌ Ticker inválido:', error);
-            errorDiv.textContent = `⚠️ ${error.detail || 'Ticker inválido o no existe'}`;
+            console.error('[ERROR] Ticker invalido:', error);
+            errorDiv.textContent = error.detail || 'Ticker invalido o no existe';
             errorDiv.style.display = 'block';
         } else {
             const error = await response.json().catch(() => ({}));
-            console.error('❌ Error:', error);
-            showAlert(`Error al añadir activo: ${response.status}`, 'error');
+            console.error('[ERROR]:', error);
+            showAlert(`Error al aniadir activo: ${response.status}`, 'error');
         }
     } catch (error) {
-        console.error('❌ Error:', error);
-        showAlert('Error de conexión', 'error');
+        console.error('[ERROR]:', error);
+        showAlert('Error de conexion', 'error');
     }
 }
 

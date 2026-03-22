@@ -51,11 +51,13 @@ class PortfolioDAO:
                 .execute()
             )
             
-            print(f"📤 INSERT Response: {response.data}")
+            print(f"[DB] INSERT Response: {response.data}")
             
             if response.data:
                 portfolio_id = response.data[0].get('id_portfolio')
                 id_usuario = response.data[0].get('id_usuario')
+                
+                print(f"[DB] Intentando guardar relacion: usuario={id_usuario}, portfolio={portfolio_id}")
                 
                 # Guardar la relación en usuarios_portfolios
                 try:
@@ -66,23 +68,27 @@ class PortfolioDAO:
                     }
                     
                     relacion_response = (
-                        supabase.table("usuarios_portfolios")
+                        supabase.table("usuario_portfolio")
                         .insert(relacion)
                         .execute()
                     )
                     
-                    print(f"✅ Relación guardada en usuarios_portfolios: {relacion_response.data}")
+                    print(f"[OK] Relacion guardada en usuarios_portfolios: {relacion_response.data}")
                     
                 except Exception as e:
-                    print(f"⚠️  Advertencia: No se pudo guardar relación en usuarios_portfolios: {e}")
-                    # No lanzamos error aquí, el portfolio ya se creó
+                    print(f"[ERROR] ERROR guardando relacion en usuarios_portfolios: {e}")
+                    print(f"   Tipo de error: {type(e).__name__}")
+                    print(f"   Datos intentados: id_usuario={id_usuario}, id_portfolio={portfolio_id}")
+                    import traceback
+                    traceback.print_exc()
+                    # No lanzamos error aqui, el portfolio ya se creo
                 
-                print(f"✅ Portfolio {portfolio_id} creado para usuario {id_usuario}")
+                print(f"[OK] Portfolio {portfolio_id} creado para usuario {id_usuario}")
                 return portfolio_id
             return None
         
         except Exception as e:
-            print(f"❌ Error creando portfolio: {e}")
+            print(f"[ERROR] Error creando portfolio: {e}")
             import traceback
             traceback.print_exc()
             return None
