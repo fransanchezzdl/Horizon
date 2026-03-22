@@ -4,7 +4,7 @@ function initSidebar() {
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
             <div class="logo">
-                <div class="logo-icon">H</div>
+                <img class="logo-icon" src="assets/icon/logo.png" alt="Logo de Horizon">
                 <span class="logo-text">Horizon</span>
             </div>
             <button class="sidebar-toggle" id="sidebarToggle" aria-label="Contraer barra lateral" title="Contraer barra lateral">
