@@ -1538,24 +1538,28 @@ body > section {
 
 .search-icon {
     position: absolute;
-    left: var(--spacing-md);
+    right: 12px;
     top: 50%;
     transform: translateY(-50%);
     color: #9ca3af;
     pointer-events: none;
     z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .search-input {
     width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md) var(--spacing-sm) 40px;
-    height: 30px;
+    padding: var(--spacing-md) 50px var(--spacing-md) var(--spacing-md);
+    height: 44px;
     border-radius: var(--radius-md);
     border: 1px solid var(--color-border);
-    background: var(--color-bg-lighter);
+    background: white;
     font-family: var(--font-sans);
     font-weight: 500;
-    font-size: 12px;
+    font-size: 14px;
+    transition: all 0.2s ease;
 }
 
 .search-input-chat {
