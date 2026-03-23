@@ -52,6 +52,14 @@ class UsuarioDAO:
 
         if update_data:
             self.db.table("usuarios").update(update_data).eq("id_usuario", user_id).execute()
+    
+    # Función para eliminar el perfil del usuario
+    def eliminar_perfil(self, user_id: str) -> None:
+        """
+        Elimina físicamente el registro del usuario de la tabla pública `usuarios`.
+        """
+        # Ejecutar el comando DELETE donde el id_usuario coincida
+        supabase.table("usuarios").delete().eq("id_usuario", user_id).execute()
 
 
 # Instanciamos el DAO para usarlo en nuestras rutas
