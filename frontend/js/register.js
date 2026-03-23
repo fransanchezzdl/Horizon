@@ -4,6 +4,7 @@
  */
 
 const API_BASE = window.API_BASE;
+let selectedCustomAvatarFile = null;
 
 document.addEventListener('DOMContentLoaded', () => {
     const token = window.getAccessToken();
@@ -41,6 +42,10 @@ function setupProfilePhotoSelector() {
             // Guardar URL
             const photoUrl = option.getAttribute('data-photo');
             fotoPerfilUrl.value = photoUrl;
+            selectedCustomAvatarFile = null;
+
+            const uploadLabel = uploadOption.querySelector('.upload-label');
+            uploadLabel.innerHTML = '<span class="plus-icon">+</span>';
         });
     });
 
@@ -89,10 +94,10 @@ function setupProfilePhotoSelector() {
                 previewImg.src = event.target.result;
                 uploadLabel.appendChild(previewImg);
 
-                // Guardar la foto en base64 o URL blob
-                // NOTA: Para producción, deberías usar Supabase Storage
-                // Por ahora guardaremos la URL blob
-                fotoPerfilUrl.value = event.target.result;
+                // La imagen personalizada se sube después del registro
+                // usando el endpoint /usuarios/me/avatar (multipart/form-data)
+                fotoPerfilUrl.value = '';
+                selectedCustomAvatarFile = file;
             };
             reader.readAsDataURL(file);
         } catch (error) {
@@ -135,7 +140,7 @@ async function handleRegister(e) {
 
     const originalText = btn.textContent;
     btn.disabled = true;
-    btn.textContent = 'Creando...';
+    btn.textContent = selectedCustomAvatarFile ? 'Creando y subiendo foto...' : 'Creando...';
 
     try {
         const response = await fetch(`${API_BASE}/register`, {
@@ -148,7 +153,8 @@ async function handleRegister(e) {
                 apellidos: apellidos || null,
                 email: email, 
                 password: password,
-                foto_perfil: fotoPerfil || null
+                // Solo enviamos URL de default si aplica. La personalizada va por endpoint aparte.
+                foto_perfil: selectedCustomAvatarFile ? null : (fotoPerfil || null)
             })
         });
 
@@ -178,6 +184,28 @@ async function handleRegister(e) {
         // Token válido, usar datos validados
         window.setCurrentUserData(validateResult.user);
         console.log('[REGISTER] Token validado correctamente ✓');
+
+        if (selectedCustomAvatarFile) {
+            const token = window.getAccessToken();
+            const formData = new FormData();
+            formData.append('file', selectedCustomAvatarFile);
+
+            const avatarRes = await fetch(`${API_BASE}/usuarios/me/avatar`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: formData,
+            });
+
+            const avatarData = await avatarRes.json();
+            if (!avatarRes.ok) {
+                throw new Error(avatarData.detail || 'No se pudo subir la foto de perfil');
+            }
+
+            window.setCurrentUserData(avatarData);
+            console.log('[REGISTER] Foto personalizada subida correctamente ✓');
+        }
 
         window.location.href = 'index.html';
 
