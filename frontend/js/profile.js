@@ -291,11 +291,12 @@ function initProfileEvents() {
             btnSave.textContent = 'Guardando...';
             divMessage.innerHTML = '';
 
-            // Armamos el Payload incluyendo el Email
+            // Armamos el Payload. El email se envía como el valor actual del usuario (no editable en UI).
+            const usuarioActual = window.getCurrentUserData();
             const payload = {
                 nombre: document.getElementById('editNombre').value.trim(),
                 apellidos: document.getElementById('editApellidos').value.trim(),
-                email: document.getElementById('editEmail').value.trim()
+                email: usuarioActual?.email || document.getElementById('editEmail').value.trim()
             };
 
             // Incluir foto_perfil si hay una seleccionada o subida
