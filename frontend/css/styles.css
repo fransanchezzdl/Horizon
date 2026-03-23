@@ -1991,6 +1991,13 @@ body > section {
     box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
 }
 
+.form-group input[readonly] {
+    color: #6b7280; /* Gris media / texto deshabilitado */
+    background: #f9fafb; /* Fondo levemente más claro */
+    border-color: #d1d5db; /* Border suavizado */
+    cursor: not-allowed;
+}
+
 .form-group input::placeholder {
     color: #9ca3af;
 }
