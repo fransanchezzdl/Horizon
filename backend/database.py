@@ -22,6 +22,7 @@ def _get_env_var(*names: str) -> Optional[str]:
 
 url: Optional[str] = _get_env_var("SUPABASE_URL")
 key: Optional[str] = _get_env_var("SUPABASE_KEY", "SUPABASE_ANON_KEY")
+service_role_key: Optional[str] = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
 if not url or not key:
     raise ValueError(
@@ -30,10 +31,19 @@ if not url or not key:
     )
 
 
-# Inicializar cliente de Supabase (reutilizable en todo el backend)
+# Inicializar cliente de Supabase con anon key (reutilizable en todo el backend)
 supabase: Client = create_client(url, key)
+
+# Inicializar cliente admin con service role key si está disponible
+supabase_admin: Optional[Client] = None
+if service_role_key:
+    supabase_admin = create_client(url, service_role_key)
 
 
 def get_supabase() -> Client:
     """Helper para obtener el cliente (útil para tests o reinicios)."""
     return supabase
+
+def get_supabase_admin() -> Optional[Client]:
+    """Helper para obtener el cliente admin (necesario para operaciones privilegiadas)."""
+    return supabase_admin
