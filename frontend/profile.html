@@ -128,20 +128,38 @@
                     <label for="editEmail">Email</label>
                     <input type="email" id="editEmail" placeholder="tu@email.com">
                 </div>
+                <!-- INICIO FRAGMENTO FOTO DE PERFIL -->
                 <div class="form-group">
-                    <label for="profilePhotoUpload">Foto de Perfil</label>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <img id="previewFoto" src="" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; display: none;">
-                        
-                        <div class="profile-photo-option.upload">
+                <label for="profilePhotoUpload">Foto de perfil</label>
+                <div class="profile-photo-selector">
+                    <div class="profile-photos-grid">
+                        <!-- Opción 1: Foto predeterminada -->
+                        <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-1.png" title="Opción 1">
+                            <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-1.png" alt="Foto 1">
+                        </div>
+
+                        <!-- Opción 2: Foto predeterminada -->
+                        <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-2.png" title="Opción 2">
+                            <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-2.png" alt="Foto 2">
+                        </div>
+
+                        <!-- Opción 3: Foto predeterminada -->
+                        <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-3.png" title="Opción 3">
+                            <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-3.png" alt="Foto 3">
+                        </div>
+
+                        <!-- Opción 4: Subir foto personalizada -->
+                        <div class="profile-photo-option upload" title="Sube tu foto">
                             <label for="profilePhotoUpload" class="upload-label">
                                 <span class="plus-icon">+</span>
                             </label>
-                            <input type="file" id="profilePhotoUpload" accept="image/*" style="display: none;">
+                            <input type="file" id="profilePhotoUpload" name="profilePhotoUpload" accept="image/*" style="display: none;">
                         </div>
                     </div>
                 </div>
-
+                <input type="hidden" id="fotoPerfilUrl" name="foto_perfil" value="">
+            </div>
+                <!-- FIN FRAGMENTO FOTO DE PERFIL -->
                 <div id="editMessage" style="font-size: 0.9em; margin-top: 10px;"></div>
 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">

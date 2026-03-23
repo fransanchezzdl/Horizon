@@ -17,5 +17,4 @@ class PerfilUpdateDTO(BaseModel):
     email: Optional[str] = None
     nombre: Optional[str] = None
     apellidos: Optional[str] = None
-    # Descomentar cuando esté preparado para manejarlo:
-    #foto_perfil: Optional[str] = None
+    foto_perfil: Optional[str] = None

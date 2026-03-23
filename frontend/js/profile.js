@@ -136,23 +136,83 @@ function initProfileEvents() {
         btnEditProfile.addEventListener('click', () => {
             const user = window.getCurrentUserData();
             
+            // Crear preview si no existe
+            if (!document.getElementById('previewFoto')) {
+                const label = document.createElement('p');
+                label.id = 'previewLabel';
+                label.textContent = 'Vista Previa:';
+                label.style.cssText = 'display:none; margin: 10px 0 5px 0; font-size: 0.9em; color: var(--color-text-secondary);';
+                
+                const preview = document.createElement('img');
+                preview.id = 'previewFoto';
+                preview.style.cssText = 'display:none; width:60px; height:60px; border-radius:50%; margin-top:10px;';
+                preview.alt = 'Preview de foto';
+                
+                const fotoPerfilUrl = document.getElementById('fotoPerfilUrl');
+                if (fotoPerfilUrl) {
+                    fotoPerfilUrl.parentNode.insertBefore(label, fotoPerfilUrl);
+                    fotoPerfilUrl.parentNode.insertBefore(preview, fotoPerfilUrl);
+                }
+            }
+            
             // Llenamos los datos
             document.getElementById('editEmail').value = user.email || '';
             document.getElementById('editNombre').value = user.nombre || '';
             document.getElementById('editApellidos').value = user.apellidos || '';
             document.getElementById('editMessage').innerHTML = ''; 
             
-            // Reseteamos y mostramos la foto actual si existe
-            fotoBase64Temporal = ""; 
+            // Resetear selecciones de foto
+            const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
+            photoOptions.forEach(opt => opt.classList.remove('selected'));
+            document.getElementById('fotoPerfilUrl').value = "";
+            fotoBase64Temporal = "";
             const preview = document.getElementById('previewFoto');
-            if (user.foto_perfil) {
-                preview.src = user.foto_perfil;
-                preview.style.display = 'block';
-            } else {
+            if (preview) {
                 preview.style.display = 'none';
             }
+            const label = document.getElementById('previewLabel');
+            if (label) {
+                label.style.display = 'none';
+            }
+
+            // Mostrar foto actual si existe
+            if (user.foto_perfil) {
+                const defaultPhotos = [
+                    "https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-1.png",
+                    "https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-2.png",
+                    "https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-3.png"
+                ];
+                if (defaultPhotos.includes(user.foto_perfil)) {
+                    // Seleccionar la opción predeterminada
+                    const option = document.querySelector(`.profile-photo-option[data-photo="${user.foto_perfil}"]`);
+                    if (option) {
+                        option.classList.add('selected');
+                        document.getElementById('fotoPerfilUrl').value = user.foto_perfil;
+                        const preview = document.getElementById('previewFoto');
+                        if (preview) {
+                            preview.src = user.foto_perfil;
+                            preview.style.display = 'block';
+                        }
+                        const label = document.getElementById('previewLabel');
+                        if (label) {
+                            label.style.display = 'block';
+                        }
+                    }
+                } else {
+                    // Foto personalizada
+                    const preview = document.getElementById('previewFoto');
+                    if (preview) {
+                        preview.src = user.foto_perfil;
+                        preview.style.display = 'block';
+                    }
+                    const label = document.getElementById('previewLabel');
+                    if (label) {
+                        label.style.display = 'block';
+                    }
+                }
+            }
             
-            modalEditProfile.style.display = 'flex'; 
+            modalEditProfile.style.display = 'flex';
         });
     }
 
@@ -170,12 +230,48 @@ function initProfileEvents() {
                 
                 // Actualizamos la miniatura para que el usuario vea su nueva foto
                 const preview = document.getElementById('previewFoto');
-                preview.src = fotoBase64Temporal;
-                preview.style.display = 'block';
+                if (preview) {
+                    preview.src = fotoBase64Temporal;
+                    preview.style.display = 'block';
+                }
+                const label = document.getElementById('previewLabel');
+                if (label) {
+                    label.style.display = 'block';
+                }
+
+                // Resetear selección de predeterminadas
+                const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
+                photoOptions.forEach(opt => opt.classList.remove('selected'));
+                document.getElementById('fotoPerfilUrl').value = "";
             };
             lector.readAsDataURL(archivo);
         });
     }
+
+    // --- SELECCIÓN DE FOTOS PREDETERMINADAS ---
+    const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
+    photoOptions.forEach(option => {
+        option.addEventListener('click', () => {
+            // Remover selected de todas
+            photoOptions.forEach(opt => opt.classList.remove('selected'));
+            // Agregar selected a esta
+            option.classList.add('selected');
+            // Setear la URL
+            const photoUrl = option.getAttribute('data-photo');
+            document.getElementById('fotoPerfilUrl').value = photoUrl;
+            fotoBase64Temporal = ""; // Reset upload
+            // Mostrar preview
+            const preview = document.getElementById('previewFoto');
+            if (preview) {
+                preview.src = photoUrl;
+                preview.style.display = 'block';
+            }
+            const label = document.getElementById('previewLabel');
+            if (label) {
+                label.style.display = 'block';
+            }
+        });
+    });
 
     if (btnCancelEdit) {
         btnCancelEdit.addEventListener('click', () => {
@@ -202,9 +298,12 @@ function initProfileEvents() {
                 email: document.getElementById('editEmail').value.trim()
             };
 
-            // Solo mandamos la foto si el usuario subió una nueva
+            // Incluir foto_perfil si hay una seleccionada o subida
+            const selectedPhoto = document.getElementById('fotoPerfilUrl').value;
             if (fotoBase64Temporal !== "") {
                 payload.foto_perfil = fotoBase64Temporal;
+            } else if (selectedPhoto !== "") {
+                payload.foto_perfil = selectedPhoto;
             }
 
             try {
