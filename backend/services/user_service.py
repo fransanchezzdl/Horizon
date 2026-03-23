@@ -1,5 +1,6 @@
 from fastapi import HTTPException
 from ..dtos.usuario_dto import PerfilUpdateDTO
+from ..database import supabase, get_supabase_admin
 
 class UserService:
     """
@@ -40,4 +41,38 @@ class UserService:
             "status": "exito", 
             "mensaje": "Perfil actualizado correctamente.",
             "datos_actualizados": datos_dict
+        }
+
+    def eliminar_perfil(self, user_id: str) -> dict:
+        """
+        Elimina el perfil del usuario completamente:
+        1. Elimina de la tabla 'usuarios' (base de datos pública)
+        2. Elimina de Supabase Auth (si está disponible el cliente admin)
+        """
+        try:
+            # Primero eliminar de la tabla usuarios
+            self.usuario_dao.eliminar_perfil(user_id)
+            
+            # Luego eliminar de Supabase Auth usando cliente admin
+            supabase_admin = get_supabase_admin()
+            if supabase_admin:
+                try:
+                    supabase_admin.auth.admin.delete_user(user_id)
+                    print(f"[USER SERVICE] Usuario {user_id} eliminado de Supabase Auth")
+                except Exception as auth_error:
+                    print(f"[USER SERVICE] Advertencia al eliminar de Auth: {str(auth_error)}")
+                    # Continuamos aunque falle Auth, ya eliminamos de la tabla
+            else:
+                print("[USER SERVICE] Cliente admin no disponible. Asegúrate de configurar SUPABASE_SERVICE_ROLE_KEY")
+            
+        except Exception as e:
+            print(f"[USER SERVICE] Error al eliminar perfil: {str(e)}")
+            raise HTTPException(
+                status_code=500,
+                detail="Ocurrió un error al intentar eliminar el perfil."
+            )
+        
+        return {
+            "status": "exito",
+            "mensaje": "Perfil eliminado correctamente. La cuenta no podrá ser recuperada."
         }

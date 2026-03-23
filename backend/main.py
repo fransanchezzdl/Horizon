@@ -50,6 +50,14 @@ def get_usuarios():
     usuarios = usuario_dao.obtener_todos()
     return usuarios
 
+@app.delete("/usuarios/me")
+def eliminar_usuario(user_id: str):
+    """
+    Elimina el perfil del usuario actual.
+    """
+    result = user_service.eliminar_perfil(user_id)
+    return result
+
 @app.post("/login", response_model=LoginResponse)
 def login(credenciales: LoginRequest):
     """
@@ -212,6 +220,7 @@ def editar_mi_perfil(datos: PerfilUpdateDTO, user_id: str = Depends(auth_service
     Actualiza los datos del perfil del usuario autenticado (Actualización parcial).
     """
     return user_service.actualizar_perfil(user_id, datos)
+
 
 # ─── Endpoints de Portfolios ─────────────────────────────────────────
 

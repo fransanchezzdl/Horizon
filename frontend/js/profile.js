@@ -359,11 +359,31 @@ function initProfileEvents() {
         });
     }
 
-    // Autenticación de dos factores
-    const btn2FA = document.getElementById('btn2FA');
-    if (btn2FA) {
-        btn2FA.addEventListener('click', () => {
-            alert('Funcionalidad de 2FA en desarrollo');
+    // Eliminar cuenta
+    const btnDeleteAccount = document.getElementById('btnDeleteAccount');
+    if (btnDeleteAccount) {
+        btnDeleteAccount.addEventListener('click', async () => {
+            const confirmDelete = confirm('¿Seguro que desea eliminar la cuenta? Esta acción no se puede deshacer.');
+            if (!confirmDelete) return;
+
+            try {
+                const user = window.getCurrentUserData();
+                const userId = user.id_usuario || user.id;
+                const response = await window.fetchWithAuth(`${API_BASE}/usuarios/me?user_id=${userId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    alert('Cuenta eliminada correctamente.');
+                    window.clearAuthSession();
+                    window.location.replace('login.html');
+                } else {
+                    alert('Error al eliminar la cuenta. Inténtalo de nuevo.');
+                }
+            } catch (error) {
+                console.error('Error eliminando cuenta:', error);
+                alert('Error al eliminar la cuenta. Inténtalo de nuevo.');
+            }
         });
     }
 
