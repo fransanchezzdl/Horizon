@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from .database import supabase
 
@@ -13,6 +13,7 @@ from .services import (
     ReflexionService,
     PortfolioService,
     UserService,
+    storage_service,
 )
 
 # Exception handlers
@@ -34,14 +35,14 @@ register_exception_handlers(app)
 
 
 # Wiring explícito de dependencias (evita singletons innecesarios)
-auth_service = AuthService(supabase, usuario_dao)
+auth_service = AuthService(supabase, usuario_dao, storage_service)
 gemini_service = GeminiService()
 chat_dao = ChatDAO()
 chat_service = ChatService(usuario_dao, chat_dao, gemini_service)
 activo_service = ActivoService(ActivoDAO)
 reflexion_service = ReflexionService(ReflexionDAO)
 portfolio_service = PortfolioService(portfolio_dao=PortfolioDAO)
-user_service = UserService(usuario_dao)
+user_service = UserService(usuario_dao, storage_service)
 
 
 @app.get("/usuarios", response_model=list[UsuarioResponse])
@@ -49,14 +50,6 @@ def get_usuarios():
     # Llamamos al DAO en lugar de a la base de datos directamente
     usuarios = usuario_dao.obtener_todos()
     return usuarios
-
-@app.delete("/usuarios/me")
-def eliminar_usuario(user_id: str):
-    """
-    Elimina el perfil del usuario actual.
-    """
-    result = user_service.eliminar_perfil(user_id)
-    return result
 
 @app.post("/login", response_model=LoginResponse)
 def login(credenciales: LoginRequest):
@@ -211,6 +204,7 @@ def get_current_user_info(user_id: str = Depends(auth_service.get_current_user))
         # Podría ocurrir si se eliminó el usuario después de login
         raise HTTPException(status_code=401, detail="Usuario no encontrado")
     
+    storage_service.hydrate_user_avatar_safe(user, "[AUTH/ME]")
     return user
 
 # ─── Endpoint de Editar Perfil ─────────────────────────────────────────
@@ -220,6 +214,31 @@ def editar_mi_perfil(datos: PerfilUpdateDTO, user_id: str = Depends(auth_service
     Actualiza los datos del perfil del usuario autenticado (Actualización parcial).
     """
     return user_service.actualizar_perfil(user_id, datos)
+
+@app.delete("/usuarios/me")
+def eliminar_usuario(user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Elimina el perfil del usuario actual.
+    """
+    result = user_service.eliminar_perfil(user_id)
+    return result
+
+@app.post("/usuarios/me/avatar", response_model=UsuarioResponse)
+def agregar_mi_avatar(file: UploadFile = File(...), user_id: str = Depends(auth_service.get_current_user)):
+    """Sube un avatar para el usuario autenticado en /avatars/{id_usuario}/..."""
+    return user_service.agregar_avatar(user_id, file)
+
+
+@app.put("/usuarios/me/avatar", response_model=UsuarioResponse)
+def actualizar_mi_avatar(file: UploadFile = File(...), user_id: str = Depends(auth_service.get_current_user)):
+    """Reemplaza el avatar actual del usuario (elimina el anterior)."""
+    return user_service.actualizar_avatar(user_id, file)
+
+
+@app.delete("/usuarios/me/avatar")
+def eliminar_mi_avatar(user_id: str = Depends(auth_service.get_current_user)):
+    """Elimina el avatar actual del usuario y limpia foto_perfil en BD."""
+    return user_service.eliminar_avatar(user_id)
 
 
 # ─── Endpoints de Portfolios ─────────────────────────────────────────

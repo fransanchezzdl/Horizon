@@ -1,6 +1,7 @@
 """Paquete de servicios (business logic)."""
 
 from .auth_service import AuthService, auth_service
+from .storage_service import StorageService, storage_service
 from .finance_service import FinanceService, get_finance_service
 from .prediction_service import PredictionService, get_prediction_service
 from .portfolio_service import PortfolioService, get_portfolio_service
@@ -14,6 +15,8 @@ from .user_service import UserService
 __all__ = [
     "AuthService", 
     "auth_service",
+    "StorageService",
+    "storage_service",
     "FinanceService",
     "get_finance_service",
     "PredictionService",
