@@ -3,6 +3,7 @@ from ..daos import usuario_dao, UsuarioDAO
 from ..dtos import UsuarioResponse
 from fastapi import HTTPException, Header
 from supabase import Client
+from .storage_service import StorageService, storage_service
 
 
 class AuthService:
@@ -11,9 +12,10 @@ class AuthService:
     Orquesta llamadas al cliente de Auth (supabase) y al DAO de usuarios.
     """
 
-    def __init__(self, db_client: Client, usuario_dao_instance: UsuarioDAO):
+    def __init__(self, db_client: Client, usuario_dao_instance: UsuarioDAO, storage_service_instance: StorageService = storage_service):
         self.db = db_client
         self.usuario_dao = usuario_dao_instance
+        self.storage_service = storage_service_instance
 
     def iniciar_sesion(self, email: str, password: str) -> tuple[str, UsuarioResponse]:
         try:
@@ -38,6 +40,8 @@ class AuthService:
                 except Exception:
                     pass
                 raise HTTPException(status_code=403, detail="Usuario no registrado en el sistema.")
+
+            self.storage_service.hydrate_user_avatar_safe(perfil, "[AUTH]")
 
             access_token = session.get("access_token") if isinstance(session, dict) else getattr(session, "access_token", None)
             return access_token, perfil
@@ -69,6 +73,8 @@ class AuthService:
                 raise HTTPException(status_code=400, detail="Error al crear el perfil de usuario")
 
             perfil = self.usuario_dao.obtener_por_id(user_id)
+            if perfil:
+                self.storage_service.hydrate_user_avatar_safe(perfil, "[AUTH]")
 
             access_token = None
             if session:
@@ -189,4 +195,4 @@ class AuthService:
 
 
 # Instanciamos el servicio listo para inyectar en controladores
-auth_service = AuthService(supabase, usuario_dao)
+auth_service = AuthService(supabase, usuario_dao, storage_service)

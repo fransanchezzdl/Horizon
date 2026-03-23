@@ -1,6 +1,79 @@
 const API_BASE = window.API_BASE;
 
-let fotoBase64Temporal = ""; // Guardará el texto de la imagen
+let selectedCustomAvatarFile = null;
+const DEFAULT_AVATAR_URLS = [
+    'https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png',
+    'https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png',
+    'https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-3.png',
+];
+
+function ensurePreviewElements() {
+    let preview = document.getElementById('previewFoto');
+    let label = document.getElementById('previewLabel');
+
+    if (preview && label) {
+        return { preview, label };
+    }
+
+    label = document.createElement('p');
+    label.id = 'previewLabel';
+    label.textContent = 'Vista Previa:';
+    label.style.cssText = 'display:none; margin: 10px 0 5px 0; font-size: 0.9em; color: var(--color-text-secondary);';
+
+    preview = document.createElement('img');
+    preview.id = 'previewFoto';
+    preview.style.cssText = 'display:none; width:60px; height:60px; border-radius:50%; margin-top:10px;';
+    preview.alt = 'Preview de foto';
+
+    const fotoPerfilUrl = document.getElementById('fotoPerfilUrl');
+    if (fotoPerfilUrl) {
+        fotoPerfilUrl.parentNode.insertBefore(label, fotoPerfilUrl);
+        fotoPerfilUrl.parentNode.insertBefore(preview, fotoPerfilUrl);
+    }
+
+    return { preview, label };
+}
+
+function showPreview(src) {
+    const { preview, label } = ensurePreviewElements();
+    if (preview) {
+        preview.src = src;
+        preview.style.display = 'block';
+    }
+    if (label) {
+        label.style.display = 'block';
+    }
+}
+
+function hidePreview() {
+    const preview = document.getElementById('previewFoto');
+    const label = document.getElementById('previewLabel');
+    if (preview) {
+        preview.style.display = 'none';
+    }
+    if (label) {
+        label.style.display = 'none';
+    }
+}
+
+function clearDefaultPhotoSelection(photoOptions) {
+    photoOptions.forEach(opt => opt.classList.remove('selected'));
+}
+
+function applySelectedDefaultPhoto(photoOptions, photoUrl) {
+    clearDefaultPhotoSelection(photoOptions);
+    const option = document.querySelector(`.profile-photo-option[data-photo="${photoUrl}"]`);
+    if (option) {
+        option.classList.add('selected');
+    }
+    document.getElementById('fotoPerfilUrl').value = photoUrl || '';
+    selectedCustomAvatarFile = null;
+    if (photoUrl) {
+        showPreview(photoUrl);
+    } else {
+        hidePreview();
+    }
+}
 
 function initProfilePage() {
     loadProfileData();
@@ -135,25 +208,7 @@ function initProfileEvents() {
     if (btnEditProfile) {
         btnEditProfile.addEventListener('click', () => {
             const user = window.getCurrentUserData();
-            
-            // Crear preview si no existe
-            if (!document.getElementById('previewFoto')) {
-                const label = document.createElement('p');
-                label.id = 'previewLabel';
-                label.textContent = 'Vista Previa:';
-                label.style.cssText = 'display:none; margin: 10px 0 5px 0; font-size: 0.9em; color: var(--color-text-secondary);';
-                
-                const preview = document.createElement('img');
-                preview.id = 'previewFoto';
-                preview.style.cssText = 'display:none; width:60px; height:60px; border-radius:50%; margin-top:10px;';
-                preview.alt = 'Preview de foto';
-                
-                const fotoPerfilUrl = document.getElementById('fotoPerfilUrl');
-                if (fotoPerfilUrl) {
-                    fotoPerfilUrl.parentNode.insertBefore(label, fotoPerfilUrl);
-                    fotoPerfilUrl.parentNode.insertBefore(preview, fotoPerfilUrl);
-                }
-            }
+            ensurePreviewElements();
             
             // Llenamos los datos
             document.getElementById('editEmail').value = user.email || '';
@@ -163,52 +218,18 @@ function initProfileEvents() {
             
             // Resetear selecciones de foto
             const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
-            photoOptions.forEach(opt => opt.classList.remove('selected'));
+            clearDefaultPhotoSelection(photoOptions);
             document.getElementById('fotoPerfilUrl').value = "";
-            fotoBase64Temporal = "";
-            const preview = document.getElementById('previewFoto');
-            if (preview) {
-                preview.style.display = 'none';
-            }
-            const label = document.getElementById('previewLabel');
-            if (label) {
-                label.style.display = 'none';
-            }
+            selectedCustomAvatarFile = null;
+            hidePreview();
 
             // Mostrar foto actual si existe
             if (user.foto_perfil) {
-                const defaultPhotos = [
-                    "https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-1.png",
-                    "https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-2.png",
-                    "https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars/default/default-3.png"
-                ];
-                if (defaultPhotos.includes(user.foto_perfil)) {
-                    // Seleccionar la opción predeterminada
-                    const option = document.querySelector(`.profile-photo-option[data-photo="${user.foto_perfil}"]`);
-                    if (option) {
-                        option.classList.add('selected');
-                        document.getElementById('fotoPerfilUrl').value = user.foto_perfil;
-                        const preview = document.getElementById('previewFoto');
-                        if (preview) {
-                            preview.src = user.foto_perfil;
-                            preview.style.display = 'block';
-                        }
-                        const label = document.getElementById('previewLabel');
-                        if (label) {
-                            label.style.display = 'block';
-                        }
-                    }
+                if (DEFAULT_AVATAR_URLS.includes(user.foto_perfil)) {
+                    applySelectedDefaultPhoto(photoOptions, user.foto_perfil);
                 } else {
                     // Foto personalizada
-                    const preview = document.getElementById('previewFoto');
-                    if (preview) {
-                        preview.src = user.foto_perfil;
-                        preview.style.display = 'block';
-                    }
-                    const label = document.getElementById('previewLabel');
-                    if (label) {
-                        label.style.display = 'block';
-                    }
+                    showPreview(user.foto_perfil);
                 }
             }
             
@@ -223,28 +244,26 @@ function initProfileEvents() {
             const archivo = evento.target.files[0];
             if (!archivo) return;
 
-            // Usamos FileReader para convertir la imagen a texto (Base64)
-            const lector = new FileReader();
-            lector.onload = function(e) {
-                fotoBase64Temporal = e.target.result; // Guardamos el Base64
-                
-                // Actualizamos la miniatura para que el usuario vea su nueva foto
-                const preview = document.getElementById('previewFoto');
-                if (preview) {
-                    preview.src = fotoBase64Temporal;
-                    preview.style.display = 'block';
-                }
-                const label = document.getElementById('previewLabel');
-                if (label) {
-                    label.style.display = 'block';
-                }
+            if (!archivo.type.startsWith('image/')) {
+                alert('Por favor selecciona una imagen válida');
+                inputFoto.value = '';
+                return;
+            }
 
-                // Resetear selección de predeterminadas
-                const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
-                photoOptions.forEach(opt => opt.classList.remove('selected'));
-                document.getElementById('fotoPerfilUrl').value = "";
-            };
-            lector.readAsDataURL(archivo);
+            const maxSize = 5 * 1024 * 1024;
+            if (archivo.size > maxSize) {
+                alert('La imagen no debe superar 5MB');
+                inputFoto.value = '';
+                return;
+            }
+
+            selectedCustomAvatarFile = archivo;
+            showPreview(URL.createObjectURL(archivo));
+
+            // Resetear selección de predeterminadas
+            const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
+            clearDefaultPhotoSelection(photoOptions);
+            document.getElementById('fotoPerfilUrl').value = "";
         });
     }
 
@@ -252,24 +271,8 @@ function initProfileEvents() {
     const photoOptions = document.querySelectorAll('.profile-photo-option:not(.upload)');
     photoOptions.forEach(option => {
         option.addEventListener('click', () => {
-            // Remover selected de todas
-            photoOptions.forEach(opt => opt.classList.remove('selected'));
-            // Agregar selected a esta
-            option.classList.add('selected');
-            // Setear la URL
             const photoUrl = option.getAttribute('data-photo');
-            document.getElementById('fotoPerfilUrl').value = photoUrl;
-            fotoBase64Temporal = ""; // Reset upload
-            // Mostrar preview
-            const preview = document.getElementById('previewFoto');
-            if (preview) {
-                preview.src = photoUrl;
-                preview.style.display = 'block';
-            }
-            const label = document.getElementById('previewLabel');
-            if (label) {
-                label.style.display = 'block';
-            }
+            applySelectedDefaultPhoto(photoOptions, photoUrl);
         });
     });
 
@@ -299,11 +302,9 @@ function initProfileEvents() {
                 email: usuarioActual?.email || document.getElementById('editEmail').value.trim()
             };
 
-            // Incluir foto_perfil si hay una seleccionada o subida
+            // Incluir foto_perfil solo para defaults públicos.
             const selectedPhoto = document.getElementById('fotoPerfilUrl').value;
-            if (fotoBase64Temporal !== "") {
-                payload.foto_perfil = fotoBase64Temporal;
-            } else if (selectedPhoto !== "") {
+            if (selectedPhoto !== "") {
                 payload.foto_perfil = selectedPhoto;
             }
 
@@ -322,6 +323,26 @@ function initProfileEvents() {
                 const data = await response.json();
                 
                 if (response.ok) {
+                    if (selectedCustomAvatarFile) {
+                        const formData = new FormData();
+                        formData.append('file', selectedCustomAvatarFile);
+
+                        const avatarRes = await fetch(`${API_BASE}/usuarios/me/avatar`, {
+                            method: 'PUT',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                            },
+                            body: formData,
+                        });
+
+                        const avatarData = await avatarRes.json();
+                        if (!avatarRes.ok) {
+                            throw new Error(avatarData.detail || 'No se pudo actualizar la foto de perfil');
+                        }
+
+                        payload.foto_perfil = avatarData.foto_perfil;
+                    }
+
                     divMessage.innerHTML = `<span style="color: green;">${data.mensaje}</span>`;
                     
                     // Actualizamos memoria y pantalla
@@ -367,9 +388,7 @@ function initProfileEvents() {
             if (!confirmDelete) return;
 
             try {
-                const user = window.getCurrentUserData();
-                const userId = user.id_usuario || user.id;
-                const response = await window.fetchWithAuth(`${API_BASE}/usuarios/me?user_id=${userId}`, {
+                const response = await window.fetchWithAuth(`${API_BASE}/usuarios/me`, {
                     method: 'DELETE'
                 });
 

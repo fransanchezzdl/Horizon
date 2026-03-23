@@ -1,4 +1,5 @@
 from typing import Any
+from datetime import datetime
 from ..database import supabase
 from ..dtos import UsuarioResponse
 
@@ -52,6 +53,25 @@ class UsuarioDAO:
 
         if update_data:
             self.db.table("usuarios").update(update_data).eq("id_usuario", user_id).execute()
+
+    def actualizar_foto_perfil(self, user_id: str, foto_perfil: str | None) -> None:
+        """Actualiza el campo foto_perfil incluso cuando el valor es None."""
+        self.db.table("usuarios").update({"foto_perfil": foto_perfil}).eq("id_usuario", user_id).execute()
+
+    def restaurar_perfil(self, perfil: UsuarioResponse) -> None:
+        """Restaura una fila de usuario (usado en rollback lógico)."""
+        payload = {
+            "id_usuario": perfil.id_usuario,
+            "email": str(perfil.email),
+            "nombre": perfil.nombre,
+            "apellidos": perfil.apellidos,
+            "membresia": perfil.membresia,
+            "foto_perfil": perfil.foto_perfil,
+        }
+        if isinstance(perfil.created_at, datetime):
+            payload["created_at"] = perfil.created_at.isoformat()
+
+        self.db.table("usuarios").insert(payload).execute()
     
     # Función para eliminar el perfil del usuario
     def eliminar_perfil(self, user_id: str) -> None:
@@ -59,7 +79,7 @@ class UsuarioDAO:
         Elimina físicamente el registro del usuario de la tabla pública `usuarios`.
         """
         # Ejecutar el comando DELETE donde el id_usuario coincida
-        supabase.table("usuarios").delete().eq("id_usuario", user_id).execute()
+        self.db.table("usuarios").delete().eq("id_usuario", user_id).execute()
 
 
 # Instanciamos el DAO para usarlo en nuestras rutas
