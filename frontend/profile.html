@@ -15,8 +15,9 @@
         <section class="profile-header">
             <div class="profile-banner"></div>
             <div class="profile-card">
-                <div class="profile-avatar-container">
+                <div class="profile-avatar-container" id="btnAvatarEdit" role="button" tabindex="0" aria-label="Cambiar foto de perfil">
                     <div class="profile-avatar" id="profileAvatar">A</div>
+                    <div class="avatar-hover-hint">Cambiar foto</div>
                 </div>
                 <div class="profile-basic-info">
                     <h1 id="profileName">Cargando...</h1>
@@ -41,6 +42,7 @@
                             <p class="info-value" id="infoEmail">-</p>
                         </div>
                     </div>
+                    <button class="btn-primary" id="btnEditProfile">Editar Perfil</button>
                 </div>
 
                 <!-- Estadísticas -->
@@ -100,11 +102,6 @@
                 </div>
             </div>
 
-            <!-- Botones de Acción -->
-            <div class="profile-actions">
-                <button class="btn-primary" id="btnEditProfile">Editar Perfil</button>
-                <a href="index.html" class="btn-secondary">Volver al Dashboard</a>
-            </div>
         </section>
     </div>
 
@@ -128,38 +125,6 @@
                     <label for="editEmail">Email</label>
                     <input type="email" id="editEmail" placeholder="tu@email.com" readonly>
                 </div>
-                <!-- INICIO FRAGMENTO FOTO DE PERFIL -->
-                <div class="form-group">
-                <label for="profilePhotoUpload">Foto de perfil</label>
-                <div class="profile-photo-selector">
-                    <div class="profile-photos-grid">
-                        <!-- Opción 1: Foto predeterminada -->
-                        <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png" title="Opción 1">
-                            <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png" alt="Foto 1">
-                        </div>
-
-                        <!-- Opción 2: Foto predeterminada -->
-                        <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png" title="Opción 2">
-                            <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png" alt="Foto 2">
-                        </div>
-
-                        <!-- Opción 3: Foto predeterminada -->
-                        <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-3.png" title="Opción 3">
-                            <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-3.png" alt="Foto 3">
-                        </div>
-
-                        <!-- Opción 4: Subir foto personalizada -->
-                        <div class="profile-photo-option upload" title="Sube tu foto">
-                            <label for="profilePhotoUpload" class="upload-label">
-                                <span class="plus-icon">+</span>
-                            </label>
-                            <input type="file" id="profilePhotoUpload" name="profilePhotoUpload" accept="image/*" style="display: none;">
-                        </div>
-                    </div>
-                </div>
-                <input type="hidden" id="fotoPerfilUrl" name="foto_perfil" value="">
-            </div>
-                <!-- FIN FRAGMENTO FOTO DE PERFIL -->
                 <div id="editMessage" style="font-size: 0.9em; margin-top: 10px;"></div>
 
                 <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -167,6 +132,49 @@
                     <button type="submit" class="btn-primary" id="btnSaveEdit" style="flex: 1;">Guardar</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <div id="modalEditAvatar" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0;">Cambiar foto de perfil</h2>
+            </div>
+            <div style="padding: var(--spacing-xl);">
+                <div class="form-group">
+                    <label for="profilePhotoUpload">Foto de perfil</label>
+                    <div class="profile-photo-selector">
+                        <div class="profile-photos-grid">
+                            <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png" title="Opción 1">
+                                <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png" alt="Foto 1">
+                            </div>
+
+                            <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png" title="Opción 2">
+                                <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png" alt="Foto 2">
+                            </div>
+
+                            <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-3.png" title="Opción 3">
+                                <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-3.png" alt="Foto 3">
+                            </div>
+
+                            <div class="profile-photo-option upload" title="Sube tu foto">
+                                <label for="profilePhotoUpload" class="upload-label">
+                                    <span class="plus-icon">+</span>
+                                </label>
+                                <input type="file" id="profilePhotoUpload" name="profilePhotoUpload" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="fotoPerfilUrl" name="foto_perfil" value="">
+                </div>
+
+                <div id="avatarMessage" style="font-size: 0.9em; margin-top: 10px;"></div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" class="btn-secondary" id="btnCancelAvatar" style="background: var(--color-bg-light); color: var(--color-text-primary); border: 1px solid var(--color-border); flex: 1;">Cancelar</button>
+                    <button type="button" class="btn-primary" id="btnSaveAvatar" style="flex: 1;">Guardar foto</button>
+                </div>
+            </div>
         </div>
     </div>
 </body>
