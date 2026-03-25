@@ -457,6 +457,20 @@ function initProfileEvents() {
             alert('Próximamente podrás mejorar tu plan');
         });
     }
+
+    const btnSupport = document.getElementById('btnSupport');
+    if (btnSupport) {
+        btnSupport.addEventListener('click', () => {
+            window.location.href = 'ayuda.html';
+        });
+    }
+
+    const btnOpenSettings = document.getElementById('btnOpenSettings');
+    if (btnOpenSettings) {
+        btnOpenSettings.addEventListener('click', () => {
+            window.location.href = 'ajustes.html';
+        });
+    }
 }
 
 function checkLogin() {
