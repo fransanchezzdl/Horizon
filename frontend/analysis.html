@@ -67,12 +67,12 @@
         <section class="metrics-grid" style="margin-top:18px;">
             <div class="card metric-card">
                 <div class="metric-header"><span class="metric-title">Confianza LSTM</span></div>
-                <div class="metric-body"><span class="metric-value">91%</span><span class="metric-sub text-success">Máxima</span></div>
+                <div class="metric-body"><span id="confianzaValue" class="metric-value">--</span><span id="confianzaSub" class="metric-sub text-muted">Sin datos</span></div>
             </div>
 
             <div class="card metric-card">
                 <div class="metric-header"><span class="metric-title">Señal de IA</span></div>
-                <div class="metric-body"><span class="metric-value">FUERTE COMPRA</span><span class="metric-sub">Basado en 24 indicadores</span></div>
+                <div class="metric-body"><span id="senalValue" class="metric-value">--</span><span id="senalSub" class="metric-sub">Basado en IA</span></div>
             </div>
 
             <div class="card metric-card">
@@ -91,8 +91,8 @@
             <div class="card">
                 <h3 class="opt-title">Predicción de Precios LSTM</h3>
                 <p class="opt-info">Histórico + Pronóstico 30 días</p>
-                <div style="height:260px; border-radius:10px; background:#f8fafc; margin-top:12px; display:flex; align-items:center; justify-content:center; color:#9ca3af;">
-                    [Gráfico de ejemplo aquí]
+                <div id="predictionChartContainer" style="height:260px; border-radius:10px; background:#f8fafc; margin-top:12px; display:flex; align-items:center; justify-content:center; color:#9ca3af;">
+                    Sin datos de predicción
                 </div>
             </div>
 
