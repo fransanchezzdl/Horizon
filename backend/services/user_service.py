@@ -118,6 +118,10 @@ class UserService:
                     )
                 avatar_to_delete = perfil.foto_perfil
 
+            # Limpiar dependencias en tablas relacionadas para no depender
+            # de ON DELETE CASCADE en el esquema físico.
+            self.usuario_dao.limpiar_dependencias_usuario(user_id)
+
             # Primero eliminar en tabla pública.
             self.usuario_dao.eliminar_perfil(user_id)
 

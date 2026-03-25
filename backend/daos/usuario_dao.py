@@ -72,6 +72,63 @@ class UsuarioDAO:
             payload["created_at"] = perfil.created_at.isoformat()
 
         self.db.table("usuarios").insert(payload).execute()
+
+    def limpiar_dependencias_usuario(self, user_id: str) -> None:
+        """
+        Elimina dependencias de un usuario en tablas relacionadas para evitar
+        bloqueos por claves foráneas cuando no hay ON DELETE CASCADE aplicado.
+
+        Orden de limpieza:
+        1) portfolio_activo de portfolios del usuario
+        2) usuario_portfolio del usuario y por portfolios detectados
+        3) portfolios del usuario
+        """
+        # Obtener portfolios del usuario
+        portfolios_resp = (
+            self.db.table("portfolios")
+            .select("id_portfolio")
+            .eq("id_usuario", user_id)
+            .execute()
+        )
+
+        portfolio_rows = getattr(portfolios_resp, "data", None) or (
+            portfolios_resp.get("data") if isinstance(portfolios_resp, dict) else []
+        )
+        portfolio_ids = [row.get("id_portfolio") for row in (portfolio_rows or []) if row.get("id_portfolio") is not None]
+
+        # 1) Eliminar acciones de esos portfolios
+        if portfolio_ids:
+            (
+                self.db.table("portfolio_activo")
+                .delete()
+                .in_("id_portfolio", portfolio_ids)
+                .execute()
+            )
+
+        # 2a) Eliminar relaciones usuario_portfolio por usuario
+        (
+            self.db.table("usuario_portfolio")
+            .delete()
+            .eq("id_usuario", user_id)
+            .execute()
+        )
+
+        # 2b) Eliminar posibles relaciones residuales por portfolio
+        if portfolio_ids:
+            (
+                self.db.table("usuario_portfolio")
+                .delete()
+                .in_("id_portfolio", portfolio_ids)
+                .execute()
+            )
+
+        # 3) Eliminar portfolios del usuario
+        (
+            self.db.table("portfolios")
+            .delete()
+            .eq("id_usuario", user_id)
+            .execute()
+        )
     
     # Función para eliminar el perfil del usuario
     def eliminar_perfil(self, user_id: str) -> None:
