@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ayuda | Horizon</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <script src="js/config.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/ayuda.js"></script>
+
+    <div id="dashboard-contenido">
+        <header class="page-header">
+            <div class="header-titles">
+                <h1>Centro de Ayuda</h1>
+                <p class="subtitle">Resolvemos tus dudas frecuentes y te guiamos en los siguientes pasos.</p>
+            </div>
+        </header>
+
+        <section class="opts-section" style="grid-template-columns: repeat(2, 1fr); margin-top: 0;">
+            <article class="card">
+                <h3 class="opt-title">Preguntas Frecuentes</h3>
+                <p class="opt-info"><strong>Cuenta:</strong> Edita tus datos desde Perfil.</p>
+                <p class="opt-info"><strong>Portfolios:</strong> Crea y gestiona carteras desde Portfolio.</p>
+                <p class="opt-info"><strong>Análisis:</strong> Busca un ticker en la pantalla de Análisis.</p>
+            </article>
+
+            <article class="card">
+                <h3 class="opt-title">Contacto</h3>
+                <p class="opt-info">Si no encuentras tu respuesta, escríbenos y te ayudamos.</p>
+                <p class="opt-info" id="supportUserEmail">Email de cuenta: Cargando...</p>
+                <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md); flex-wrap: wrap;">
+                    <button class="btn-primary" id="btnContactSupport">Contactar Soporte</button>
+                </div>
+            </article>
+        </section>
+    </div>
+</body>
+</html>
