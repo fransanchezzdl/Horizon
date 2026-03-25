@@ -121,6 +121,7 @@ async function handleRegister(e) {
     const apellidos = document.getElementById('apellidos').value.trim();
     const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value.trim();
+    const confirmPassword = document.getElementById('confirmPassword').value.trim();
     const fotoPerfil = document.getElementById('fotoPerfilUrl').value.trim();
     const errorMsg = document.getElementById('errorMessage');
     const btn = e.target.querySelector('button');
@@ -128,8 +129,13 @@ async function handleRegister(e) {
     errorMsg.textContent = '';
     errorMsg.style.display = 'none';
 
-    if (!email || !password) {
-        showError(errorMsg, 'Por favor completa email y contraseña');
+    if (!email || !password || !confirmPassword) {
+        showError(errorMsg, 'Por favor completa email, contraseña y confirmación');
+        return;
+    }
+
+    if (password !== confirmPassword) {
+        showError(errorMsg, 'Las contraseñas no coinciden');
         return;
     }
 
