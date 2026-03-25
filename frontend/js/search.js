@@ -43,80 +43,8 @@ function normalizeActivoPayload(rawActivo) {
     return {
         ...rawActivo,
         confianza_bygru: rawActivo.confianza_bygru,
-        senal_ia: rawActivo.senal_ia,
-        grafico_prediccion: rawActivo.grafico_prediccion
+        senal_ia: rawActivo.senal_ia
     };
-}
-
-function parseGraficoData(graficoPrediccion) {
-    if (!graficoPrediccion) return null;
-    if (typeof graficoPrediccion === 'object') return graficoPrediccion;
-
-    if (typeof graficoPrediccion === 'string') {
-        try {
-            return JSON.parse(graficoPrediccion);
-        } catch {
-            return null;
-        }
-    }
-
-    return null;
-}
-
-function renderGraficoPrediccion(graficoPrediccion) {
-    const chartContainer = document.getElementById('predictionChartContainer');
-    if (!chartContainer) return;
-
-    const data = parseGraficoData(graficoPrediccion);
-    if (!data) {
-        chartContainer.style.display = 'flex';
-        chartContainer.style.alignItems = 'center';
-        chartContainer.style.justifyContent = 'center';
-        chartContainer.style.color = '#9ca3af';
-        chartContainer.innerHTML = 'Sin datos de predicción';
-        return;
-    }
-
-    const metrics = [
-        { label: 'Precio actual', value: data.current_price },
-        { label: 'Precio predicho', value: data.predicted_price },
-        { label: 'Rango superior', value: data.price_upper },
-        { label: 'Rango inferior', value: data.price_lower },
-        { label: 'Retorno %', value: data.predicted_return_pct },
-        { label: 'Meta tendencia', value: data.meta_trend }
-    ].filter((item) => item.value !== undefined && item.value !== null);
-
-    if (metrics.length === 0) {
-        chartContainer.style.display = 'flex';
-        chartContainer.style.alignItems = 'center';
-        chartContainer.style.justifyContent = 'center';
-        chartContainer.style.color = '#9ca3af';
-        chartContainer.innerHTML = 'Sin datos de predicción';
-        return;
-    }
-
-    chartContainer.style.display = 'grid';
-    chartContainer.style.alignItems = 'stretch';
-    chartContainer.style.justifyContent = 'stretch';
-    chartContainer.style.gridTemplateColumns = 'repeat(2, minmax(0, 1fr))';
-    chartContainer.style.gap = '10px';
-    chartContainer.style.padding = '12px';
-    chartContainer.style.color = '#111827';
-
-    chartContainer.innerHTML = metrics
-        .map((metric) => {
-            const numeric = typeof metric.value === 'number'
-                ? (metric.label.includes('%') ? `${metric.value.toFixed(2)}%` : metric.value.toFixed(2))
-                : String(metric.value);
-
-            return `
-                <div style="background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px;display:flex;flex-direction:column;gap:4px;">
-                    <span style="font-size:12px;color:#6b7280;">${metric.label}</span>
-                    <strong style="font-size:16px;color:#111827;">${numeric}</strong>
-                </div>
-            `;
-        })
-        .join('');
 }
 
 function initSearch() {
@@ -193,8 +121,7 @@ function initSearch() {
         const senalValue = document.getElementById('senalValue');
         if (senalValue) senalValue.textContent = formatSignal(activo.senal_ia);
 
-        // Gráfico de predicción (render de datos JSON)
-        renderGraficoPrediccion(activo.grafico_prediccion);
+        // El bloque de predicción queda estático en HTML en esta fase
     }
 
     // ── Evento de escritura con debounce ────────────────────────
