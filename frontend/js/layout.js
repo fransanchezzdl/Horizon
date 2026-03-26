@@ -4,7 +4,7 @@ function initSidebar() {
     <aside id="sidebar" class="sidebar">
         <div class="sidebar-header">
             <div class="logo">
-                <img class="logo-icon" src="assets/icon/logo.png" alt="Logo de Horizon">
+                <img class="logo-icon" id="sidebarLogo" src="assets/icon/logo_lightmode.png" data-logo-light="assets/icon/logo_lightmode.png" data-logo-dark="assets/icon/logo_darkmode.png" alt="Logo de Horizon">
                 <span class="logo-text">Horizon</span>
             </div>
             <button class="sidebar-toggle" id="sidebarToggle" aria-label="Contraer barra lateral" title="Contraer barra lateral">
@@ -23,7 +23,7 @@ function initSidebar() {
                     <span class="nav-label">Dashboard</span>
                 </a>
                 <a href="analysis.html" class="nav-item">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill=currentColor stroke=currentColor    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    <svg class="nav-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                     <span class="nav-label">Análisis de Ticker</span>
                 </a>
                 <a href="portfolio.html" class="nav-item">
@@ -56,6 +56,25 @@ function initSidebar() {
                     </svg>
                     <span class="nav-label">Ayuda</span>
                 </a>
+                <button class="nav-item nav-theme-toggle" id="themeToggle" type="button" aria-label="Cambiar a modo oscuro" title="Cambiar a modo oscuro">
+                    <span class="theme-toggle-icons" aria-hidden="true">
+                        <svg class="theme-icon theme-icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="4"></circle>
+                            <path d="M12 2v2"></path>
+                            <path d="M12 20v2"></path>
+                            <path d="M4.93 4.93l1.41 1.41"></path>
+                            <path d="M17.66 17.66l1.41 1.41"></path>
+                            <path d="M2 12h2"></path>
+                            <path d="M20 12h2"></path>
+                            <path d="M4.93 19.07l1.41-1.41"></path>
+                            <path d="M17.66 6.34l1.41-1.41"></path>
+                        </svg>
+                        <svg class="theme-icon theme-icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                    </span>
+                    <span class="nav-label">Modo oscuro</span>
+                </button>
             </div>
         </nav>
 
@@ -134,6 +153,8 @@ function initSidebarEvents() {
     const sidebar = document.getElementById('sidebar');
     const sidebarToggle = document.getElementById('sidebarToggle');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const themeToggle = document.getElementById('themeToggle');
+    const sidebarLogo = document.getElementById('sidebarLogo');
     const SIDEBAR_STATE_KEY = 'sidebar_collapsed';
     const isMobile = window.innerWidth <= 768;
 
@@ -169,6 +190,60 @@ function initSidebarEvents() {
         if (item.getAttribute('href') === currentPage) {
             item.classList.add('active');
         }
+    });
+
+    const syncThemeToggleState = () => {
+        if (!themeToggle) return;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        themeToggle.classList.toggle('is-dark', isDark);
+
+        const nextThemeLabel = isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro';
+        const currentThemeLabel = isDark ? 'Modo claro' : 'Modo oscuro';
+        const themeLabel = themeToggle.querySelector('.nav-label');
+
+        themeToggle.setAttribute('aria-label', nextThemeLabel);
+        themeToggle.setAttribute('title', nextThemeLabel);
+        if (themeLabel) {
+            themeLabel.textContent = currentThemeLabel;
+        }
+    };
+
+    const syncSidebarLogo = () => {
+        if (!sidebarLogo) return;
+
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        const lightLogo = sidebarLogo.getAttribute('data-logo-light');
+        const darkLogo = sidebarLogo.getAttribute('data-logo-dark');
+        sidebarLogo.src = isDark ? darkLogo : lightLogo;
+    };
+
+    syncThemeToggleState();
+    syncSidebarLogo();
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+            const nextTheme = isDark ? 'light' : 'dark';
+
+            if (window.setThemePreference) {
+                window.setThemePreference(nextTheme);
+            }
+
+            syncThemeToggleState();
+        });
+    }
+
+    window.addEventListener('horizon:theme-changed', () => {
+        syncThemeToggleState();
+        syncSidebarLogo();
+    });
+
+    window.addEventListener('horizon:user-updated', (event) => {
+        const user = event.detail || window.getCurrentUserData();
+        initNombreUsuario(user);
+        initAvatar(user);
+        initMembresia(user);
     });
 
     // Función para actualizar el indicador del bottom navbar y marcar item activo
