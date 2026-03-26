@@ -206,7 +206,8 @@
 }
 
 [data-theme="dark"] .reflexion-card,
-[data-theme="dark"] .card-large {
+[data-theme="dark"] .card-large,
+[data-theme="dark"] .articulo-hero {
     background: linear-gradient(145deg, #1f2a3d 0%, #0b1220 65%, #0f172a 100%);
 }
 
@@ -962,7 +963,6 @@ p {
     background: none;
     cursor: pointer;
     text-align: left;
-    font: inherit;
 }
 
 .theme-toggle-icons {
