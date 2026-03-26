@@ -17,6 +17,7 @@ class PortfolioDAO:
     
     PORTFOLIOS_TABLE = "portfolios"
     PORTFOLIO_STOCKS_TABLE = "portfolio_activo"
+    USER_PORTFOLIO_TABLE = "usuario_portfolio"
     
     # ==========================================
     # OPERACIONES CON PORTFOLIOS
@@ -214,6 +215,32 @@ class PortfolioDAO:
         
         except Exception as e:
             print(f"❌ Error eliminando portfolio: {e}")
+            return False
+
+    @staticmethod
+    def eliminar_stocks_por_portfolio(portfolio_id: int) -> bool:
+        """Elimina todas las posiciones de portfolio_activo para un portfolio."""
+        try:
+            supabase.table(PortfolioDAO.PORTFOLIO_STOCKS_TABLE).delete().eq(
+                "id_portfolio", portfolio_id
+            ).execute()
+            print(f"✅ Posiciones eliminadas para portfolio {portfolio_id}")
+            return True
+        except Exception as e:
+            print(f"❌ Error eliminando posiciones del portfolio {portfolio_id}: {e}")
+            return False
+
+    @staticmethod
+    def eliminar_relaciones_usuario_portfolio(portfolio_id: int) -> bool:
+        """Elimina relaciones en usuario_portfolio asociadas al portfolio."""
+        try:
+            supabase.table(PortfolioDAO.USER_PORTFOLIO_TABLE).delete().eq(
+                "id_portfolio", portfolio_id
+            ).execute()
+            print(f"✅ Relaciones usuario_portfolio eliminadas para portfolio {portfolio_id}")
+            return True
+        except Exception as e:
+            print(f"❌ Error eliminando relaciones usuario_portfolio del portfolio {portfolio_id}: {e}")
             return False
     
     # ==========================================

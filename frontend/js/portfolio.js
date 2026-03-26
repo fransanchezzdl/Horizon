@@ -18,7 +18,17 @@ async function initPortfolioPage() {
     }
     
     window.setCurrentUserData(result.user);
+    setupPortfolioActions();
     await loadPortfolios();
+}
+
+function setupPortfolioActions() {
+    const deletePortfolioBtn = document.getElementById('deletePortfolioBtn');
+    if (!deletePortfolioBtn) {
+        return;
+    }
+
+    deletePortfolioBtn.addEventListener('click', deleteCurrentPortfolio);
 }
 
 if (document.readyState === 'loading') {
@@ -392,6 +402,36 @@ function goToTickerAnalysis(ticker) {
     }
 
     window.location.href = `analysis.html?ticker=${encodeURIComponent(ticker)}`;
+}
+
+async function deleteCurrentPortfolio() {
+    if (!currentPortfolioId) {
+        showAlert('No hay portfolio seleccionado para eliminar', 'warning');
+        return;
+    }
+
+    const confirmed = confirm('¿Estás seguro de que deseas eliminar este portfolio completo? Esta acción no se puede deshacer.');
+    if (!confirmed) {
+        return;
+    }
+
+    try {
+        const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            showAlert(data.detail || 'No se pudo eliminar el portfolio', 'error');
+            return;
+        }
+
+        showAlert('Portfolio eliminado correctamente', 'success');
+        await loadPortfolios();
+    } catch (error) {
+        console.error('Error eliminando portfolio:', error);
+        showAlert('Error de conexión al eliminar el portfolio', 'error');
+    }
 }
 
 // Elimina una posición del portfolio activo y refresca el detalle tras éxito.
