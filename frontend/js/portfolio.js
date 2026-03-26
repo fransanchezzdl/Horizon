@@ -46,11 +46,12 @@ async function loadPortfolios() {
         console.log(`📊 Portfolios cargados: ${currentPortfolios.length}`, currentPortfolios);
         
         if (currentPortfolios.length > 0) {
-            // Mostrar selector de portfolios
-            renderPortfolioSelector();
-            
             // Cargar el primer portfolio por defecto
             currentPortfolioId = currentPortfolios[0].id_portfolio;
+
+            // Mostrar selector de portfolios
+            renderPortfolioSelector();
+
             await loadPortfolioDetails(currentPortfolioId);
         } else {
             // Si no hay portfolios, mostrar mensaje vacío
@@ -82,11 +83,122 @@ async function loadPortfolioDetails(portfolioId) {
         const portfolio = await response.json();
         console.log(`✅ Portfolio cargado:`, portfolio);
         renderPortfolioData(portfolio);
-        renderAssetsTable(portfolio.acciones || []);
+        const accionesEnriquecidas = await enrichPortfolioStocks(portfolio.acciones || []);
+        renderAssetsTable(accionesEnriquecidas);
+        await renderPortfolioMetrics(portfolio);
     } catch (error) {
         console.error('❌ Error:', error);
         showAlert('Error de conexión', 'error');
     }
+}
+
+async function enrichPortfolioStocks(acciones) {
+    if (!Array.isArray(acciones) || acciones.length === 0) {
+        return [];
+    }
+
+    const uniqueTickers = Array.from(
+        new Set(acciones.map((accion) => (accion.ticker || '').toUpperCase()).filter(Boolean))
+    );
+
+    const activosMap = new Map();
+
+    for (const ticker of uniqueTickers) {
+        try {
+            const response = await window.fetchWithAuth(`${API_BASE}/activos/${encodeURIComponent(ticker)}`);
+            if (!response.ok) continue;
+            const activo = await response.json();
+            activosMap.set(ticker, activo);
+        } catch (error) {
+            console.error(`Error cargando detalles de ${ticker}:`, error);
+        }
+    }
+
+    return acciones.map((accion) => {
+        const ticker = (accion.ticker || '').toUpperCase();
+        const detalles = activosMap.get(ticker) || {};
+
+        return {
+            ...accion,
+            ticker,
+            nombre_completo: detalles.nombre_completo || ticker,
+            precio: detalles.precio,
+            estabilidad: detalles.estabilidad,
+            senal_ia: detalles.senal_ia
+        };
+    });
+}
+
+async function renderPortfolioMetrics(portfolio) {
+    const acciones = Array.isArray(portfolio?.acciones) ? portfolio.acciones : [];
+    const totalAssets = acciones.length;
+
+    const totalAssetsValue = document.getElementById('totalAssetsValue');
+    const totalAssetsSub = document.getElementById('totalAssetsSub');
+    if (totalAssetsValue) totalAssetsValue.textContent = String(totalAssets);
+    if (totalAssetsSub) totalAssetsSub.textContent = 'tickers en cartera';
+
+    const stableAssets = await countStableAssets(acciones);
+    const stablePercent = totalAssets > 0 ? Math.round((stableAssets / totalAssets) * 100) : 0;
+
+    const stableAssetsValue = document.getElementById('stableAssetsValue');
+    const stableAssetsSub = document.getElementById('stableAssetsSub');
+    const stableAssetsBar = document.getElementById('stableAssetsBar');
+
+    if (stableAssetsValue) stableAssetsValue.textContent = `${stableAssets} de ${totalAssets}`;
+    if (stableAssetsSub) stableAssetsSub.textContent = totalAssets > 0 ? `${stablePercent}% del portfolio` : 'Sin datos';
+    if (stableAssetsBar) stableAssetsBar.style.width = `${stablePercent}%`;
+
+    const risk = Number(portfolio?.riesgo);
+    const riskProfileValue = document.getElementById('riskProfileValue');
+    const riskProfileSub = document.getElementById('riskProfileSub');
+
+    if (Number.isNaN(risk)) {
+        if (riskProfileValue) riskProfileValue.textContent = '--';
+        if (riskProfileSub) riskProfileSub.textContent = 'Sin datos';
+        return;
+    }
+
+    let riskLabel = 'Moderado';
+    let riskText = 'riesgo medio';
+
+    if (risk < 0.35) {
+        riskLabel = 'Bajo';
+        riskText = 'riesgo bajo';
+    } else if (risk >= 0.65) {
+        riskLabel = 'Alto';
+        riskText = 'riesgo alto';
+    }
+
+    const riskPercentage = Math.round(risk * 100);
+    if (riskProfileValue) riskProfileValue.textContent = riskLabel;
+    if (riskProfileSub) riskProfileSub.textContent = `${riskPercentage}% · ${riskText}`;
+}
+
+async function countStableAssets(acciones) {
+    if (!acciones.length) {
+        return 0;
+    }
+
+    const uniqueTickers = Array.from(new Set(acciones.map((accion) => (accion.ticker || '').toUpperCase()).filter(Boolean)));
+    let stableCount = 0;
+
+    for (const ticker of uniqueTickers) {
+        try {
+            const response = await window.fetchWithAuth(`${API_BASE}/activos/${encodeURIComponent(ticker)}`);
+            if (!response.ok) {
+                continue;
+            }
+            const activo = await response.json();
+            if (activo?.estabilidad === true) {
+                stableCount += 1;
+            }
+        } catch (error) {
+            console.error(`Error consultando estabilidad para ${ticker}:`, error);
+        }
+    }
+
+    return stableCount;
 }
 
 // ============================================================
@@ -94,13 +206,12 @@ async function loadPortfolioDetails(portfolioId) {
 // ============================================================
 
 function renderPortfolioSelector() {
-    // Rellena el select de portfolios y conecta el cambio de portfolio activo.
+    // Renderiza portfolios como tabs tipo píldora y conecta cambio de portfolio activo.
     const selectorContainer = document.getElementById('portfolioSelectorContainer');
-    const portfolioSelector = document.getElementById('portfolioSelector');
-    const riskBadge = document.getElementById('portfolioRiskBadge');
+    const portfolioTabs = document.getElementById('portfolioTabs');
     
-    if (!selectorContainer || !portfolioSelector) {
-        console.warn('⚠️ Elementos del selector no encontrados en HTML');
+    if (!selectorContainer || !portfolioTabs) {
+        console.warn('⚠️ Elementos de tabs no encontrados en HTML');
         return;
     }
     
@@ -111,65 +222,45 @@ function renderPortfolioSelector() {
     }
     
     selectorContainer.style.display = 'flex';
-    
-    // Limpiar opciones previas
-    portfolioSelector.innerHTML = '';
-    
-    // Agregar opciones con datos de portfolios
-    currentPortfolios.forEach(portfolio => {
-        const option = document.createElement('option');
-        option.value = portfolio.id_portfolio;
-        option.textContent = portfolio.nombre_portfolio;
-        
-        if (portfolio.id_portfolio === currentPortfolioId) {
-            option.selected = true;
-            // Actualizar badge de riesgo
-            const riskLevel = portfolio.riesgo < 0.35 ? 'Agresivo' : 
-                              portfolio.riesgo < 0.65 ? 'Moderado' : 'Conservador';
-            riskBadge.textContent = `${riskLevel} (${(portfolio.riesgo * 100).toFixed(0)}%)`;
-        }
-        
-        portfolioSelector.appendChild(option);
-    });
-    
-    console.log(`📊 Selector rellenado con ${currentPortfolios.length} portfolio(s)`);
-    
-    // Event listener para cambiar portfolio (agregar solo si no existe)
-    if (!portfolioSelector.hasListener) {
-        portfolioSelector.addEventListener('change', async (e) => {
-            const portfolioId = parseInt(e.target.value);
-            console.log(`🔀 Cambiando a portfolio ${portfolioId}`);
-            currentPortfolioId = portfolioId;
-            
-            // Actualizar badge de riesgo
-            const portfolio = currentPortfolios.find(p => p.id_portfolio === portfolioId);
-            if (portfolio) {
-                const riskLevel = portfolio.riesgo < 0.35 ? 'Agresivo' : 
-                                  portfolio.riesgo < 0.65 ? 'Moderado' : 'Conservador';
-                riskBadge.textContent = `${riskLevel} (${(portfolio.riesgo * 100).toFixed(0)}%)`;
-            }
-            
-            await loadPortfolioDetails(portfolioId);
+    portfolioTabs.innerHTML = '';
+
+    currentPortfolios.forEach((portfolio) => {
+        const tabButton = document.createElement('button');
+        tabButton.type = 'button';
+        tabButton.classList.add('portfolio-tab');
+        tabButton.className = portfolio.id_portfolio === currentPortfolioId
+            ? 'btn-primary portfolio-tab active'
+            : 'btn-outline portfolio-tab';
+        tabButton.style.padding = '10px 20px';
+        tabButton.style.borderRadius = '999px';
+        tabButton.style.fontSize = '15px';
+        tabButton.textContent = portfolio.nombre_portfolio;
+
+        tabButton.addEventListener('click', async () => {
+            if (portfolio.id_portfolio === currentPortfolioId) return;
+            currentPortfolioId = portfolio.id_portfolio;
+            renderPortfolioSelector();
+            await loadPortfolioDetails(currentPortfolioId);
         });
-        portfolioSelector.hasListener = true;
-    }
+
+        portfolioTabs.appendChild(tabButton);
+    });
+
+    const newPortfolioTab = document.createElement('button');
+    newPortfolioTab.type = 'button';
+    newPortfolioTab.className = 'btn-outline portfolio-tab';
+    newPortfolioTab.style.padding = '10px 20px';
+    newPortfolioTab.style.borderRadius = '999px';
+    newPortfolioTab.style.fontSize = '15px';
+    newPortfolioTab.textContent = '+ Nuevo';
+    newPortfolioTab.addEventListener('click', createNewPortfolio);
+    portfolioTabs.appendChild(newPortfolioTab);
+    
+    console.log(`📊 Tabs renderizadas con ${currentPortfolios.length} portfolio(s)`);
 }
 
 // Renderiza datos generales del portfolio (título, conteo de activos y riesgo).
 function renderPortfolioData(portfolio) {
-    // Actualizar nombre del portfolio
-    const headerTitle = document.querySelector('.header-titles h1');
-    if (headerTitle) {
-        headerTitle.innerHTML = `
-            <div>
-                <div>${portfolio.nombre_portfolio}</div>
-                <small style="font-size: 12px; color: #999; margin-top: 3px; display: block;">
-                    ${portfolio.descripcion || 'Sin descripción'}
-                </small>
-            </div>
-        `;
-    }
-
     // Actualizar balance
     const balanceAmount = document.querySelector('.balance-amount');
     if (balanceAmount) {
@@ -211,7 +302,27 @@ function renderAssetsTable(acciones) {
         return;
     }
 
-    acciones.forEach(activo => {
+    acciones.forEach((activo) => {
+        const precio = typeof activo.precio === 'number'
+            ? activo.precio
+            : Number(activo.precio);
+
+        const precioTexto = Number.isFinite(precio)
+            ? `$${precio.toFixed(2)}`
+            : '--';
+
+        const estabilidad = activo.estabilidad === true
+            ? { text: 'Estable', badge: 'badge-green' }
+            : { text: 'Volátil', badge: 'badge-orange' };
+
+        const senal = (activo.senal_ia || '').toString().toUpperCase();
+        const senalTexto = senal || 'SIN DATOS';
+        const senalClase = senal === 'ALCISTA'
+            ? 'text-success'
+            : senal === 'BAJISTA'
+                ? 'text-danger'
+                : 'text-muted';
+
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>
@@ -223,25 +334,23 @@ function renderAssetsTable(acciones) {
                     </div>
                     <div class="asset-info">
                         <span class="asset-symbol">${activo.ticker}</span>
-                        <span class="asset-name">${activo.ticker}</span>
+                        <span class="asset-name">${activo.nombre_completo || activo.ticker}</span>
                     </div>
                 </div>
             </td>
             <td>
                 <div class="price-cell">
-                    <span class="price-val">$${(Math.random() * 300 + 50).toFixed(2)}</span>
-                    <span class="price-change text-success">+${(Math.random() * 3).toFixed(1)}%</span>
+                    <span class="price-val">${precioTexto}</span>
                 </div>
             </td>
-            <td><span class="badge badge-green">Estable</span></td>
-            <td class="text-muted">Activo</td>
+            <td><span class="badge ${estabilidad.badge}">${estabilidad.text}</span></td>
+            <td><span class="text-bold ${senalClase}">${senalTexto}</span></td>
             <td><span class="badge badge-blue-soft">Monitoreo</span></td>
-            <td class="text-right">
-                <button class="btn-icon" data-stock-id="${activo.id_posicion}" onclick="deleteAsset(${activo.id_posicion})">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                        <circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/>
-                    </svg>
-                </button>
+            <td class="text-center">
+                <div class="row-action-buttons">
+                    <button class="table-action-btn" type="button" title="Ver en análisis" onclick="goToTickerAnalysis('${activo.ticker}')">↗</button>
+                    <button class="table-action-btn table-action-btn-delete" type="button" title="Eliminar activo" data-stock-id="${activo.id_posicion}" onclick="deleteAsset(${activo.id_posicion})">✕</button>
+                </div>
             </td>
         `;
         tbody.appendChild(row);
@@ -276,6 +385,14 @@ function renderEmptyState() {
 // ============================================================
 // EVENTOS Y ACCIONES
 // ============================================================
+
+function goToTickerAnalysis(ticker) {
+    if (!ticker) {
+        return;
+    }
+
+    window.location.href = `analysis.html?ticker=${encodeURIComponent(ticker)}`;
+}
 
 // Elimina una posición del portfolio activo y refresca el detalle tras éxito.
 async function deleteAsset(stockId) {
