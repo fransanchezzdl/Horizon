@@ -4,7 +4,59 @@ window.API_BASE = 'http://localhost:8000';
 window.STORAGE_KEYS = {
     ACCESS_TOKEN: 'access_token',
     USER_DATA: 'user_data',
+    THEME: 'horizon_setting_theme',
 };
+
+window.getSavedThemePreference = function () {
+    return localStorage.getItem(window.STORAGE_KEYS.THEME) || 'system';
+};
+
+window.resolveThemePreference = function (themePreference) {
+    const selected = themePreference || 'system';
+    if (selected === 'light' || selected === 'dark') {
+        return selected;
+    }
+
+    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return prefersDark ? 'dark' : 'light';
+};
+
+window.applyThemePreference = function (themePreference = window.getSavedThemePreference()) {
+    const resolvedTheme = window.resolveThemePreference(themePreference);
+    document.documentElement.setAttribute('data-theme', resolvedTheme);
+
+    window.dispatchEvent(new CustomEvent('horizon:theme-changed', {
+        detail: {
+            preference: themePreference || 'system',
+            resolvedTheme,
+        },
+    }));
+
+    return resolvedTheme;
+};
+
+window.setThemePreference = function (themePreference) {
+    const normalized = themePreference || 'system';
+    localStorage.setItem(window.STORAGE_KEYS.THEME, normalized);
+    return window.applyThemePreference(normalized);
+};
+
+window.applyThemePreference();
+
+if (window.matchMedia) {
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    const syncSystemTheme = () => {
+        if (window.getSavedThemePreference() === 'system') {
+            window.applyThemePreference('system');
+        }
+    };
+
+    if (typeof media.addEventListener === 'function') {
+        media.addEventListener('change', syncSystemTheme);
+    } else if (typeof media.addListener === 'function') {
+        media.addListener(syncSystemTheme);
+    }
+}
 
 let cachedCurrentUser = undefined;
 
@@ -45,16 +97,29 @@ window.setCurrentUserData = function (user) {
     if (!user) {
         localStorage.removeItem(window.STORAGE_KEYS.USER_DATA);
         cachedCurrentUser = null;
+
+        window.dispatchEvent(new CustomEvent('horizon:user-updated', {
+            detail: null,
+        }));
+
         return;
     }
 
     localStorage.setItem(window.STORAGE_KEYS.USER_DATA, JSON.stringify(user));
     cachedCurrentUser = user;
+
+    window.dispatchEvent(new CustomEvent('horizon:user-updated', {
+        detail: user,
+    }));
 };
 
 window.clearCurrentUserData = function () {
     localStorage.removeItem(window.STORAGE_KEYS.USER_DATA);
     cachedCurrentUser = null;
+
+    window.dispatchEvent(new CustomEvent('horizon:user-updated', {
+        detail: null,
+    }));
 };
 
 window.clearAuthSession = function () {

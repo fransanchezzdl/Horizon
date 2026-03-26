@@ -5,7 +5,7 @@ const SETTINGS_KEYS = {
 };
 
 function loadSettings() {
-    const theme = localStorage.getItem(SETTINGS_KEYS.theme) || 'system';
+    const theme = window.getSavedThemePreference();
 
     const themeSelect = document.getElementById('settingTheme');
 
@@ -20,7 +20,7 @@ function saveSettings() {
 
     const theme = themeSelect ? themeSelect.value : 'system';
 
-    localStorage.setItem(SETTINGS_KEYS.theme, theme);
+    window.setThemePreference(theme);
 
     if (messageEl) {
         messageEl.textContent = 'Ajustes guardados correctamente.';
