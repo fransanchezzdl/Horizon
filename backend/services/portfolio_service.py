@@ -165,6 +165,16 @@ class PortfolioService:
     # cascada en base de datos).
     def eliminar_portfolio_usuario(self, user_id: str, id_portfolio: int) -> Dict[str, str]:
         self._obtener_portfolio_si_es_propietario(user_id, id_portfolio)
+
+        # Borrado explícito en cascada para mantener integridad y trazabilidad.
+        ok_stocks = self.portfolio_dao.eliminar_stocks_por_portfolio(id_portfolio)
+        if not ok_stocks:
+            raise HTTPException(status_code=500, detail="No se pudieron eliminar las posiciones del portfolio")
+
+        ok_relaciones = self.portfolio_dao.eliminar_relaciones_usuario_portfolio(id_portfolio)
+        if not ok_relaciones:
+            raise HTTPException(status_code=500, detail="No se pudieron eliminar las relaciones de usuario_portfolio")
+
         ok = self.portfolio_dao.eliminar(id_portfolio)
         if not ok:
             raise HTTPException(status_code=500, detail="No se pudo eliminar el portfolio")
