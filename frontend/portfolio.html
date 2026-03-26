@@ -18,77 +18,58 @@
         
         <header class="page-header">
             <div class="header-titles">
-                <h1>Mi Portfolio</h1>
+                <h1>Mis Portfolios</h1>
+                <p class="subtitle">Gestiona tus inversiones por portfolio</p>
+
+                <!-- Portfolio Tabs -->
+                <section class="portfolio-selector" id="portfolioSelectorContainer">
+                    <div class="portfolio-selector-content">
+                        <div class="portfolio-selector-controls">
+                            <div id="portfolioTabs" style="display:flex; flex-wrap:wrap; gap:8px; width:100%;"></div>
+                        </div>
+                    </div>
+                </section>
+
                 <div class="balance-info">
                     <span class="balance-label">Activos:</span>
                     <span class="balance-amount">Cargando...</span>
                     <span class="badge badge-success-light" id="portfolioCountBadge"></span>
                 </div>
             </div>
-            <button class="btn-primary" onclick="showAddAssetModal()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                </svg>
-                Añadir Inversión
-            </button>
+            <button class="btn-outline" id="deletePortfolioBtn">Eliminar portfolio</button>
         </header>
-
-        <!-- Portfolio Selector -->
-        <section class="card portfolio-selector" id="portfolioSelectorContainer">
-            <div class="portfolio-selector-content">
-                <label for="portfolioSelector" class="portfolio-selector-label">Mis Portfolios</label>
-                <div class="portfolio-selector-controls">
-                    <select id="portfolioSelector" class="portfolio-selector-select">
-                        <option value="">Cargando...</option>
-                    </select>
-                    <span id="portfolioRiskBadge" class="badge badge-blue"></span>
-                    <button class="btn-primary" onclick="createNewPortfolio()" style="padding: 8px 16px; font-size: 13px;">
-                        + Nuevo Portfolio
-                    </button>
-                </div>
-            </div>
-        </section>
 
         <section class="metrics-grid">
             <div class="card metric-card">
                 <div class="metric-header">
-                    <span class="metric-title">Ganancia Total</span>
-                    <svg class="icon-trend-up" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                        <polyline points="17 6 23 6 23 12"></polyline>
-                    </svg>
+                    <span class="metric-title">Total activos</span>
                 </div>
                 <div class="metric-body">
-                    <span class="metric-value">+$12,400</span>
-                    <span class="metric-sub text-success">+11% retorno</span>
+                    <span id="totalAssetsValue" class="metric-value">0</span>
+                    <span id="totalAssetsSub" class="metric-sub text-muted">tickers en cartera</span>
                 </div>
             </div>
 
             <div class="card metric-card">
                 <div class="metric-header">
-                    <span class="metric-title">Cambio Diario</span>
-                    <svg class="icon-trend-up" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                        <polyline points="17 6 23 6 23 12"></polyline>
-                    </svg>
+                    <span class="metric-title">Activos estables</span>
                 </div>
                 <div class="metric-body">
-                    <span class="metric-value">+$350</span>
-                    <span class="metric-sub text-success">+0.8% hoy</span>
+                    <span id="stableAssetsValue" class="metric-value">0 de 0</span>
+                    <div class="metric-progress" aria-hidden="true">
+                        <span id="stableAssetsBar" class="metric-progress-fill" style="width:0%;"></span>
+                    </div>
+                    <span id="stableAssetsSub" class="metric-sub text-muted">Sin datos</span>
                 </div>
             </div>
 
             <div class="card metric-card">
                 <div class="metric-header">
-                    <span class="metric-title">Salud del Portfolio</span>
-                    <svg class="icon-shield" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                    </svg>
+                    <span class="metric-title">Perfil de riesgo</span>
                 </div>
                 <div class="metric-body">
-                    <span class="metric-value">Excelente</span>
-                    <span class="metric-sub text-muted">Bajo riesgo</span>
+                    <span id="riskProfileValue" class="metric-value">--</span>
+                    <span id="riskProfileSub" class="metric-sub text-muted">Sin datos</span>
                 </div>
             </div>
         </section>
@@ -96,12 +77,7 @@
         <section class="card table-section">
             <div class="table-toolbar">
                 <h2>Activos en Cartera</h2>
-                <button class="btn-outline">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                    </svg>
-                    Filtrar
-                </button>
+                <button class="btn-outline" type="button" onclick="showAddAssetModal()">+ Añadir inversión</button>
             </div>
 
             <div class="table-responsive">
@@ -111,9 +87,9 @@
                             <th class="text-left">Activo</th>
                             <th class="text-left">Precio Actual</th>
                             <th class="text-left">Estabilidad</th>
-                            <th class="text-left">Tamaño</th>
+                            <th class="text-left">Señal IA</th>
                             <th class="text-left">Estrategia</th>
-                            <th class="text-right">Acciones</th>
+                            <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>

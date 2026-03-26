@@ -286,14 +286,23 @@ function initSearch() {
 
     if (!input) return;
 
+    const queryTicker = new URLSearchParams(window.location.search).get('ticker');
+    const normalizedQueryTicker = queryTicker?.trim().toUpperCase();
+
     // Render inicial del logo según el ticker que viene en la cabecera
     renderInitialTickerLogo();
 
     const resultCard = document.querySelector('.result-card');
     const h2 = resultCard?.querySelector('h2');
-    const initialMatch = h2?.textContent?.match(/\(([^)]+)\)/);
-    if (initialMatch?.[1]) {
-        selectedTicker = initialMatch[1].toUpperCase();
+    if (normalizedQueryTicker) {
+        selectedTicker = normalizedQueryTicker;
+        input.value = normalizedQueryTicker;
+        renderTickerLogo(normalizedQueryTicker);
+    } else {
+        const initialMatch = h2?.textContent?.match(/\(([^)]+)\)/);
+        if (initialMatch?.[1]) {
+            selectedTicker = initialMatch[1].toUpperCase();
+        }
     }
 
     addToPortfolioBtn && addToPortfolioBtn.addEventListener('click', openAddPortfolioModal);
@@ -410,6 +419,11 @@ function initSearch() {
         suggestions.hidden = true;
         seleccionarActivo(val.toUpperCase());
     });
+
+    // Si llega ticker por query param (desde portfolio), lo carga al iniciar.
+    if (normalizedQueryTicker) {
+        seleccionarActivo(normalizedQueryTicker);
+    }
 }
 
 // Inicializa inmediatamente o al cargar DOM, según estado del documento.
