@@ -6,7 +6,7 @@ const API_BASE = window.API_BASE;
 let currentPortfolioId = null;
 let currentPortfolios = [];
 
-// Cargar estado y renderizar al abrir la página
+// Carga sesión, valida autenticación y arranca la carga de portfolios.
 async function initPortfolioPage() {
     // VALIDAR AUTENTICACIÓN CENTRALIZADA
     const result = await window.validateAuthToken();
@@ -31,6 +31,7 @@ if (document.readyState === 'loading') {
 // CARGAR PORTFOLIOS Y ACTIVOS
 // ============================================================
 
+// Obtiene la lista de portfolios del usuario y decide el estado inicial de UI.
 async function loadPortfolios() {
     try {
         const response = await window.fetchWithAuth(`${API_BASE}/portfolios`);
@@ -61,6 +62,7 @@ async function loadPortfolios() {
     }
 }
 
+// Carga el detalle de un portfolio concreto y renderiza cabecera + tabla.
 async function loadPortfolioDetails(portfolioId) {
     try {
         console.log(`🔐 Cargando portfolio ${portfolioId}`);
@@ -92,10 +94,7 @@ async function loadPortfolioDetails(portfolioId) {
 // ============================================================
 
 function renderPortfolioSelector() {
-    /**
-     * Rellena el selector de portfolios con las opciones disponibles
-     * Usa el HTML del archivo portfolio.html (no lo genera)
-     */
+    // Rellena el select de portfolios y conecta el cambio de portfolio activo.
     const selectorContainer = document.getElementById('portfolioSelectorContainer');
     const portfolioSelector = document.getElementById('portfolioSelector');
     const riskBadge = document.getElementById('portfolioRiskBadge');
@@ -156,6 +155,7 @@ function renderPortfolioSelector() {
     }
 }
 
+// Renderiza datos generales del portfolio (título, conteo de activos y riesgo).
 function renderPortfolioData(portfolio) {
     // Actualizar nombre del portfolio
     const headerTitle = document.querySelector('.header-titles h1');
@@ -186,10 +186,12 @@ function renderPortfolioData(portfolio) {
     }
 }
 
+// Abre el modal compartido para crear un nuevo portfolio.
 function createNewPortfolio() {
     showCreatePortfolioModal();
 }
 
+// Renderiza la tabla de activos del portfolio o el estado vacío de la tabla.
 function renderAssetsTable(acciones) {
     const tbody = document.querySelector('.custom-table tbody');
     if (!tbody) return;
@@ -246,6 +248,7 @@ function renderAssetsTable(acciones) {
     });
 }
 
+// Renderiza el estado vacío global cuando el usuario no tiene portfolios.
 function renderEmptyState() {
     const pageContent = document.querySelector('#dashboard-contenido');
     if (pageContent) {
@@ -274,6 +277,7 @@ function renderEmptyState() {
 // EVENTOS Y ACCIONES
 // ============================================================
 
+// Elimina una posición del portfolio activo y refresca el detalle tras éxito.
 async function deleteAsset(stockId) {
     if (!confirm('¿Estás seguro de que deseas eliminar este activo del portfolio?')) {
         return;
@@ -301,10 +305,7 @@ async function deleteAsset(stockId) {
 // ============================================================
 
 function showAddAssetModal() {
-    /**
-     * Muestra el modal de agregar activos (ya existe en portfolio.html)
-     * Configura la búsqueda dinámica de activos
-     */
+    // Abre el modal de añadir activo y prepara sus estados/eventos locales.
     const modal = document.getElementById('assetModal');
     const searchInput = document.getElementById('assetSearch');
     const suggestions = document.getElementById('assetSuggestions');
@@ -324,7 +325,7 @@ function showAddAssetModal() {
     addBtn.disabled = true;
     searchInput.focus();
     
-    // Buscar activos en la API
+    // Busca activos por texto para el autocompletado del modal.
     async function buscarActivos(query) {
         try {
             const resp = await window.fetchWithAuth(`${API_BASE}/activos?q=${encodeURIComponent(query)}`);
@@ -336,7 +337,7 @@ function showAddAssetModal() {
         }
     }
     
-    // Renderizar sugerencias
+    // Dibuja las sugerencias de activos en la lista desplegable.
     function renderSuggestions(list) {
         suggestions.innerHTML = '';
         if (list.length === 0) { 
@@ -356,7 +357,7 @@ function showAddAssetModal() {
         });
     }
     
-    // Seleccionar un activo
+    // Marca un activo como seleccionado y habilita el botón de añadir.
     function seleccionarActivo(activo) {
         selectedAsset = activo;
         searchInput.value = activo.ticker;
@@ -374,7 +375,7 @@ function showAddAssetModal() {
         console.log('[OK] Activo seleccionado:', activo);
     }
     
-    // Evento de búsqueda con debounce
+    // Gestiona escritura en input con debounce para evitar llamadas excesivas.
     searchInput.addEventListener('input', () => {
         const q = searchInput.value.trim();
         if (q.length === 0) { 
@@ -393,7 +394,7 @@ function showAddAssetModal() {
         }, 250);
     });
     
-    // Navegación con teclado
+    // Permite navegar sugerencias con teclado y confirmar selección.
     searchInput.addEventListener('keydown', (e) => {
         const items = suggestions.querySelectorAll('.suggestion-item');
         if (e.key === 'ArrowDown') { 
@@ -416,12 +417,12 @@ function showAddAssetModal() {
         items.forEach((it, idx) => it.classList.toggle('active', idx === activeIndex));
     });
     
-    // Cerrar sugerencias al hacer click fuera
+    // Cierra sugerencias cuando el click ocurre fuera del input-wrap.
     document.addEventListener('click', (ev) => {
         if (!ev.target.closest('.input-wrap')) suggestions.hidden = true;
     });
     
-    // Escape para cerrar modal
+    // Cierra el modal al pulsar Escape.
     const escapeHandler = (e) => {
         if (e.key === 'Escape') {
             closeAddAssetModal();
@@ -431,6 +432,7 @@ function showAddAssetModal() {
     document.addEventListener('keydown', escapeHandler);
 }
 
+// Cierra el modal de añadir activo y resetea sus elementos básicos.
 function closeAddAssetModal() {
     const modal = document.getElementById('assetModal');
     const searchInput = document.getElementById('assetSearch');
@@ -445,6 +447,7 @@ function closeAddAssetModal() {
     document.getElementById('tickerError').style.display = 'none';
 }
 
+// Valida y envía el ticker seleccionado al portfolio activo.
 async function addAssetToPortfolio() {
     const searchInput = document.getElementById('assetSearch');
     const errorDiv = document.getElementById('tickerError');
@@ -510,89 +513,11 @@ async function addAssetToPortfolio() {
     }
 }
 
-function showCreatePortfolioModal() {
-    const modal = `
-        <div id="portfolioModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h3>Crear Portfolio</h3>
-                    <button class="btn-close" onclick="closeCreatePortfolioModal()">×</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Nombre del Portfolio</label>
-                        <input type="text" id="portfolioNameInput" placeholder="ej: Mi Portfolio Agresivo">
-                    </div>
-                    <div class="form-group">
-                        <label>Descripción</label>
-                        <textarea id="portfolioDescInput" placeholder="Describe tu estrategia de inversión" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label>Nivel de Riesgo</label>
-                        <select id="portfolioRiskInput">
-                            <option value="0.3">Conservador (Bajo riesgo)</option>
-                            <option value="0.5" selected>Moderado (Riesgo medio)</option>
-                            <option value="0.8">Agresivo (Alto riesgo)</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn-secondary" onclick="closeCreatePortfolioModal()">Cancelar</button>
-                    <button class="btn-primary" onclick="createPortfolio()">Crear</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.body.insertAdjacentHTML('beforeend', modal);
-    document.getElementById('portfolioNameInput').focus();
-}
-
-function closeCreatePortfolioModal() {
-    const modal = document.getElementById('portfolioModal');
-    if (modal) modal.remove();
-}
-
-async function createPortfolio() {
-    const nombre = document.getElementById('portfolioNameInput')?.value?.trim();
-    const descripcion = document.getElementById('portfolioDescInput')?.value?.trim();
-    const riesgo = parseFloat(document.getElementById('portfolioRiskInput')?.value);
-
-    if (!nombre) {
-        showAlert('Por favor ingresa un nombre', 'error');
-        return;
-    }
-
-    try {
-        const response = await window.fetchWithAuth(`${API_BASE}/portfolios`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                nombre_portfolio: nombre,
-                descripcion: descripcion || '',
-                riesgo: riesgo
-            })
-        });
-
-        if (response.ok) {
-            showAlert('Portfolio creado correctamente', 'success');
-            closeCreatePortfolioModal();
-            await loadPortfolios();
-        } else {
-            showAlert('Error al crear el portfolio', 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        showAlert('Error de conexión', 'error');
-    }
-}
-
 // ============================================================
 // UTILIDADES
 // ============================================================
 
+// Muestra una notificación tipo toast para feedback de éxito/error/info.
 function showAlert(message, type = 'info') {
     const colors = {
         success: '#10b981',
