@@ -42,7 +42,12 @@ function initAjustesPage() {
     const btnCancel = document.getElementById('btnSettingsCancel');
     if (btnCancel) {
         btnCancel.addEventListener('click', () => {
-            window.location.href = 'profile.html';
+            if (window.history.length > 1) {
+                window.history.back();
+                return;
+            }
+
+            window.location.href = 'index.html';
         });
     }
 
