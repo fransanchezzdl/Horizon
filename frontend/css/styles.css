@@ -673,6 +673,8 @@ p {
 .text-bold { font-weight: 700; }
 .uppercase { text-transform: uppercase; }
 
+.is-hidden { display: none !important; }
+
 .icon-trend-up { color: var(--color-success); }
 .icon-shield { color: var(--color-primary); }
 
@@ -3019,6 +3021,21 @@ body > section {
     }
 }
 
+.is-closing-toast {
+    animation: slideOutAlert 0.3s ease-out forwards;
+}
+
+@keyframes slideOutAlert {
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
 /* Estilos especficos del formulario en modales */
 .form-group small {
     display: block;
@@ -3042,6 +3059,9 @@ body > section {
 .portfolio-tab {
     min-height: 44px;
     font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 15px;
 }
 
 .portfolio-tab.active {

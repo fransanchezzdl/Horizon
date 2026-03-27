@@ -2,55 +2,31 @@
     let currentOptions = null;
 
     function showCreatePortfolioModal(options = {}) {
-        if (document.getElementById('portfolioModal')) {
+        currentOptions = options;
+
+        const modal = document.getElementById('portfolioModal');
+        if (!modal) {
+            console.error('No se encontró #portfolioModal en el HTML');
             return;
         }
 
-        currentOptions = options;
+        modal.classList.remove('is-hidden');
 
-        const modal = `
-            <div id="portfolioModal" class="modal">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h3>Crear Portfolio</h3>
-                        <button class="btn-close" onclick="closeCreatePortfolioModal()">×</button>
-                    </div>
-                    <div class="modal-body">
-                        <div class="form-group">
-                            <label>Nombre del Portfolio</label>
-                            <input type="text" id="portfolioNameInput" placeholder="ej: Mi Portfolio Agresivo">
-                        </div>
-                        <div class="form-group">
-                            <label>Descripción</label>
-                            <textarea id="portfolioDescInput" placeholder="Describe tu estrategia de inversión" rows="3"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Nivel de Riesgo</label>
-                            <select id="portfolioRiskInput">
-                                <option value="0.3">Conservador (Bajo riesgo)</option>
-                                <option value="0.5" selected>Moderado (Riesgo medio)</option>
-                                <option value="0.8">Agresivo (Alto riesgo)</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button class="btn-secondary" onclick="closeCreatePortfolioModal()">Cancelar</button>
-                        <button class="btn-primary" onclick="createPortfolio()">Crear</button>
-                    </div>
-                </div>
-            </div>
-        `;
+        const nameInput = document.getElementById('portfolioNameInput');
+        const descInput = document.getElementById('portfolioDescInput');
+        const riskInput = document.getElementById('portfolioRiskInput');
 
-        document.body.insertAdjacentHTML('beforeend', modal);
-        const input = document.getElementById('portfolioNameInput');
-        if (input) {
-            input.focus();
+        if (nameInput) {
+            nameInput.value = '';
+            nameInput.focus();
         }
+        if (descInput) descInput.value = '';
+        if (riskInput) riskInput.value = '0.5';
     }
 
     function closeCreatePortfolioModal() {
         const modal = document.getElementById('portfolioModal');
-        if (modal) modal.remove();
+        if (modal) modal.classList.add('is-hidden');
     }
 
     async function createPortfolio() {
