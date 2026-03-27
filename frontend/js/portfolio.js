@@ -132,6 +132,7 @@ async function enrichPortfolioStocks(acciones) {
             ...accion,
             ticker,
             nombre_completo: detalles.nombre_completo || ticker,
+            logo_activo: detalles.logo_activo || '',
             precio: detalles.precio,
             estabilidad: detalles.estabilidad,
             senal_ia: detalles.senal_ia
@@ -337,11 +338,7 @@ function renderAssetsTable(acciones) {
         row.innerHTML = `
             <td>
                 <div class="asset-item">
-                    <div class="asset-icon">
-                        <svg viewBox="0 0 24 24" fill="#000" width="24" height="24">
-                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
-                        </svg>
-                    </div>
+                    <div class="asset-icon"></div>
                     <div class="asset-info">
                         <span class="asset-symbol">${activo.ticker}</span>
                         <span class="asset-name">${activo.nombre_completo || activo.ticker}</span>
@@ -363,6 +360,10 @@ function renderAssetsTable(acciones) {
                 </div>
             </td>
         `;
+
+        const iconContainer = row.querySelector('.asset-icon');
+        window.renderAssetIcon(iconContainer, activo);
+
         tbody.appendChild(row);
     });
 }
