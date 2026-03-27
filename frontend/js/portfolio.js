@@ -56,6 +56,8 @@ async function loadPortfolios() {
         console.log(`📊 Portfolios cargados: ${currentPortfolios.length}`, currentPortfolios);
         
         if (currentPortfolios.length > 0) {
+            showPortfolioMainContent();
+
             // Cargar el primer portfolio por defecto
             currentPortfolioId = currentPortfolios[0].id_portfolio;
 
@@ -70,6 +72,19 @@ async function loadPortfolios() {
     } catch (error) {
         console.error('Error:', error);
         showAlert('Error de conexión', 'error');
+    }
+}
+
+function showPortfolioMainContent() {
+    const mainContent = document.getElementById('portfolioMainContent');
+    const emptyState = document.getElementById('portfolioEmptyState');
+
+    if (mainContent) {
+        mainContent.classList.remove('is-hidden');
+    }
+
+    if (emptyState) {
+        emptyState.classList.add('is-hidden');
     }
 }
 
@@ -227,11 +242,11 @@ function renderPortfolioSelector() {
     
     // Mostrar/ocultar la sección basada en si hay portfolios
     if (currentPortfolios.length === 0) {
-        selectorContainer.style.display = 'none';
+        selectorContainer.classList.add('is-hidden');
         return;
     }
-    
-    selectorContainer.style.display = 'flex';
+
+    selectorContainer.classList.remove('is-hidden');
     portfolioTabs.innerHTML = '';
 
     currentPortfolios.forEach((portfolio) => {
@@ -241,9 +256,6 @@ function renderPortfolioSelector() {
         tabButton.className = portfolio.id_portfolio === currentPortfolioId
             ? 'btn-primary portfolio-tab active'
             : 'btn-outline portfolio-tab';
-        tabButton.style.padding = '10px 20px';
-        tabButton.style.borderRadius = '999px';
-        tabButton.style.fontSize = '15px';
         tabButton.textContent = portfolio.nombre_portfolio;
 
         tabButton.addEventListener('click', async () => {
@@ -259,9 +271,6 @@ function renderPortfolioSelector() {
     const newPortfolioTab = document.createElement('button');
     newPortfolioTab.type = 'button';
     newPortfolioTab.className = 'btn-outline portfolio-tab';
-    newPortfolioTab.style.padding = '10px 20px';
-    newPortfolioTab.style.borderRadius = '999px';
-    newPortfolioTab.style.fontSize = '15px';
     newPortfolioTab.textContent = '+ Nuevo';
     newPortfolioTab.addEventListener('click', createNewPortfolio);
     portfolioTabs.appendChild(newPortfolioTab);
@@ -295,22 +304,18 @@ function createNewPortfolio() {
 // Renderiza la tabla de activos del portfolio o el estado vacío de la tabla.
 function renderAssetsTable(acciones) {
     const tbody = document.querySelector('.custom-table tbody');
-    if (!tbody) return;
+    const emptyAssetsRow = document.getElementById('emptyAssetsRow');
+    if (!tbody || !emptyAssetsRow) return;
 
-    // Limpiar tabla
-    tbody.innerHTML = '';
+    // Limpiar solo filas dinámicas.
+    tbody.querySelectorAll('.asset-row-dynamic').forEach((row) => row.remove());
 
     if (acciones.length === 0) {
-        // Mostrar mensaje si no hay activos
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="6" style="text-align: center; padding: 40px; color: #999;">
-                    <p>No hay activos en este portfolio. Haz clic en "Añadir Inversión" para comenzar.</p>
-                </td>
-            </tr>
-        `;
+        emptyAssetsRow.classList.remove('is-hidden');
         return;
     }
+
+    emptyAssetsRow.classList.add('is-hidden');
 
     acciones.forEach((activo) => {
         const precio = typeof activo.precio === 'number'
@@ -334,11 +339,13 @@ function renderAssetsTable(acciones) {
                 : 'text-muted';
 
         const row = document.createElement('tr');
+        row.className = 'asset-row-dynamic';
+        // HTML dinámico: esta fila se repite por cada activo con datos y estados distintos.
         row.innerHTML = `
             <td>
                 <div class="asset-item">
                     <div class="asset-icon">
-                        <svg viewBox="0 0 24 24" fill="#000" width="24" height="24">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>
                         </svg>
                     </div>
@@ -369,26 +376,15 @@ function renderAssetsTable(acciones) {
 
 // Renderiza el estado vacío global cuando el usuario no tiene portfolios.
 function renderEmptyState() {
-    const pageContent = document.querySelector('#dashboard-contenido');
-    if (pageContent) {
-        pageContent.innerHTML = `
-            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 60vh; color: #999; text-align: center;">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" style="margin-bottom: 20px; color: #ccc;">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                </svg>
-                <h2 style="color: #333; font-size: 24px; margin-bottom: 10px;">No tienes portfolios aún</h2>
-                <p style="margin-bottom: 30px; color: #666; font-size: 15px;">Crea tu primer portfolio para comenzar a invertir y gestionar tus activos</p>
-                <button class="btn-primary" onclick="showCreatePortfolioModal()" style="padding: 12px 30px; font-size: 15px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
-                    Crear Mi Primer Portfolio
-                </button>
-            </div>
-        `;
+    const mainContent = document.getElementById('portfolioMainContent');
+    const emptyState = document.getElementById('portfolioEmptyState');
+
+    if (mainContent) {
+        mainContent.classList.add('is-hidden');
+    }
+
+    if (emptyState) {
+        emptyState.classList.remove('is-hidden');
     }
 }
 
@@ -474,11 +470,11 @@ function showAddAssetModal() {
     let activeIndex = -1;
     
     // Mostrar modal
-    modal.style.display = 'flex';
+    modal.classList.remove('is-hidden');
     searchInput.value = '';
     suggestions.hidden = true;
-    errorDiv.style.display = 'none';
-    selectedInfo.style.display = 'none';
+    errorDiv.classList.add('is-hidden');
+    selectedInfo.classList.add('is-hidden');
     addBtn.disabled = true;
     searchInput.focus();
     
@@ -506,6 +502,7 @@ function showAddAssetModal() {
             const li = document.createElement('li');
             li.className = 'suggestion-item';
             li.tabIndex = 0;
+            // HTML dinámico: cada sugerencia depende de resultados en tiempo real.
             li.innerHTML = `<span><span class="suggestion-symbol">${activo.ticker}</span> <span class="suggestion-name">${activo.nombre_completo}</span></span>`;
             li.addEventListener('click', () => {
                 seleccionarActivo(activo);
@@ -523,11 +520,11 @@ function showAddAssetModal() {
         // Mostrar información del activo seleccionado
         document.getElementById('selectedAssetName').textContent = activo.nombre_completo;
         document.getElementById('selectedAssetTicker').textContent = activo.ticker;
-        selectedInfo.style.display = 'block';
+        selectedInfo.classList.remove('is-hidden');
         
         // Habilitar botón de añadir
         addBtn.disabled = false;
-        errorDiv.style.display = 'none';
+        errorDiv.classList.add('is-hidden');
         
         console.log('[OK] Activo seleccionado:', activo);
     }
@@ -539,7 +536,7 @@ function showAddAssetModal() {
             suggestions.hidden = true; 
             selectedAsset = null;
             addBtn.disabled = true;
-            selectedInfo.style.display = 'none';
+            selectedInfo.classList.add('is-hidden');
             return; 
         }
         
@@ -595,13 +592,13 @@ function closeAddAssetModal() {
     const searchInput = document.getElementById('assetSearch');
     const suggestions = document.getElementById('assetSuggestions');
     
-    modal.style.display = 'none';
+    modal.classList.add('is-hidden');
     suggestions.hidden = true;
     searchInput.value = '';
     
     // Limpiar listeners escondiendo y mostrando modal vacío
-    document.getElementById('selectedAssetInfo').style.display = 'none';
-    document.getElementById('tickerError').style.display = 'none';
+    document.getElementById('selectedAssetInfo').classList.add('is-hidden');
+    document.getElementById('tickerError').classList.add('is-hidden');
 }
 
 // Valida y envía el ticker seleccionado al portfolio activo.
@@ -614,19 +611,19 @@ async function addAssetToPortfolio() {
     // Validación básica
     if (!ticker || ticker.length === 0) {
         errorDiv.textContent = 'Por favor selecciona un activo de la lista';
-        errorDiv.style.display = 'block';
+        errorDiv.classList.remove('is-hidden');
         return;
     }
 
     if (ticker.length > 10) {
         errorDiv.textContent = 'El ticker es muy largo (máximo 10 caracteres)';
-        errorDiv.style.display = 'block';
+        errorDiv.classList.remove('is-hidden');
         return;
     }
 
     if (!/^[A-Z0-9]+$/.test(ticker)) {
         errorDiv.textContent = 'El ticker solo debe contener letras y números';
-        errorDiv.style.display = 'block';
+        errorDiv.classList.remove('is-hidden');
         return;
     }
 
@@ -658,13 +655,13 @@ async function addAssetToPortfolio() {
             const error = await response.json().catch(() => ({}));
             console.error('[ERROR] Ticker inválido:', error);
             errorDiv.textContent = error.detail || 'Ticker inválido o no existe';
-            errorDiv.style.display = 'block';
+            errorDiv.classList.remove('is-hidden');
         } else {
             const error = await response.json().catch(() => ({}));
             console.error('[ERROR]:', error);
             if (errorDiv && error?.detail) {
                 errorDiv.textContent = error.detail;
-                errorDiv.style.display = 'block';
+                errorDiv.classList.remove('is-hidden');
             } else {
                 showAlert('No se pudo añadir el activo', 'error');
             }
@@ -681,50 +678,13 @@ async function addAssetToPortfolio() {
 
 // Muestra una notificación tipo toast para feedback de éxito/error/info.
 function showAlert(message, type = 'info') {
-    const colors = {
-        success: '#10b981',
-        error: '#ef4444',
-        info: '#3b82f6',
-        warning: '#f59e0b'
-    };
-    
-    const icons = {
-        success: '✅',
-        error: '❌',
-        info: 'ℹ️',
-        warning: '⚠️'
-    };
-    
-    const bgColor = colors[type] || colors.info;
-    const icon = icons[type] || '';
-    
     const alertBox = document.createElement('div');
     alertBox.className = `alert alert-${type}`;
-    alertBox.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        background: ${bgColor};
-        color: white;
-        border-radius: 6px;
-        z-index: 10001;
-        animation: slideInAlert 0.3s ease-out;
-        font-size: 14px;
-        font-weight: 500;
-        max-width: 350px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        word-wrap: break-word;
-    `;
-    
-    alertBox.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+    alertBox.textContent = message;
     document.body.appendChild(alertBox);
     
     setTimeout(() => {
-        alertBox.style.animation = 'slideInAlert 0.3s ease-out reverse';
+        alertBox.classList.add('is-closing-toast');
         setTimeout(() => alertBox.remove(), 300);
     }, 3000);
 }
