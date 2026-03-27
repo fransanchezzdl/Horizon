@@ -5,6 +5,7 @@
 const API_BASE = window.API_BASE;
 let currentPortfolioId = null;
 let currentPortfolios = [];
+let pendingConfirmAction = null;
 
 // Carga sesión, valida autenticación y arranca la carga de portfolios.
 async function initPortfolioPage() {
@@ -29,6 +30,52 @@ function setupPortfolioActions() {
     }
 
     deletePortfolioBtn.addEventListener('click', deleteCurrentPortfolio);
+
+    const closeBtn = document.getElementById('confirmActionCloseBtn');
+    const cancelBtn = document.getElementById('confirmActionCancelBtn');
+    const confirmBtn = document.getElementById('confirmActionConfirmBtn');
+
+    closeBtn?.addEventListener('click', closeConfirmActionModal);
+    cancelBtn?.addEventListener('click', closeConfirmActionModal);
+    confirmBtn?.addEventListener('click', handleConfirmAction);
+}
+
+function openConfirmActionModal(message, onConfirm) {
+    const modal = document.getElementById('confirmActionModal');
+    const messageEl = document.getElementById('confirmActionMessage');
+
+    if (!modal || !messageEl) {
+        return;
+    }
+
+    pendingConfirmAction = onConfirm;
+    messageEl.textContent = message;
+    modal.classList.remove('is-hidden');
+}
+
+function closeConfirmActionModal() {
+    const modal = document.getElementById('confirmActionModal');
+    if (modal) {
+        modal.classList.add('is-hidden');
+    }
+    pendingConfirmAction = null;
+}
+
+async function handleConfirmAction() {
+    if (typeof pendingConfirmAction !== 'function') {
+        closeConfirmActionModal();
+        return;
+    }
+
+    const actionToRun = pendingConfirmAction;
+    closeConfirmActionModal();
+
+    try {
+        await actionToRun();
+    } catch (error) {
+        console.error('Error ejecutando acción de confirmación:', error);
+        showAlert('Error ejecutando la acción', 'error');
+    }
 }
 
 if (document.readyState === 'loading') {
@@ -407,51 +454,52 @@ async function deleteCurrentPortfolio() {
         return;
     }
 
-    const confirmed = confirm('¿Estás seguro de que deseas eliminar este portfolio completo? Esta acción no se puede deshacer.');
-    if (!confirmed) {
-        return;
-    }
+    openConfirmActionModal(
+        '¿Estás seguro de que deseas eliminar este portfolio? Esta acción no se puede deshacer.',
+        async () => {
+            try {
+                const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}`, {
+                    method: 'DELETE'
+                });
 
-    try {
-        const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}`, {
-            method: 'DELETE'
-        });
+                if (!response.ok) {
+                    const data = await response.json().catch(() => ({}));
+                    showAlert(data.detail || 'No se pudo eliminar el portfolio', 'error');
+                    return;
+                }
 
-        if (!response.ok) {
-            const data = await response.json().catch(() => ({}));
-            showAlert(data.detail || 'No se pudo eliminar el portfolio', 'error');
-            return;
+                showAlert('Portfolio eliminado correctamente', 'success');
+                await loadPortfolios();
+            } catch (error) {
+                console.error('Error eliminando portfolio:', error);
+                showAlert('Error de conexión al eliminar el portfolio', 'error');
+            }
         }
-
-        showAlert('Portfolio eliminado correctamente', 'success');
-        await loadPortfolios();
-    } catch (error) {
-        console.error('Error eliminando portfolio:', error);
-        showAlert('Error de conexión al eliminar el portfolio', 'error');
-    }
+    );
 }
 
 // Elimina una posición del portfolio activo y refresca el detalle tras éxito.
 async function deleteAsset(stockId) {
-    if (!confirm('¿Estás seguro de que deseas eliminar este activo del portfolio?')) {
-        return;
-    }
+    openConfirmActionModal(
+        '¿Estás seguro de que deseas eliminar este activo del portfolio?',
+        async () => {
+            try {
+                const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}/activos/${stockId}`, {
+                    method: 'DELETE'
+                });
 
-    try {
-        const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}/activos/${stockId}`, {
-            method: 'DELETE'
-        });
-
-        if (response.ok) {
-            showAlert('Activo eliminado correctamente', 'success');
-            await loadPortfolioDetails(currentPortfolioId);
-        } else {
-            showAlert('Error al eliminar el activo', 'error');
+                if (response.ok) {
+                    showAlert('Activo eliminado correctamente', 'success');
+                    await loadPortfolioDetails(currentPortfolioId);
+                } else {
+                    showAlert('Error al eliminar el activo', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('Error de conexión', 'error');
+            }
         }
-    } catch (error) {
-        console.error('Error:', error);
-        showAlert('Error de conexión', 'error');
-    }
+    );
 }
 
 // ============================================================

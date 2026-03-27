@@ -3263,6 +3263,22 @@ body > section,
     border: 1px solid var(--color-danger-border);
 }
 
+.btn-danger {
+    background: var(--color-danger-700);
+    border-color: var(--color-danger-700);
+    color: var(--color-white);
+}
+
+.btn-danger:hover {
+    background: var(--color-danger-800);
+    border-color: var(--color-danger-800);
+}
+
+.btn-danger:disabled {
+    background: var(--color-danger-border-strong);
+    border-color: var(--color-danger-border-strong);
+}
+
 .alert-warning {
     background: var(--color-warning-bg);
     color: var(--color-warning-800);
