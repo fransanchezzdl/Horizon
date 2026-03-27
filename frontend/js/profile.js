@@ -432,7 +432,6 @@ function initProfileEvents() {
     const deleteAccountExpectedName = document.getElementById('deleteAccountExpectedName');
     const deleteAccountConfirmBtn = document.getElementById('deleteAccountConfirmBtn');
     const deleteAccountCancelBtn = document.getElementById('deleteAccountCancelBtn');
-    const deleteAccountCloseBtn = document.getElementById('deleteAccountCloseBtn');
 
     const notify = (message, type = 'info') => {
         if (typeof window.showAlert === 'function') {
@@ -516,7 +515,6 @@ function initProfileEvents() {
     }
 
     deleteAccountCancelBtn?.addEventListener('click', closeDeleteAccountModal);
-    deleteAccountCloseBtn?.addEventListener('click', closeDeleteAccountModal);
     deleteAccountInput?.addEventListener('input', validateDeleteAccountInput);
     deleteAccountConfirmBtn?.addEventListener('click', confirmDeleteAccount);
 

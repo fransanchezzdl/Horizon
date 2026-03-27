@@ -804,20 +804,6 @@ p {
     font-size: 18px;
 }
 
-.balance-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-    color: var(--color-tertiary);
-    font-size: 15px;
-}
-
-.balance-amount {
-    font-weight: 700;
-    color: var(--color-text-primary);
-    font-size: 18px;
-}
-
 /* #endregion PAGINA PORTFOLIO - CONTENIDO */
 
 /* #endregion PAGINA PORTFOLIO */
@@ -3266,6 +3252,14 @@ body > section,
     margin-bottom: 0;
 }
 
+.form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--color-text-primary);
+}
+
 .form-group input,
 .form-group textarea,
 .form-group select {
@@ -3319,13 +3313,13 @@ body > section,
     border: 1px solid var(--color-danger-border);
 }
 
-.delete-account-modal-content {
+#deleteAccountModal .modal-content {
     max-width: 620px;
     border-radius: 16px;
     overflow: hidden;
 }
 
-.delete-account-modal-header {
+#deleteAccountModal .modal-header {
     padding: 18px 24px;
 }
 
@@ -3354,7 +3348,7 @@ body > section,
     color: var(--color-danger-700);
 }
 
-.delete-account-modal-body {
+#deleteAccountModal .modal-body {
     padding: 22px 30px 24px;
 }
 
@@ -3396,18 +3390,6 @@ body > section,
     line-height: 1.35;
 }
 
-.delete-account-form-group {
-    margin-bottom: 0;
-}
-
-.delete-account-form-group label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: var(--color-text-primary);
-}
-
 .delete-account-expected-name {
     display: inline-block;
     margin-bottom: 10px;
@@ -3420,42 +3402,42 @@ body > section,
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
-.delete-account-form-group input {
+#deleteAccountModal input {
     font-size: 16px;
     padding: 12px 14px;
     border-radius: 12px;
 }
 
-.delete-account-form-group input::placeholder {
+#deleteAccountModal input::placeholder {
     color: var(--color-text-muted);
     font-weight: 600;
 }
 
-.delete-account-modal-footer {
+#deleteAccountModal .modal-footer {
     padding: 16px 24px 20px;
     gap: 10px;
 }
 
-.delete-account-modal-footer .btn-secondary,
-.delete-account-modal-footer .btn-logout {
+#deleteAccountModal .modal-footer .btn-secondary,
+#deleteAccountModal .modal-footer .btn-logout {
     min-width: 148px;
     min-height: 48px;
     font-size: 16px;
     border-radius: 12px;
 }
 
-.delete-account-modal-footer .btn-logout:disabled {
+#deleteAccountModal .modal-footer .btn-logout:disabled {
     color: var(--color-danger-border-strong);
     background: var(--color-danger-bg);
     border: 1px solid var(--color-danger-border);
 }
 
 @media (max-width: 900px) {
-    .delete-account-modal-content {
+    #deleteAccountModal .modal-content {
         width: 94%;
     }
 
-    .delete-account-modal-body {
+    #deleteAccountModal .modal-body {
         padding: 18px 16px 18px;
     }
 
@@ -3471,12 +3453,12 @@ body > section,
         font-size: 14px;
     }
 
-    .delete-account-modal-footer {
+    #deleteAccountModal .modal-footer {
         padding: 14px 16px 18px;
     }
 
-    .delete-account-modal-footer .btn-secondary,
-    .delete-account-modal-footer .btn-logout {
+    #deleteAccountModal .modal-footer .btn-secondary,
+    #deleteAccountModal .modal-footer .btn-logout {
         min-width: 118px;
         min-height: 42px;
         font-size: 15px;

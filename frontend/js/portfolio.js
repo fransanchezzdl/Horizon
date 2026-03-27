@@ -154,7 +154,6 @@ async function loadPortfolioDetails(portfolioId) {
 
         const portfolio = await response.json();
         console.log(`✅ Portfolio cargado:`, portfolio);
-        renderPortfolioData(portfolio);
         const accionesEnriquecidas = await enrichPortfolioStocks(portfolio.acciones || []);
         renderAssetsTable(accionesEnriquecidas);
         await renderPortfolioMetrics(portfolio);
@@ -324,24 +323,6 @@ function renderPortfolioSelector() {
     portfolioTabs.appendChild(newPortfolioTab);
     
     console.log(`📊 Tabs renderizadas con ${currentPortfolios.length} portfolio(s)`);
-}
-
-// Renderiza datos generales del portfolio (título, conteo de activos y riesgo).
-function renderPortfolioData(portfolio) {
-    // Actualizar balance
-    const balanceAmount = document.querySelector('.balance-amount');
-    if (balanceAmount) {
-        const activeCount = (portfolio.acciones && portfolio.acciones.length) || 0;
-        balanceAmount.textContent = `${activeCount} activos`;
-    }
-    
-    // Actualizar badge de riesgo
-    const badge = document.querySelector('#portfolioCountBadge');
-    if (badge) {
-        const riskLevel = portfolio.riesgo < 0.35 ? 'Agresivo' : 
-                          portfolio.riesgo < 0.65 ? 'Moderado' : 'Conservador';
-        badge.textContent = `${riskLevel} (${(portfolio.riesgo * 100).toFixed(0)}%)`;
-    }
 }
 
 // Abre el modal compartido para crear un nuevo portfolio.
