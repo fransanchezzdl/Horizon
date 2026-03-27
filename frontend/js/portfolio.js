@@ -636,7 +636,7 @@ async function addAssetToPortfolio() {
     }
 
     try {
-        console.log(`[INFO] Aniadiendo activo ${ticker} al portfolio ${currentPortfolioId}`);
+        console.log(`[INFO] Añadiendo activo ${ticker} al portfolio ${currentPortfolioId}`);
         
         const response = await window.fetchWithAuth(`${API_BASE}/portfolios/${currentPortfolioId}/activos`, {
             method: 'POST',
@@ -650,19 +650,24 @@ async function addAssetToPortfolio() {
 
         if (response.ok) {
             const data = await response.json();
-            console.log(`[OK] Activo aniadido:`, data);
-            showAlert(`Activo ${ticker} aniadido correctamente`, 'success');
+            console.log(`[OK] Activo añadido:`, data);
+            showAlert(`Activo ${ticker} añadido correctamente`, 'success');
             closeAddAssetModal();
             await loadPortfolioDetails(currentPortfolioId);
         } else if (response.status === 400) {
             const error = await response.json().catch(() => ({}));
-            console.error('[ERROR] Ticker invalido:', error);
-            errorDiv.textContent = error.detail || 'Ticker invalido o no existe';
+            console.error('[ERROR] Ticker inválido:', error);
+            errorDiv.textContent = error.detail || 'Ticker inválido o no existe';
             errorDiv.style.display = 'block';
         } else {
             const error = await response.json().catch(() => ({}));
             console.error('[ERROR]:', error);
-            showAlert(`Error al aniadir activo: ${response.status}`, 'error');
+            if (errorDiv && error?.detail) {
+                errorDiv.textContent = error.detail;
+                errorDiv.style.display = 'block';
+            } else {
+                showAlert('No se pudo añadir el activo', 'error');
+            }
         }
     } catch (error) {
         console.error('[ERROR]:', error);
