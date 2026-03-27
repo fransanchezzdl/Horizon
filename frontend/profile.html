@@ -185,8 +185,8 @@
     </div>
 
     <div id="deleteAccountModal" class="modal is-hidden">
-        <div class="modal-content delete-account-modal-content">
-            <div class="modal-header delete-account-modal-header">
+        <div class="modal-content">
+            <div class="modal-header">
                 <div class="delete-account-title-wrap">
                     <span class="delete-account-title-icon" aria-hidden="true">
                         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
@@ -197,9 +197,8 @@
                     </span>
                     <h2>Eliminar cuenta</h2>
                 </div>
-                <button class="btn-close" id="deleteAccountCloseBtn">×</button>
             </div>
-            <div class="modal-body delete-account-modal-body">
+            <div class="modal-body">
                 <div class="delete-account-warning-box">
                     <span class="delete-account-warning-icon" aria-hidden="true">!</span>
                     <div>
@@ -208,13 +207,13 @@
                     </div>
                 </div>
 
-                <div class="form-group delete-account-form-group">
+                <div class="form-group">
                     <label for="deleteAccountConfirmInput">Escribe tu nombre de usuario para confirmar:</label>
                     <div id="deleteAccountExpectedName" class="delete-account-expected-name"></div>
                     <input type="text" id="deleteAccountConfirmInput" autocomplete="off" placeholder="Escribe tu nombre aquí...">
                 </div>
             </div>
-            <div class="modal-footer delete-account-modal-footer">
+            <div class="modal-footer">
                 <button class="btn-secondary" id="deleteAccountCancelBtn">Cancelar</button>
                 <button class="btn-logout btn-logout-compact" id="deleteAccountConfirmBtn" disabled>Eliminar cuenta</button>
             </div>
