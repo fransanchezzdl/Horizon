@@ -183,5 +183,42 @@
             </div>
         </div>
     </div>
+
+    <div id="deleteAccountModal" class="modal is-hidden">
+        <div class="modal-content delete-account-modal-content">
+            <div class="modal-header delete-account-modal-header">
+                <div class="delete-account-title-wrap">
+                    <span class="delete-account-title-icon" aria-hidden="true">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 9v4"></path>
+                            <path d="M12 17h.01"></path>
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        </svg>
+                    </span>
+                    <h2>Eliminar cuenta</h2>
+                </div>
+                <button class="btn-close" id="deleteAccountCloseBtn">×</button>
+            </div>
+            <div class="modal-body delete-account-modal-body">
+                <div class="delete-account-warning-box">
+                    <span class="delete-account-warning-icon" aria-hidden="true">!</span>
+                    <div>
+                        <strong>Esta acción es irreversible</strong>
+                        <p>Se eliminarán permanentemente tu cuenta, portfolios y todos tus datos.</p>
+                    </div>
+                </div>
+
+                <div class="form-group delete-account-form-group">
+                    <label for="deleteAccountConfirmInput">Escribe tu nombre de usuario para confirmar:</label>
+                    <div id="deleteAccountExpectedName" class="delete-account-expected-name"></div>
+                    <input type="text" id="deleteAccountConfirmInput" autocomplete="off" placeholder="Escribe tu nombre aquí...">
+                </div>
+            </div>
+            <div class="modal-footer delete-account-modal-footer">
+                <button class="btn-secondary" id="deleteAccountCancelBtn">Cancelar</button>
+                <button class="btn-logout btn-logout-compact" id="deleteAccountConfirmBtn" disabled>Eliminar cuenta</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
