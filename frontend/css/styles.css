@@ -3263,20 +3263,168 @@ body > section,
     border: 1px solid var(--color-danger-border);
 }
 
-.btn-danger {
-    background: var(--color-danger-700);
-    border-color: var(--color-danger-700);
-    color: var(--color-white);
+.delete-account-modal-content {
+    max-width: 620px;
+    border-radius: 16px;
+    overflow: hidden;
 }
 
-.btn-danger:hover {
-    background: var(--color-danger-800);
-    border-color: var(--color-danger-800);
+.delete-account-modal-header {
+    padding: 18px 24px;
 }
 
-.btn-danger:disabled {
-    background: var(--color-danger-border-strong);
-    border-color: var(--color-danger-border-strong);
+.delete-account-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.delete-account-title-wrap h2 {
+    margin: 0;
+    font-size: 34px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--color-text-primary);
+}
+
+.delete-account-title-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-danger-bg-strong);
+    color: var(--color-danger-700);
+}
+
+.delete-account-modal-body {
+    padding: 22px 30px 24px;
+}
+
+.delete-account-warning-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 16px;
+    border-radius: 12px;
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+    color: var(--color-danger-700);
+    margin-bottom: 20px;
+}
+
+.delete-account-warning-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid currentColor;
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.delete-account-warning-box strong {
+    display: block;
+    font-size: 17px;
+    margin-bottom: 4px;
+}
+
+.delete-account-warning-box p {
+    margin: 0;
+    font-size: 15px;
+    line-height: 1.35;
+}
+
+.delete-account-form-group {
+    margin-bottom: 0;
+}
+
+.delete-account-form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--color-text-primary);
+}
+
+.delete-account-expected-name {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--color-danger-bg-strong);
+    color: var(--color-danger-700);
+    font-size: 15px;
+    font-weight: 700;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.delete-account-form-group input {
+    font-size: 16px;
+    padding: 12px 14px;
+    border-radius: 12px;
+}
+
+.delete-account-form-group input::placeholder {
+    color: var(--color-text-muted);
+    font-weight: 600;
+}
+
+.delete-account-modal-footer {
+    padding: 16px 24px 20px;
+    gap: 10px;
+}
+
+.delete-account-modal-footer .btn-secondary,
+.delete-account-modal-footer .btn-logout {
+    min-width: 148px;
+    min-height: 48px;
+    font-size: 16px;
+    border-radius: 12px;
+}
+
+.delete-account-modal-footer .btn-logout:disabled {
+    color: var(--color-danger-border-strong);
+    background: var(--color-danger-bg);
+    border: 1px solid var(--color-danger-border);
+}
+
+@media (max-width: 900px) {
+    .delete-account-modal-content {
+        width: 94%;
+    }
+
+    .delete-account-modal-body {
+        padding: 18px 16px 18px;
+    }
+
+    .delete-account-title-wrap h2 {
+        font-size: 26px;
+    }
+
+    .delete-account-warning-box strong {
+        font-size: 16px;
+    }
+
+    .delete-account-warning-box p {
+        font-size: 14px;
+    }
+
+    .delete-account-modal-footer {
+        padding: 14px 16px 18px;
+    }
+
+    .delete-account-modal-footer .btn-secondary,
+    .delete-account-modal-footer .btn-logout {
+        min-width: 118px;
+        min-height: 42px;
+        font-size: 15px;
+    }
 }
 
 .alert-warning {
