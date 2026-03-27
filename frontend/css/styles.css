@@ -834,9 +834,6 @@ p {
 
 .metric-card {
     min-height: auto;
-    padding: var(--spacing-xl);
-    border: 1px solid var(--color-border-subtle);
-    box-shadow: 0 4px 6px -1px var(--color-black-a05);
 }
 
 .metric-header {
@@ -951,13 +948,35 @@ p {
 .asset-icon {
     width: 40px;
     height: 40px;
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
     border-radius: var(--radius-lg);
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    overflow: hidden;
+}
+
+/* Recuadro de portfolio igual al componente usado en analysis */
+.custom-table .asset-icon {
+    background: linear-gradient(135deg, var(--color-primary-a10) 0%, var(--color-secondary-a10) 100%);
+    border: none;
+}
+
+/* Color del fallback SVG en logos de analysis y portfolio */
+#tickerLogoContainer svg,
+.custom-table .asset-icon svg {
+    color: var(--color-text-strong);
+}
+
+[data-theme="dark"] #tickerLogoContainer,
+[data-theme="dark"] .custom-table .asset-icon {
+    background: linear-gradient(135deg, var(--color-primary-a25) 0%, var(--color-secondary-a14) 100%);
+    border: 1px solid var(--color-primary-a20);
+}
+
+[data-theme="dark"] #tickerLogoContainer svg,
+[data-theme="dark"] .custom-table .asset-icon svg {
+    color: var(--color-surface-dark-soft);
 }
 
 .asset-info {
@@ -2304,6 +2323,7 @@ body > section,
 
 #dashboard-contenido.analysis-home .analysis-search-shell {
     width: min(920px, 100%);
+    max-width: 100%;
     box-sizing: border-box;
     margin-bottom: 0;
 }
@@ -2318,13 +2338,29 @@ body > section,
 }
 
 #dashboard-contenido.analysis-active .analysis-search-shell {
-    width: 100%;
+    width: min(1200px, 100%);
+    max-width: 100%;
+    margin-inline: auto;
+    box-sizing: border-box;
     animation: analysisSearchDock 0.38s ease-out;
 }
 
 #dashboard-contenido.analysis-active .analysis-results {
+    width: min(1200px, 100%);
+    max-width: 100%;
+    margin-inline: auto;
+    box-sizing: border-box;
     display: block;
     animation: analysisContentReveal 0.46s ease-out;
+}
+
+#dashboard-contenido.analysis-active .search-inner,
+#dashboard-contenido.analysis-active .search-row,
+#dashboard-contenido.analysis-active .input-wrap,
+#dashboard-contenido.analysis-active .search-input {
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
 }
 
 @keyframes analysisSearchDock {
@@ -2574,6 +2610,26 @@ body > section,
     }
 
     #dashboard-contenido.analysis-home #searchBtn {
+        align-self: auto;
+        width: 44px;
+        min-width: 44px;
+        height: 44px;
+        flex: 0 0 44px;
+        padding: 0;
+    }
+
+    #dashboard-contenido.analysis-active .search-row {
+        flex-direction: row;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    #dashboard-contenido.analysis-active .input-wrap {
+        flex: 1;
+        min-width: 0;
+    }
+
+    #dashboard-contenido.analysis-active #searchBtn {
         align-self: auto;
         width: 44px;
         min-width: 44px;

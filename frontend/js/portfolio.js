@@ -392,7 +392,7 @@ function renderAssetsTable(acciones) {
         row.innerHTML = `
             <td>
                 <div class="asset-item">
-                    <div class="asset-icon"></div>
+                    <div class="card-icon asset-icon"></div>
                     <div class="asset-info">
                         <span class="asset-symbol">${activo.ticker}</span>
                         <span class="asset-name">${activo.nombre_completo || activo.ticker}</span>
