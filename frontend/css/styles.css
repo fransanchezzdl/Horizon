@@ -409,6 +409,43 @@ p {
     color: var(--color-secondary);
 }
 
+.quick-access-card {
+    justify-content: flex-start;
+    gap: var(--spacing-md);
+}
+
+.quick-access-card:hover {
+    transform: none;
+}
+
+.quick-access-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    width: 100%;
+}
+
+.quick-access-subcard {
+    min-height: 118px;
+    padding: var(--spacing-lg);
+    gap: var(--spacing-sm);
+}
+
+.quick-access-subcard .card-icon-hero {
+    width: 132px;
+    height: 132px;
+    right: -22px;
+}
+
+.quick-access-subcard .opt-title {
+    margin-bottom: var(--spacing-xs);
+    font-size: 16px;
+}
+
+.quick-access-subcard .opt-info {
+    font-size: 13px;
+}
+
 /* #endregion CARDS (ESTANDARIZADAS) - CONTENIDO */
 
 /* #endregion CARDS (ESTANDARIZADAS) */
