@@ -494,7 +494,6 @@ function initProfileEvents() {
             });
 
             if (response.ok) {
-                notify('Cuenta eliminada correctamente.', 'success');
                 window.clearAuthSession();
                 window.location.replace('login.html');
                 return;
