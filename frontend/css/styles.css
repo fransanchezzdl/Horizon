@@ -109,6 +109,28 @@
     /* Dashboard: icono grande decorativo en cards */
     --color-card-hero-icon: rgba(59, 130, 246, 0.12);
     --color-card-hero-icon-hover: rgba(37, 99, 235, 0.2);
+
+    /* Gradientes de fondo reutilizables */
+    --gradient-app-bg:
+        radial-gradient(120% 120% at 6% -12%, var(--color-primary-a20) 0%, transparent 52%),
+        radial-gradient(120% 120% at 100% 4%, var(--color-secondary-a10) 0%, transparent 56%),
+        radial-gradient(110% 110% at 48% 112%, var(--color-primary-a10) 0%, transparent 62%),
+        linear-gradient(162deg, var(--color-info-bg) 0%, var(--color-info-border) 44%, var(--color-white) 100%);
+
+    --gradient-login-bg:
+        radial-gradient(120% 120% at 6% -10%, var(--color-primary) 0%, transparent 52%),
+        radial-gradient(120% 120% at 100% 4%, var(--color-secondary) 0%, transparent 56%),
+        radial-gradient(110% 110% at 48% 112%, var(--color-primary) 0%, transparent 62%),
+        linear-gradient(162deg, var(--color-info-bg) 0%, var(--color-info-border) 44%, var(--color-white) 100%);
+
+    /* Sidebar glassmorphism */
+    --sidebar-glass-bg: rgba(255, 255, 255, 0.56);
+    --sidebar-glass-border: rgba(255, 255, 255, 0.72);
+    --sidebar-glass-divider: rgba(255, 255, 255, 0.42);
+    --sidebar-glass-shadow: 1px 0 10px var(--color-black-a08), 4px 0 14px var(--color-primary-a08), inset 0 1px 0 rgba(255, 255, 255, 0.68);
+    --sidebar-glass-blur: blur(20px) saturate(140%);
+    --sidebar-glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.12) 64%, rgba(255, 255, 255, 0.02) 100%);
+    --sidebar-glass-specular: radial-gradient(88% 56% at 14% 0%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 78%);
     
     /* Sidebar */
     --sidebar-width: 250px;
@@ -202,6 +224,26 @@
 
     --color-card-hero-icon: rgba(148, 163, 184, 0.22);
     --color-card-hero-icon-hover: rgba(226, 232, 240, 0.38);
+
+    --gradient-app-bg:
+        radial-gradient(115% 115% at 6% -8%, rgba(6, 182, 212, 0.28) 0%, rgba(6, 182, 212, 0) 48%),
+        radial-gradient(120% 120% at 98% 4%, rgba(56, 189, 248, 0.24) 0%, rgba(56, 189, 248, 0) 54%),
+        radial-gradient(110% 110% at 50% 110%, rgba(16, 185, 129, 0.16) 0%, rgba(16, 185, 129, 0) 56%),
+        linear-gradient(158deg, #020617 0%, #0a1021 42%, #111b34 100%);
+
+    --gradient-login-bg:
+        radial-gradient(115% 115% at 6% -8%, rgba(6, 182, 212, 0.3) 0%, rgba(6, 182, 212, 0) 48%),
+        radial-gradient(120% 120% at 98% 4%, rgba(56, 189, 248, 0.27) 0%, rgba(56, 189, 248, 0) 54%),
+        radial-gradient(110% 110% at 50% 110%, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0) 56%),
+        linear-gradient(158deg, #020617 0%, #0a1021 42%, #111b34 100%);
+
+    --sidebar-glass-bg: rgba(11, 18, 32, 0.56);
+    --sidebar-glass-border: rgba(148, 163, 184, 0.36);
+    --sidebar-glass-divider: rgba(148, 163, 184, 0.28);
+    --sidebar-glass-shadow: 1px 0 12px var(--color-black-a15), 4px 0 16px var(--color-primary-a10), inset 0 1px 0 rgba(148, 163, 184, 0.26);
+    --sidebar-glass-blur: blur(20px) saturate(150%);
+    --sidebar-glass-highlight: linear-gradient(180deg, rgba(148, 163, 184, 0.2) 0%, rgba(15, 23, 42, 0.07) 64%, rgba(15, 23, 42, 0.02) 100%);
+    --sidebar-glass-specular: radial-gradient(88% 56% at 14% 0%, rgba(148, 163, 184, 0.16) 0%, rgba(148, 163, 184, 0) 80%);
 }
 
 [data-theme="dark"] .nav-item.active .nav-label {
@@ -619,6 +661,10 @@ p {
     gap: 8px;
 }
 
+[data-theme="dark"] .btn-logout {
+    color: #fda4af;
+}
+
 .btn-logout:hover {
     background: var(--color-danger-bg-strong);
     border-color: var(--color-danger-border-strong);
@@ -982,13 +1028,38 @@ p {
     top: 0;
     width: var(--sidebar-width);
     height: 100vh;
-    background: var(--color-surface);
-    border-right: 1px solid var(--color-border);
+    overflow: hidden;
+    isolation: isolate;
+    background: var(--sidebar-glass-bg);
+    border-right: 1px solid var(--sidebar-glass-border);
     display: flex;
     flex-direction: column;
     z-index: 1000;
     transition: all 0.3s ease;
-    box-shadow: 2px 0 8px var(--color-slate-a10);
+    box-shadow: var(--sidebar-glass-shadow);
+    backdrop-filter: var(--sidebar-glass-blur);
+    -webkit-backdrop-filter: var(--sidebar-glass-blur);
+}
+
+.sidebar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--sidebar-glass-highlight);
+    pointer-events: none;
+}
+
+.sidebar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--sidebar-glass-specular);
+    pointer-events: none;
+}
+
+.sidebar > * {
+    position: relative;
+    z-index: 1;
 }
 
 .sidebar.collapsed {
@@ -1000,7 +1071,7 @@ p {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-bottom: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--sidebar-glass-divider);
 }
 
 .logo {
@@ -1180,13 +1251,13 @@ p {
 
 .nav-divider {
     height: 1px;
-    background: var(--color-border);
+    background: var(--sidebar-glass-divider);
     margin: 0 12px;
 }
 
 .sidebar-footer {
     padding: 16px;
-    border-top: 1px solid var(--color-border);
+    border-top: 1px solid var(--sidebar-glass-divider);
 }
 
 .user-profile {
@@ -1335,6 +1406,14 @@ body > section {
     margin-left: var(--sidebar-width);
     transition: margin-left 0.3s ease, padding-bottom 0.3s ease;
     padding: 32px;
+    min-height: 100vh;
+}
+
+#dashboard-contenido,
+body > main,
+body > section,
+.main-content {
+    background: var(--gradient-app-bg);
 }
 
 .sidebar.collapsed ~ #dashboard-contenido,
@@ -1648,7 +1727,7 @@ body > section {
 }
 
 .profile-card {
-    background: var(--color-surface);
+    background: var(--gradient-app-bg);
     border-radius: var(--radius-xl);
     border: 1px solid var(--color-black-a04);
     box-shadow: 0 6px 18px var(--color-slate-a06);
@@ -2575,17 +2654,60 @@ body > section {
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background: linear-gradient(180deg, var(--color-secondary) 0%, var(--color-primary) 50%, var(--color-bg-light) 100%);
+    background: var(--gradient-login-bg);
 }
 
 .login-container {
-    background: var(--color-surface);
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.54);
+    border: 1px solid rgba(255, 255, 255, 0.72);
     border-radius: var(--radius-xl);
-    box-shadow: 0 20px 60px var(--color-black-a15);
+    box-shadow: 0 32px 80px var(--color-black-a15), 0 14px 36px var(--color-primary-a20), inset 0 1px 0 rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(24px) saturate(145%);
+    -webkit-backdrop-filter: blur(24px) saturate(145%);
     width: 100%;
     max-width: 400px;
     padding: var(--spacing-2xl);
     animation: loginContainerSlideIn 1s ease-out both;
+}
+
+.login-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(255, 255, 255, 0.1) 58%, rgba(255, 255, 255, 0.02) 100%);
+    pointer-events: none;
+}
+
+.login-container::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(90% 56% at 16% 0%, rgba(255, 255, 255, 0.46) 0%, rgba(255, 255, 255, 0) 78%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+}
+
+.login-container > * {
+    position: relative;
+    z-index: 1;
+}
+
+[data-theme="dark"] .login-container {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(148, 163, 184, 0.34);
+    box-shadow: 0 34px 90px var(--color-black-a30), 0 16px 40px var(--color-primary-a20), inset 0 1px 0 rgba(148, 163, 184, 0.3);
+}
+
+[data-theme="dark"] .login-container::before {
+    background: linear-gradient(180deg, rgba(148, 163, 184, 0.28) 0%, rgba(15, 23, 42, 0.08) 60%, rgba(15, 23, 42, 0.02) 100%);
+}
+
+[data-theme="dark"] .login-container::after {
+    background: radial-gradient(90% 56% at 16% 0%, rgba(148, 163, 184, 0.26) 0%, rgba(148, 163, 184, 0) 80%);
 }
 
 @keyframes loginContainerSlideIn {
