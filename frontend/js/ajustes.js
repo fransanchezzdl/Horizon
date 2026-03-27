@@ -42,12 +42,20 @@ function initAjustesPage() {
     const btnCancel = document.getElementById('btnSettingsCancel');
     if (btnCancel) {
         btnCancel.addEventListener('click', () => {
-            if (window.history.length > 1) {
-                window.history.back();
+            const hasReferrer = Boolean(document.referrer);
+            const isSameOriginReferrer = hasReferrer
+                && new URL(document.referrer).origin === window.location.origin;
+
+            if (window.history.length > 1 && isSameOriginReferrer) {
+                const previousUrl = new URL(document.referrer);
+                previousUrl.searchParams.set('_refresh', Date.now().toString());
+                window.location.replace(previousUrl.toString());
                 return;
             }
 
-            window.location.href = 'index.html';
+            const fallbackUrl = new URL('index.html', window.location.href);
+            fallbackUrl.searchParams.set('_refresh', Date.now().toString());
+            window.location.replace(fallbackUrl.toString());
         });
     }
 
