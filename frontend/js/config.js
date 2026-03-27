@@ -191,6 +191,58 @@ window.applyUserAvatar = function (avatarElement, user = window.getCurrentUserDa
     testImage.src = avatarUrl;
 };
 
+window.ASSET_ICON_FALLBACK_SVG = [
+    '<svg viewBox="0 0 24 24" fill="#000" width="24" height="24" aria-hidden="true">',
+    '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"/>',
+    '</svg>'
+].join('');
+
+window.getAssetLogoUrl = function (assetOrLogo) {
+    const rawLogo = typeof assetOrLogo === 'string'
+        ? assetOrLogo
+        : assetOrLogo?.logo_activo;
+
+    const logoUrl = (rawLogo || '').trim();
+    if (!logoUrl || logoUrl === '-') {
+        return '';
+    }
+
+    return logoUrl;
+};
+
+window.renderAssetIcon = function (containerElement, assetOrLogo) {
+    if (!containerElement) {
+        return;
+    }
+
+    const drawFallback = () => {
+        containerElement.innerHTML = window.ASSET_ICON_FALLBACK_SVG;
+    };
+
+    const logoUrl = window.getAssetLogoUrl(assetOrLogo);
+    if (!logoUrl) {
+        drawFallback();
+        return;
+    }
+
+    const img = document.createElement('img');
+    img.src = logoUrl;
+    img.alt = 'Logo del activo';
+    img.loading = 'lazy';
+    img.style.width = '112%';
+    img.style.height = '112%';
+    img.style.objectFit = 'cover';
+    img.style.objectPosition = 'center';
+    img.style.display = 'block';
+
+    img.onerror = () => {
+        drawFallback();
+    };
+
+    containerElement.innerHTML = '';
+    containerElement.appendChild(img);
+};
+
 // ──────────────────────────────────────────────────────────────────
 // CENTRALIZACIÓN DE AUTENTICACIÓN
 // ──────────────────────────────────────────────────────────────────
