@@ -1,44 +1,51 @@
-// ============================================================
-// CONFIGURACIÓN Y ESTADO
+﻿// ============================================================
+// CONFIGURACION Y ESTADO
 // ============================================================
 
-// Base URL de la API usada para búsquedas y operaciones de portfolio.
+// Base URL de la API usada para busquedas y operaciones de portfolio.
 const API_BASE = window.API_BASE;
 
-// Ticker actualmente seleccionado en la vista de análisis.
-let selectedTicker = 'AAPL';
+// Ticker actualmente seleccionado en la vista de analisis.
+let selectedTicker = '';
 
 // Lista de portfolios del usuario disponible para el modal.
 let availablePortfolios = [];
 
-// ============================================================
-// UTILIDADES DE PRESENTACIÓN (ANÁLISIS)
-// ============================================================
-
-// Renderiza las iniciales del ticker en el avatar/fallback del resultado.
-function renderTickerLogo(ticker) {
-    const logoFallback = document.getElementById('tickerLogoFallback');
-
-    if (!logoFallback) {
+function setAnalysisMode(mode) {
+    const dashboard = document.getElementById('dashboard-contenido');
+    if (!dashboard) {
         return;
     }
 
-    const normalizedTicker = (ticker || '').toUpperCase().trim();
-    const fallbackText = normalizedTicker.slice(0, 2) || '--';
-    logoFallback.textContent = fallbackText;
+    if (mode === 'active') {
+        dashboard.classList.remove('analysis-home');
+        dashboard.classList.add('analysis-active');
+        return;
+    }
+
+    dashboard.classList.remove('analysis-active');
+    dashboard.classList.add('analysis-home');
 }
 
-// Obtiene el ticker inicial desde la cabecera y pinta su fallback visual.
-function renderInitialTickerLogo() {
-    const resultCard = document.querySelector('.result-card');
-    const h2 = resultCard?.querySelector('h2');
-    const text = h2?.textContent || '';
-    const match = text.match(/\(([^)]+)\)/);
-    const ticker = match?.[1] || '';
-    renderTickerLogo(ticker);
+// ============================================================
+// UTILIDADES DE PRESENTACION (ANALISIS)
+// ============================================================
+
+// Renderiza el logo del activo en analisis con fallback SVG comun.
+function renderTickerLogo(activoOrTicker, explicitLogoUrl = '') {
+    const logoContainer = document.getElementById('tickerLogoContainer');
+    if (!logoContainer) {
+        return;
+    }
+
+    const logoRef = typeof activoOrTicker === 'object'
+        ? activoOrTicker
+        : explicitLogoUrl;
+
+    window.renderAssetIcon(logoContainer, logoRef);
 }
 
-// Muestra mensaje de estado/errores dentro del modal de análisis.
+// Muestra mensaje de estado/errores dentro del modal de analisis.
 function showAnalysisMessage(message, isError = true) {
     const errorDiv = document.getElementById('analysisPortfolioError');
     if (!errorDiv) return;
@@ -47,7 +54,7 @@ function showAnalysisMessage(message, isError = true) {
     errorDiv.style.color = isError ? '#dc2626' : '#059669';
 }
 
-// Oculta y limpia el mensaje de estado del modal de análisis.
+// Oculta y limpia el mensaje de estado del modal de analisis.
 function hideAnalysisMessage() {
     const errorDiv = document.getElementById('analysisPortfolioError');
     if (!errorDiv) return;
@@ -56,14 +63,14 @@ function hideAnalysisMessage() {
 }
 
 // ============================================================
-// FLUJO DE MODAL: AÑADIR A PORTFOLIO
+// FLUJO DE MODAL: ANADIR A PORTFOLIO
 // ============================================================
 
 // Abre el modal, fija el ticker seleccionado y carga portfolios del usuario.
 function openAddPortfolioModal() {
     const modal = document.getElementById('addPortfolioModal');
     const selectedTickerInput = document.getElementById('selectedTickerInput');
-    if (!modal || !selectedTickerInput) return;
+    if (!modal || !selectedTickerInput || !selectedTicker) return;
 
     selectedTickerInput.value = selectedTicker || '';
     hideAnalysisMessage();
@@ -71,14 +78,14 @@ function openAddPortfolioModal() {
     loadUserPortfoliosForModal();
 }
 
-// Cierra el modal de añadir activo a portfolio.
+// Cierra el modal de anadir activo a portfolio.
 function closeAddPortfolioModal() {
     const modal = document.getElementById('addPortfolioModal');
     if (!modal) return;
     modal.style.display = 'none';
 }
 
-// Renderiza el selector de portfolios o el bloque vacío si no hay portfolios.
+// Renderiza el selector de portfolios o el bloque vacio si no hay portfolios.
 function renderPortfolioOptionsInModal() {
     const select = document.getElementById('analysisPortfolioSelect');
     const selectionBlock = document.getElementById('portfolioSelectionBlock');
@@ -120,18 +127,18 @@ async function loadUserPortfoliosForModal() {
         renderPortfolioOptionsInModal();
     } catch (error) {
         console.error('Error cargando portfolios:', error);
-        showAnalysisMessage('Error de conexión cargando portfolios');
+        showAnalysisMessage('Error de conexion cargando portfolios');
     }
 }
 
-// Añade el ticker actual al portfolio seleccionado en el select del modal.
+// Anade el ticker actual al portfolio seleccionado en el select del modal.
 async function addTickerToSelectedPortfolio() {
     const select = document.getElementById('analysisPortfolioSelect');
     if (!select) return;
 
     const selectedPortfolioId = Number(select.value);
     if (!selectedPortfolioId || !selectedTicker) {
-        showAnalysisMessage('Selecciona un portfolio y un ticker válido');
+        showAnalysisMessage('Selecciona un portfolio y un ticker valido');
         return;
     }
 
@@ -146,22 +153,22 @@ async function addTickerToSelectedPortfolio() {
 
         if (!response.ok) {
             const data = await response.json().catch(() => ({}));
-            showAnalysisMessage(data.detail || 'No se pudo añadir el activo al portfolio');
+            showAnalysisMessage(data.detail || 'No se pudo anadir el activo al portfolio');
             return;
         }
 
-        showAnalysisMessage(`Activo ${selectedTicker} añadido correctamente`, false);
+        showAnalysisMessage(`Activo ${selectedTicker} anadido correctamente`, false);
         setTimeout(() => closeAddPortfolioModal(), 900);
     } catch (error) {
-        console.error('Error añadiendo activo:', error);
-        showAnalysisMessage('Error de conexión al añadir el activo');
+        console.error('Error anadiendo activo:', error);
+        showAnalysisMessage('Error de conexion al anadir el activo');
     }
 }
 
-// Añade el ticker actual a un portfolio por ID (usado tras crear uno nuevo).
+// Anade el ticker actual a un portfolio por ID (usado tras crear uno nuevo).
 async function addTickerToPortfolioById(portfolioId) {
     if (!portfolioId || !selectedTicker) {
-        showAnalysisMessage('Portfolio o ticker inválido');
+        showAnalysisMessage('Portfolio o ticker invalido');
         return false;
     }
 
@@ -176,22 +183,22 @@ async function addTickerToPortfolioById(portfolioId) {
 
         if (!response.ok) {
             const data = await response.json().catch(() => ({}));
-            showAnalysisMessage(data.detail || 'No se pudo añadir el activo al portfolio');
+            showAnalysisMessage(data.detail || 'No se pudo anadir el activo al portfolio');
             return false;
         }
 
         return true;
     } catch (error) {
-        console.error('Error añadiendo activo al nuevo portfolio:', error);
-        showAnalysisMessage('Error de conexión al añadir el activo');
+        console.error('Error anadiendo activo al nuevo portfolio:', error);
+        showAnalysisMessage('Error de conexion al anadir el activo');
         return false;
     }
 }
 
-// Abre el modal compartido de creación y, al crear, añade el ticker actual.
+// Abre el modal compartido de creacion y, al crear, anade el ticker actual.
 function openExistingCreatePortfolioFlow() {
     if (typeof window.showCreatePortfolioModal !== 'function') {
-        showAnalysisMessage('No se pudo abrir el modal de creación de portfolio');
+        showAnalysisMessage('No se pudo abrir el modal de creacion de portfolio');
         return;
     }
 
@@ -207,7 +214,7 @@ function openExistingCreatePortfolioFlow() {
             await loadUserPortfoliosForModal();
 
             if (added) {
-                showAnalysisMessage(`Portfolio creado y activo ${selectedTicker} añadido correctamente`, false);
+                showAnalysisMessage(`Portfolio creado y activo ${selectedTicker} anadido correctamente`, false);
                 setTimeout(() => closeAddPortfolioModal(), 1200);
             }
         }
@@ -215,7 +222,7 @@ function openExistingCreatePortfolioFlow() {
 }
 
 // ============================================================
-// FORMATEO Y NORMALIZACIÓN DE DATOS
+// FORMATEO Y NORMALIZACION DE DATOS
 // ============================================================
 
 // Convierte la confianza a porcentaje visible y etiqueta cualitativa.
@@ -238,7 +245,7 @@ function formatConfidence(confianza) {
     return { value: `${rounded}%`, label };
 }
 
-// Normaliza el texto de señal para mostrarlo de forma consistente.
+// Normaliza el texto de senal para mostrarlo de forma consistente.
 function formatSignal(senal) {
     if (!senal || typeof senal !== 'string') {
         return '--';
@@ -254,7 +261,7 @@ function formatSignal(senal) {
     return map[normalized] || normalized;
 }
 
-// Devuelve un payload de activo estandarizado para la vista de análisis.
+// Devuelve un payload de activo estandarizado para la vista de analisis.
 function normalizeActivoPayload(rawActivo) {
     if (!rawActivo || typeof rawActivo !== 'object') {
         return {};
@@ -268,17 +275,17 @@ function normalizeActivoPayload(rawActivo) {
 }
 
 // ============================================================
-// INICIALIZACIÓN Y BÚSQUEDA DE ACTIVOS
+// INICIALIZACION Y BUSQUEDA DE ACTIVOS
 // ============================================================
 
-// Inicializa la página de análisis: eventos UI, búsqueda y render inicial.
+// Inicializa la pagina de analisis: eventos UI, busqueda y render inicial.
 function initSearch() {
     const input = document.getElementById('tickerSearch');
     const suggestions = document.getElementById('suggestions');
     const searchBtn = document.getElementById('searchBtn');
     const addToPortfolioBtn = document.getElementById('addToPortfolioBtn');
     const closeAddPortfolioModalBtn = document.getElementById('closeAddPortfolioModalBtn');
-    const cancelAddPortfolioBtn = document.getElementById('cancelAddPortfolioBtn');
+    const cancelAddPortfolioModalBtn = document.getElementById('cancelAddPortfolioBtn');
     const confirmAddPortfolioBtn = document.getElementById('confirmAddPortfolioBtn');
     const createPortfolioFromAnalysisBtn = document.getElementById('createPortfolioFromAnalysisBtn');
     let activeIndex = -1;
@@ -289,32 +296,33 @@ function initSearch() {
     const queryTicker = new URLSearchParams(window.location.search).get('ticker');
     const normalizedQueryTicker = queryTicker?.trim().toUpperCase();
 
-    // Render inicial del logo según el ticker que viene en la cabecera
-    renderInitialTickerLogo();
+    setAnalysisMode('home');
 
     const resultCard = document.querySelector('.result-card');
     const h2 = resultCard?.querySelector('h2');
-    if (normalizedQueryTicker) {
-        selectedTicker = normalizedQueryTicker;
-        input.value = normalizedQueryTicker;
-        renderTickerLogo(normalizedQueryTicker);
-    } else {
-        const initialMatch = h2?.textContent?.match(/\(([^)]+)\)/);
-        if (initialMatch?.[1]) {
-            selectedTicker = initialMatch[1].toUpperCase();
-        }
+    if (h2) {
+        h2.textContent = 'Selecciona un activo';
+    }
+
+    const newsTitle = document.getElementById('newsTitle');
+    if (newsTitle) {
+        newsTitle.textContent = 'Noticias';
     }
 
     addToPortfolioBtn && addToPortfolioBtn.addEventListener('click', openAddPortfolioModal);
     closeAddPortfolioModalBtn && closeAddPortfolioModalBtn.addEventListener('click', closeAddPortfolioModal);
-    cancelAddPortfolioBtn && cancelAddPortfolioBtn.addEventListener('click', closeAddPortfolioModal);
+    cancelAddPortfolioModalBtn && cancelAddPortfolioModalBtn.addEventListener('click', closeAddPortfolioModal);
     confirmAddPortfolioBtn && confirmAddPortfolioBtn.addEventListener('click', addTickerToSelectedPortfolio);
     createPortfolioFromAnalysisBtn && createPortfolioFromAnalysisBtn.addEventListener('click', openExistingCreatePortfolioFlow);
 
     // Renderiza la lista de sugerencias de ticker en el dropdown.
     function renderSuggestions(list) {
         suggestions.innerHTML = '';
-        if (list.length === 0) { suggestions.hidden = true; return; }
+        if (list.length === 0) {
+            suggestions.hidden = true;
+            return;
+        }
+
         suggestions.hidden = false;
         list.forEach((t) => {
             const li = document.createElement('li');
@@ -347,45 +355,53 @@ function initSearch() {
         try {
             const url = `${API_BASE}/activos/${encodeURIComponent(ticker)}?_ts=${Date.now()}`;
             const resp = await fetch(url, { cache: 'no-store' });
-            if (!resp.ok) return;
+            if (!resp.ok) {
+                return false;
+            }
             const rawActivo = await resp.json();
             const activo = normalizeActivoPayload(rawActivo);
             actualizarVista(activo);
+            return true;
         } catch (err) {
             console.error('Error obteniendo activo:', err);
+            return false;
         }
     }
 
-    // Refresca el bloque de resultados/métricas con el activo seleccionado.
+    // Refresca el bloque de resultados/metricas con el activo seleccionado.
     function actualizarVista(activo) {
-        // Nombre y ticker en la cabecera del resultado
-        const resultCard = document.querySelector('.result-card');
-        if (resultCard) {
-            const h2 = resultCard.querySelector('h2');
-            if (h2) h2.textContent = `${activo.nombre_completo} (${activo.ticker})`;
+        const titleElement = document.querySelector('.result-card h2');
+        if (titleElement) {
+            titleElement.textContent = `${activo.nombre_completo} (${activo.ticker})`;
         }
 
-        renderTickerLogo(activo.ticker);
-        selectedTicker = (activo.ticker || '').toUpperCase();
+        const currentNewsTitle = document.getElementById('newsTitle');
+        if (currentNewsTitle) {
+            currentNewsTitle.textContent = `Noticias de ${activo.ticker}`;
+        }
 
-        // Confianza LSTM
+        renderTickerLogo(activo);
+        selectedTicker = (activo.ticker || '').toUpperCase();
+        setAnalysisMode('active');
+
         const confianzaValue = document.getElementById('confianzaValue');
         const confianzaSub = document.getElementById('confianzaSub');
         const confidence = formatConfidence(activo.confianza_bygru);
         if (confianzaValue) confianzaValue.textContent = confidence.value;
         if (confianzaSub) confianzaSub.textContent = confidence.label;
 
-        // Señal de IA
         const senalValue = document.getElementById('senalValue');
         if (senalValue) senalValue.textContent = formatSignal(activo.senal_ia);
-
-        // El bloque de predicción queda estático en HTML en esta fase
     }
 
     // Gestiona la escritura en el input con debounce para autocompletado.
     input.addEventListener('input', () => {
         const q = input.value.trim();
-        if (q.length === 0) { suggestions.hidden = true; return; }
+        if (q.length === 0) {
+            suggestions.hidden = true;
+            return;
+        }
+
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(async () => {
             const results = await buscarActivos(q);
@@ -397,12 +413,19 @@ function initSearch() {
     // Permite navegar y seleccionar sugerencias con teclado.
     input.addEventListener('keydown', (e) => {
         const items = suggestions.querySelectorAll('.suggestion-item');
-        if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = Math.min(activeIndex + 1, items.length - 1); }
-        else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = Math.max(activeIndex - 1, 0); }
-        else if (e.key === 'Enter') {
+        if (e.key === 'ArrowDown') {
             e.preventDefault();
-            if (activeIndex >= 0 && items[activeIndex]) { items[activeIndex].click(); }
-            else { searchBtn && searchBtn.click(); }
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (activeIndex >= 0 && items[activeIndex]) {
+                items[activeIndex].click();
+            } else {
+                searchBtn && searchBtn.click();
+            }
         }
         items.forEach((it, idx) => it.classList.toggle('active', idx === activeIndex));
     });
@@ -412,7 +435,7 @@ function initSearch() {
         if (!ev.target.closest('.input-wrap')) suggestions.hidden = true;
     });
 
-    // Ejecuta búsqueda manual al pulsar el botón principal.
+    // Ejecuta busqueda manual al pulsar el boton principal.
     searchBtn && searchBtn.addEventListener('click', () => {
         const val = input.value.trim();
         if (!val) return;
@@ -422,11 +445,12 @@ function initSearch() {
 
     // Si llega ticker por query param (desde portfolio), lo carga al iniciar.
     if (normalizedQueryTicker) {
+        input.value = normalizedQueryTicker;
         seleccionarActivo(normalizedQueryTicker);
     }
 }
 
-// Inicializa inmediatamente o al cargar DOM, según estado del documento.
+// Inicializa inmediatamente o al cargar DOM, segun estado del documento.
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initSearch);
 } else {
