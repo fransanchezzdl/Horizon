@@ -147,6 +147,7 @@ async function enrichPortfolioStocks(acciones) {
             ...accion,
             ticker,
             nombre_completo: detalles.nombre_completo || ticker,
+            logo_activo: detalles.logo_activo || '',
             precio: detalles.precio,
             estabilidad: detalles.estabilidad,
             senal_ia: detalles.senal_ia
@@ -374,6 +375,10 @@ function renderAssetsTable(acciones) {
                 </div>
             </td>
         `;
+
+        const iconContainer = row.querySelector('.asset-icon');
+        window.renderAssetIcon(iconContainer, activo);
+
         tbody.appendChild(row);
     });
 }
