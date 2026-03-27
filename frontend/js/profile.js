@@ -1,6 +1,7 @@
 const API_BASE = window.API_BASE;
 
 let selectedCustomAvatarFile = null;
+let expectedDeleteAccountName = '';
 const DEFAULT_AVATAR_URLS = [
     'https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png',
     'https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png',
@@ -426,26 +427,104 @@ function initProfileEvents() {
 
     // Eliminar cuenta
     const btnDeleteAccount = document.getElementById('btnDeleteAccount');
+    const deleteAccountModal = document.getElementById('deleteAccountModal');
+    const deleteAccountInput = document.getElementById('deleteAccountConfirmInput');
+    const deleteAccountExpectedName = document.getElementById('deleteAccountExpectedName');
+    const deleteAccountConfirmBtn = document.getElementById('deleteAccountConfirmBtn');
+    const deleteAccountCancelBtn = document.getElementById('deleteAccountCancelBtn');
+    const deleteAccountCloseBtn = document.getElementById('deleteAccountCloseBtn');
+
+    const notify = (message, type = 'info') => {
+        if (typeof window.showAlert === 'function') {
+            window.showAlert(message, type);
+        } else {
+            alert(message);
+        }
+    };
+
+    const getExpectedDeleteAccountName = () => {
+        const user = window.getCurrentUserData() || {};
+        if (typeof window.getUserDisplayName === 'function') {
+            return window.getUserDisplayName(user, 'Usuario');
+        }
+        return user.nombre || user.email || 'Usuario';
+    };
+
+    const closeDeleteAccountModal = () => {
+        if (!deleteAccountModal) return;
+        deleteAccountModal.classList.add('is-hidden');
+        if (deleteAccountInput) deleteAccountInput.value = '';
+        if (deleteAccountConfirmBtn) deleteAccountConfirmBtn.disabled = true;
+    };
+
+    const validateDeleteAccountInput = () => {
+        if (!deleteAccountInput || !deleteAccountConfirmBtn) return;
+        deleteAccountConfirmBtn.disabled = deleteAccountInput.value !== expectedDeleteAccountName;
+    };
+
+    const openDeleteAccountModal = () => {
+        if (!deleteAccountModal) return;
+        expectedDeleteAccountName = getExpectedDeleteAccountName();
+        if (deleteAccountExpectedName) {
+            deleteAccountExpectedName.textContent = expectedDeleteAccountName;
+        }
+        if (deleteAccountInput) {
+            deleteAccountInput.value = '';
+        }
+        if (deleteAccountConfirmBtn) {
+            deleteAccountConfirmBtn.disabled = true;
+        }
+        deleteAccountModal.classList.remove('is-hidden');
+        deleteAccountInput?.focus();
+    };
+
+    const confirmDeleteAccount = async () => {
+        if (!deleteAccountInput || deleteAccountInput.value !== expectedDeleteAccountName) {
+            return;
+        }
+
+        if (deleteAccountConfirmBtn) {
+            deleteAccountConfirmBtn.disabled = true;
+            deleteAccountConfirmBtn.textContent = 'Eliminando...';
+        }
+
+        try {
+            const response = await window.fetchWithAuth(`${API_BASE}/usuarios/me`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                notify('Cuenta eliminada correctamente.', 'success');
+                window.clearAuthSession();
+                window.location.replace('login.html');
+                return;
+            }
+
+            notify('Error al eliminar la cuenta. Inténtalo de nuevo.', 'error');
+        } catch (error) {
+            console.error('Error eliminando cuenta:', error);
+            notify('Error al eliminar la cuenta. Inténtalo de nuevo.', 'error');
+        } finally {
+            if (deleteAccountConfirmBtn) {
+                deleteAccountConfirmBtn.textContent = 'Eliminar cuenta';
+            }
+            validateDeleteAccountInput();
+        }
+    };
+
     if (btnDeleteAccount) {
-        btnDeleteAccount.addEventListener('click', async () => {
-            const confirmDelete = confirm('¿Seguro que desea eliminar la cuenta? Esta acción no se puede deshacer.');
-            if (!confirmDelete) return;
+        btnDeleteAccount.addEventListener('click', openDeleteAccountModal);
+    }
 
-            try {
-                const response = await window.fetchWithAuth(`${API_BASE}/usuarios/me`, {
-                    method: 'DELETE'
-                });
+    deleteAccountCancelBtn?.addEventListener('click', closeDeleteAccountModal);
+    deleteAccountCloseBtn?.addEventListener('click', closeDeleteAccountModal);
+    deleteAccountInput?.addEventListener('input', validateDeleteAccountInput);
+    deleteAccountConfirmBtn?.addEventListener('click', confirmDeleteAccount);
 
-                if (response.ok) {
-                    alert('Cuenta eliminada correctamente.');
-                    window.clearAuthSession();
-                    window.location.replace('login.html');
-                } else {
-                    alert('Error al eliminar la cuenta. Inténtalo de nuevo.');
-                }
-            } catch (error) {
-                console.error('Error eliminando cuenta:', error);
-                alert('Error al eliminar la cuenta. Inténtalo de nuevo.');
+    if (deleteAccountModal) {
+        deleteAccountModal.addEventListener('click', (event) => {
+            if (event.target === deleteAccountModal) {
+                closeDeleteAccountModal();
             }
         });
     }
