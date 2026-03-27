@@ -846,13 +846,13 @@ p {
 }
 
 .table-action-btn {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 14px;
     border: 1px solid var(--color-border-soft);
     background: var(--color-surface);
     color: var(--color-text-primary);
-    font-size: 30px;
+    font-size: 26px;
     line-height: 1;
     display: inline-flex;
     align-items: center;

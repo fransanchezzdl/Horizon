@@ -197,12 +197,18 @@ class PortfolioService:
     ) -> StockInPortfolioResponse:
         self._obtener_portfolio_si_es_propietario(user_id, id_portfolio)
 
-        if not self.finance_service.validate_ticker(datos.ticker.upper()):
+        ticker = datos.ticker.upper()
+
+        existentes = self.portfolio_dao.obtener_stocks_por_ticker(id_portfolio, ticker)
+        if existentes:
+            raise HTTPException(status_code=400, detail="Ya existe ese activo en este portfolio")
+
+        if not self.finance_service.validate_ticker(ticker):
             raise HTTPException(status_code=400, detail="Ticker inválido")
 
         stock_id = self.portfolio_dao.crear_stock({
             "id_portfolio": id_portfolio,
-            "ticker": datos.ticker.upper(),
+            "ticker": ticker,
         })
         if not stock_id:
             raise HTTPException(status_code=500, detail="No se pudo añadir el activo al portfolio")
