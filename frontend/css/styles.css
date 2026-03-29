@@ -3393,43 +3393,25 @@ body > section,
     border: 1px solid var(--color-danger-border);
 }
 
-#deleteAccountModal .modal-content {
-    max-width: 620px;
-    border-radius: 16px;
-    overflow: hidden;
-}
-
-#deleteAccountModal .modal-header {
-    padding: 18px 24px;
-}
-
 .delete-account-title-wrap {
     display: inline-flex;
     align-items: center;
     gap: 12px;
 }
 
-.delete-account-title-wrap h2 {
+.delete-account-title-wrap h3 {
     margin: 0;
-    font-size: 34px;
-    line-height: 1;
-    letter-spacing: -0.02em;
-    color: var(--color-text-primary);
 }
 
 .delete-account-title-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     background: var(--color-danger-bg-strong);
     color: var(--color-danger-700);
-}
-
-#deleteAccountModal .modal-body {
-    padding: 22px 30px 24px;
 }
 
 .delete-account-warning-box {
@@ -3460,13 +3442,13 @@ body > section,
 
 .delete-account-warning-box strong {
     display: block;
-    font-size: 17px;
+    font-size: 16px;
     margin-bottom: 4px;
 }
 
 .delete-account-warning-box p {
     margin: 0;
-    font-size: 15px;
+    font-size: 14px;
     line-height: 1.35;
 }
 
@@ -3480,69 +3462,6 @@ body > section,
     font-size: 15px;
     font-weight: 700;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-}
-
-#deleteAccountModal input {
-    font-size: 16px;
-    padding: 12px 14px;
-    border-radius: 12px;
-}
-
-#deleteAccountModal input::placeholder {
-    color: var(--color-text-muted);
-    font-weight: 600;
-}
-
-#deleteAccountModal .modal-footer {
-    padding: 16px 24px 20px;
-    gap: 10px;
-}
-
-#deleteAccountModal .modal-footer .btn-secondary,
-#deleteAccountModal .modal-footer .btn-logout {
-    min-width: 148px;
-    min-height: 48px;
-    font-size: 16px;
-    border-radius: 12px;
-}
-
-#deleteAccountModal .modal-footer .btn-logout:disabled {
-    color: var(--color-danger-border-strong);
-    background: var(--color-danger-bg);
-    border: 1px solid var(--color-danger-border);
-}
-
-@media (max-width: 900px) {
-    #deleteAccountModal .modal-content {
-        width: 94%;
-    }
-
-    #deleteAccountModal .modal-body {
-        padding: 18px 16px 18px;
-    }
-
-    .delete-account-title-wrap h2 {
-        font-size: 26px;
-    }
-
-    .delete-account-warning-box strong {
-        font-size: 16px;
-    }
-
-    .delete-account-warning-box p {
-        font-size: 14px;
-    }
-
-    #deleteAccountModal .modal-footer {
-        padding: 14px 16px 18px;
-    }
-
-    #deleteAccountModal .modal-footer .btn-secondary,
-    #deleteAccountModal .modal-footer .btn-logout {
-        min-width: 118px;
-        min-height: 42px;
-        font-size: 15px;
-    }
 }
 
 .alert-warning {
