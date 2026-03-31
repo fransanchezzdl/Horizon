@@ -8,9 +8,13 @@
  */
 function initializeLogout() {
     const logoutBtn = document.getElementById('logoutBtn');
+    const logoutBtnProfile = document.getElementById('logoutBtnProfile');
     
     if (logoutBtn) {
         logoutBtn.addEventListener('click', handleLogout);
+    }
+    if (logoutBtnProfile) {
+        logoutBtnProfile.addEventListener('click', handleLogout);
     }
 }
 
