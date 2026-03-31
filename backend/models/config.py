@@ -13,15 +13,52 @@ load_dotenv()
 FINNHUB_API_KEY = os.getenv("FINNHUB_API_KEY", None)
 ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", None)
 SAVED_MODELS_DIR = os.getenv("SAVED_MODELS_DIR", "backend/models/saved_models")
-USE_SENTIMENT = os.getenv("USE_SENTIMENT", "True").lower() == "true"
+USE_SENTIMENT = True  # Habilitado: usando Alpha Vantage + DistilRoBERTa
 USE_ADVANCED_FEATURES = os.getenv("USE_ADVANCED_FEATURES", "True").lower() == "true"
 USE_ATTENTION_MODEL = os.getenv("USE_ATTENTION_MODEL", "True").lower() == "true"
 
-# Catálogo de tickers iniciales
+# Catálogo de tickers - Actualizado de la BD
+# stable = estabilidad TRUE en BD
+# volatile = estabilidad FALSE en BD
 TICKERS = {
-    "stable": ["KO", "AAPL", "GC=F", "SI=F"],
-    "volatile": ["TSLA", "NVDA", "BTC-USD", "ETH-USD"] # type: ignore
+    "stable": ["KO", "AAPL", "GC=F", "SI=F", "GOOGL", "MSFT"],
+    "volatile": ["TSLA", "NVDA", "BTC-USD", "ETH-USD", "AMZN", "BABA", "INTC", "META", "NFLX"] # type: ignore
 }
+
+
+def get_tickers_from_database():
+    """
+    Carga los tickers desde la BD Supabase (RECOMENDADO).
+    Retorna dict con {stable: list, volatile: list}
+    
+    Uso:
+        TICKERS = get_tickers_from_database()
+    """
+    try:
+        from ..daos.activo_dao import ActivoDAO
+        
+        all_activos = ActivoDAO.obtener_todos()  # type: ignore
+        stable = []
+        volatile = []
+        
+        for activo in all_activos:
+            if hasattr(activo, 'ticker') and activo.ticker:
+                if hasattr(activo, 'estabilidad') and activo.estabilidad:
+                    stable.append(activo.ticker)
+                else:
+                    volatile.append(activo.ticker)
+        
+        if stable or volatile:
+            print(f"✅ Cargados {len(stable) + len(volatile)} tickers de BD:")
+            print(f"   • Stable: {stable}")
+            print(f"   • Volatile: {volatile}")
+            return {"stable": stable, "volatile": volatile}
+    
+    except Exception as e:
+        print(f"⚠️  No se pudo cargar de BD: {e}")
+    
+    # Fallback a hardcoded
+    return TICKERS
 
 # Configuración por tipo de activo
 STABLE_CONFIG = {
@@ -83,6 +120,9 @@ VOLATILE_FEATURE_COLS = BASE_FEATURE_COLS + VOLATILE_EXTRA_COLS
 # Features de sentimiento (3 extras, opcionales si USE_SENTIMENT=True)
 SENTIMENT_FEATURE_COLS = ["sentiment_score", "sentiment_magnitude", "news_volume"]
 
+# Features macro para commodities (4 extras, solo para GC=F y SI=F)
+MACRO_COMMODITY_COLS = ["dollar_proxy", "real_rates_proxy", "risk_sentiment", "industrial_demand"]
+
 # Features técnicas avanzadas (10 seleccionadas por correlación > 0.03)
 # Eliminadas por baja correlación: ADX, Stochastic_K/D, Williams_R, MFI, ROC, Keltner_PctB, Donchian_PctB
 ADVANCED_TECHNICAL_COLS = [
@@ -105,6 +145,22 @@ ADVANCED_TECHNICAL_COLS = [
     "Ultimate_Osc",       # Ultimate Oscillator (0.0310)
 ]
 
+# PHASE 2 FEATURES (12 nuevos indicadores técnicos de ingeniería)
+PHASE2_FEATURE_COLS = [
+    "momentum_5d",        # Momentum simple de 5 días
+    "rsi_14",             # RSI adicional con período 14
+    "macd_signal",        # MACD - Signal divergence
+    "bbands_pct",         # Bollinger Bands percentage
+    "atr_14",             # ATR adicional period 14
+    "obv_momentum",       # On Balance Volume momentum
+    "volume_sma_ratio",   # Volumen / SMA ratio
+    "high_low_ratio",     # (High-Low)/Close ratio
+    "close_range_pct",    # Close posición dentro de (High-Low)
+    "roc_10",             # Rate of Change (10 períodos)
+    "volatility_std",     # Rolling volatility STD (20 períodos)
+    "price_acceleration", # Aceleración del precio (cambio en cambio)
+]
+
 # Features combinadas con sentimiento (12 / 14 features)
 BASE_WITH_SENTIMENT_COLS = BASE_FEATURE_COLS + SENTIMENT_FEATURE_COLS       # 12
 VOLATILE_WITH_SENTIMENT_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS  # 14
@@ -113,9 +169,13 @@ VOLATILE_WITH_SENTIMENT_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS  #
 BASE_WITH_ADVANCED_COLS = BASE_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 19
 VOLATILE_WITH_ADVANCED_COLS = VOLATILE_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 21
 
-# Features combinadas con sentimiento + técnicas avanzadas (22 / 24 features)
-BASE_WITH_ALL_COLS = BASE_FEATURE_COLS + SENTIMENT_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 22
-VOLATILE_WITH_ALL_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS + ADVANCED_TECHNICAL_COLS  # 24
+# Features combinadas con PHASE 2 (21 / 23 features)
+BASE_WITH_PHASE2_COLS = BASE_FEATURE_COLS + PHASE2_FEATURE_COLS  # 21
+VOLATILE_WITH_PHASE2_COLS = VOLATILE_FEATURE_COLS + PHASE2_FEATURE_COLS  # 23
+
+# Features combinadas con todo (34 / 36 features)
+BASE_WITH_ALL_COLS = BASE_FEATURE_COLS + SENTIMENT_FEATURE_COLS + ADVANCED_TECHNICAL_COLS + PHASE2_FEATURE_COLS  # 34
+VOLATILE_WITH_ALL_COLS = VOLATILE_FEATURE_COLS + SENTIMENT_FEATURE_COLS + ADVANCED_TECHNICAL_COLS + PHASE2_FEATURE_COLS  # 36
 
 # Alias para compatibilidad con código existente
 FEATURE_COLS = BASE_FEATURE_COLS
@@ -176,18 +236,16 @@ def get_feature_cols(ticker: str) -> list:
     """
     Devuelve la lista de features según el tipo de activo.
 
-    Combina features base, contexto de mercado (volátiles), sentimiento y técnicas avanzadas
-    según las flags USE_SENTIMENT y USE_ADVANCED_FEATURES.
+    Combina features base, contexto de mercado (volátiles), sentimiento, macro (commodities)
+    y técnicas avanzadas según las flags USE_SENTIMENT y USE_ADVANCED_FEATURES.
     
     Configuraciones posibles:
     - Stable sin extras: 9 features
     - Stable + sentiment: 12 features
+    - Stable + macro (GC=F, SI=F): 13 features
+    - Stable + macro + sentiment: 16 features
     - Stable + advanced: 27 features
-    - Stable + sentiment + advanced: 30 features
-    - Volatile sin extras: 11 features
-    - Volatile + sentiment: 14 features
-    - Volatile + advanced: 29 features
-    - Volatile + sentiment + advanced: 32 features
+    - Etc.
     """
     is_volatile = ticker in TICKERS["volatile"]
     
@@ -196,6 +254,10 @@ def get_feature_cols(ticker: str) -> list:
         base = VOLATILE_FEATURE_COLS.copy()
     else:
         base = BASE_FEATURE_COLS.copy()
+    
+    # Añadir features macro si es commodity
+    if ticker in ["GC=F", "SI=F"]:
+        base.extend(MACRO_COMMODITY_COLS)
     
     # Añadir sentimiento si está habilitado
     if USE_SENTIMENT:

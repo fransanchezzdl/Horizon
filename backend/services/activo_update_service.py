@@ -327,11 +327,12 @@ class ActivoUpdateService:
             if training_metrics and isinstance(training_metrics, dict):
                 grafico_raw["training_metrics"] = {
                     "avg_val_loss": float(training_metrics.get("avg_val_loss", 0)),
-                    "avg_directional_accuracy": float(training_metrics.get("avg_directional_accuracy", 0)),
-                    "avg_mae": float(training_metrics.get("avg_mae", 0)),
-                    "avg_rmse": float(training_metrics.get("avg_rmse", 0)),
+                    "avg_test_accuracy": float(training_metrics.get("avg_test_accuracy", 0)),
+                    "avg_f1_weighted": float(training_metrics.get("avg_f1_weighted", 0)),
                     "dynamic_threshold": float(training_metrics.get("dynamic_threshold", 0)),
-                    "xgb_directional_accuracy": training_metrics.get("xgb_directional_accuracy"),
+                    "xgb_directional_accuracy": float(training_metrics.get("xgb_directional_accuracy", 0)) if training_metrics.get("xgb_directional_accuracy") else None,
+                    "xgb_precision_up": float(training_metrics.get("xgb_precision_up", 0)) if training_metrics.get("xgb_precision_up") else None,
+                    "xgb_recall_up": float(training_metrics.get("xgb_recall_up", 0)) if training_metrics.get("xgb_recall_up") else None,
                 }
             
             # Sanitizar para JSON safety (quitar NaN, Infinity, etc)

@@ -12,14 +12,18 @@ import pandas as pd
 import yfinance as yf
 import pandas_ta as ta
 import torch
+import logging
 from sklearn.preprocessing import MinMaxScaler
 from typing import Tuple, Dict
+
+logger = logging.getLogger(__name__)
 
 from .config import (
     FEATURE_COLS,
     BASE_FEATURE_COLS,
     VOLATILE_FEATURE_COLS,
     SENTIMENT_FEATURE_COLS,
+    MACRO_COMMODITY_COLS,
     ADVANCED_TECHNICAL_COLS,
     MARKET_CONTEXT_TICKERS,
     PREDICTION_HORIZON,
@@ -142,7 +146,15 @@ def compute_features(
 
     # 3. Volatilidad realizada 20 días: régimen de volatilidad actual
     df["Realized_Vol"] = df["Log_Return"].rolling(20).std() * (252 ** 0.5)  # anualizada
-
+    # === PHASE 2 FEATURES (12 nuevos indicadores técnicos) ===
+    # Se agregan después de los indicadores base para tener acceso a OHLCV
+    try:
+        from .phase2_features import Phase2FeaturesBuilder
+        logger.info("[Phase2] Agregando 12 nuevos indicadores técnicos...")
+        df = Phase2FeaturesBuilder.build_phase2_features(df)
+        logger.info("[Phase2] ✅ 12 indicadores agregados: momentum_5d, rsi_14, macd_signal, bbands_pct, atr_14, obv_momentum, volume_sma_ratio, high_low_ratio, close_range_pct, roc_10, volatility_std, price_acceleration")
+    except Exception as e:
+        logger.warning(f"[Phase2] No se pudieron agregar indicadores Phase 2: {str(e)}. Continuando sin ellos.")
     # Contexto de mercado: VIX y NASDAQ (solo para activos volátiles)
     if include_market_context:
         start_date = df.index.min().strftime("%Y-%m-%d")
@@ -205,11 +217,65 @@ def compute_features(
     # Eliminar filas con NaN producidos por los indicadores
     df.dropna(inplace=True)
 
+    # === FEATURES DE SENTIMIENTO (3) ===
+    # Se agregan DESPUÉS de dropna porque vienen de fuente externa (Alpha Vantage + DistilRoBERTa)
+    if USE_SENTIMENT and ticker:
+        try:
+            from . import sentiment
+            print(f"[*] Agregando features de sentimiento para {ticker} (Alpha Vantage + DistilRoBERTa)...")
+            
+            # Get date range from dataframe
+            start_date = df.index.min().strftime("%Y-%m-%d")
+            end_date = df.index.max().strftime("%Y-%m-%d")
+            
+            # Compute historical sentiment using Alpha Vantage + DistilRoBERTa
+            sentiment_df = sentiment.compute_historical_sentiment(ticker, start_date, end_date)
+            
+            if not sentiment_df.empty:
+                # Left join para preservar todas las fechas técnicas y llenar con neutrales si falta sentimiento
+                df = df.join(sentiment_df, how="left")
+                # Fill any missing sentiment values with neutral (0.0, 0.0, 0)
+                df["sentiment_score"] = df["sentiment_score"].fillna(0.0)
+                df["sentiment_magnitude"] = df["sentiment_magnitude"].fillna(0.0)
+                df["news_volume"] = df["news_volume"].fillna(0).astype(int)
+                print(f"[OK] Features de sentimiento agregadas: {len(df)} filas")
+            else:
+                print(f"[!] No sentiment data from Alpha Vantage, adding neutral values")
+                df["sentiment_score"] = 0.0
+                df["sentiment_magnitude"] = 0.0
+                df["news_volume"] = 0
+                
+        except Exception as exc:
+            logging.getLogger(__name__).warning(
+                "No se pudieron obtener features de sentimiento: %s. "
+                "Continuando sin sentimiento.",
+                exc
+            )
+            # Añadir valores neutros para features de sentimiento
+            df["sentiment_score"] = 0.0
+            df["sentiment_magnitude"] = 0.0
+            df["news_volume"] = 0
+
     # Seleccionar columnas base + avanzadas (todo lo que ya está en df)
-    # Las columnas de sentimiento se añaden después porque vienen de una API externa
+    # Las columnas de sentimiento y macro se añaden después
     all_feature_cols = get_feature_cols(ticker)
-    non_sentiment_cols = [c for c in all_feature_cols if c not in SENTIMENT_FEATURE_COLS]
+    # Excluir sentiment y macro features que se agregan después
+    non_sentiment_cols = [c for c in all_feature_cols if c not in SENTIMENT_FEATURE_COLS and c not in MACRO_COMMODITY_COLS]
     tech_df = df[non_sentiment_cols].copy()
+
+    # === FEATURES MACRO PARA COMMODITIES (GC=F, SI=F) ===
+    # Indicadores especializados que capturan regímenes de riesgo macro
+    # DEBEN agregarse ANTES de sentiment para poder usarlas
+    if ticker in ["GC=F", "SI=F"]:
+        try:
+            from .commodity_macro import augment_commodity_features
+            tech_df = augment_commodity_features(tech_df, ticker)
+        except Exception as exc:
+            import logging
+            logging.getLogger(__name__).warning(
+                "No se pudieron agregar features macro para %s: %s",
+                ticker, exc
+            )
 
     # Añadir features de sentimiento si está habilitado
     if USE_SENTIMENT and ticker:
@@ -432,6 +498,32 @@ def compute_dynamic_threshold(targets: np.ndarray, percentile: float = 60.0) -> 
     return threshold
 
 
+def returns_to_classes(returns: np.ndarray, threshold: float) -> np.ndarray:
+    """
+    Convierte retornos continuos a clases balanceadas de 3 categorías.
+
+    Clases:
+        0 → BAJISTA  (retorno ≤ -threshold)
+        1 → LATERAL  (retorno ∈ (-threshold, +threshold))
+        2 → ALCISTA  (retorno > +threshold)
+
+    Este cambio de regresión a clasificación es la **BUG FIX #1**,
+    porque el modelo anterior (HorizonBiGRUAttention) predecía regresión
+    pero se usaba como clasificación, causando 53% accuracy.
+
+    Args:
+        returns: Array de retornos logarítmicos.
+        threshold: Umbral dinámico calculado sobre train.
+
+    Returns:
+        Array de enteros [0, 1, 2] con las clases.
+    """
+    classes = np.ones(len(returns), dtype=np.int64)  # default: LATERAL (1)
+    classes[returns > threshold] = 2   # ALCISTA
+    classes[returns < -threshold] = 0  # BAJISTA
+    return classes
+
+
 def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> dict:
     """
     Prepara datos una sola vez y crea secuencias para múltiples window_sizes.
@@ -475,16 +567,28 @@ def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> 
     dynamic_threshold = compute_dynamic_threshold(train_returns, percentile=60.0)
     print(f"📏 Threshold dinámico: ±{dynamic_threshold:.4f} ({dynamic_threshold*100:.2f}%)")
 
-    # Distribución direccional en train
-    up_pct = float(np.mean(train_returns > dynamic_threshold)) * 100
-    down_pct = float(np.mean(train_returns < -dynamic_threshold)) * 100
-    neutral_pct = 100 - up_pct - down_pct
+    # Convertir retornos continuos a clases (0=BAJISTA, 1=LATERAL, 2=ALCISTA)
+    # BUG FIX #1: Cambiar de regresión a clasificación pura
+    train_classes = returns_to_classes(train_returns, dynamic_threshold)
+    val_classes   = returns_to_classes(val_returns, dynamic_threshold)
+    test_classes  = returns_to_classes(test_returns, dynamic_threshold)
+
+    # Distribución de clases en train
+    up_pct = float(np.mean(train_classes == 2)) * 100
+    down_pct = float(np.mean(train_classes == 0)) * 100
+    neutral_pct = float(np.mean(train_classes == 1)) * 100
     print(f"   ALCISTA: {up_pct:.1f}% | LATERAL: {neutral_pct:.1f}% | BAJISTA: {down_pct:.1f}%")
 
-    # Targets son retornos continuos (float) — el threshold se aplica en evaluate_model
-    train_targets = train_returns
-    val_targets   = val_returns
-    test_targets  = test_returns
+    # Calcular class weights para balancear desbalanceo
+    class_counts = np.bincount(train_classes, minlength=3)
+    class_weights = 1.0 / (class_counts + 1e-8)
+    class_weights = class_weights / class_weights.sum() * 3  # Normalizar a suma=3
+    print(f"   Class weights: {class_weights}")
+
+    # Targets son ahora clases (enteros) para CrossEntropyLoss
+    train_targets = train_classes
+    val_targets   = val_classes
+    test_targets  = test_classes
 
     # 5. Escalar UNA SOLA VEZ (fit solo en train)
     scaler = MinMaxScaler(feature_range=(0, 1))
@@ -502,6 +606,7 @@ def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> 
     result: dict = {
         "scaler": scaler,
         "dynamic_threshold": dynamic_threshold,
+        "class_weights": torch.from_numpy(class_weights).float(),  # Para CrossEntropyLoss
         # Guardar retornos continuos para inferencia de precio
         "train_returns": train_returns,
         "val_returns": val_returns,
@@ -510,17 +615,17 @@ def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> 
 
     # 7. Crear secuencias para cada window_size
     for ws in window_sizes:
-        X_train, y_train = create_sequences(train_scaled, train_targets, ws)
-        X_val,   y_val   = create_sequences(val_scaled,   val_targets,   ws)
-        X_test,  y_test  = create_sequences(test_scaled,  test_targets,  ws)
+        X_train, y_train_classes = create_sequences(train_scaled, train_targets, ws)
+        X_val,   y_val_classes   = create_sequences(val_scaled,   val_targets,   ws)
+        X_test,  y_test_classes  = create_sequences(test_scaled,  test_targets,  ws)
 
-        # y son retornos continuos (float) para HuberLoss
+        # Tensores PyTorch: y son clases (long) para CrossEntropyLoss
         X_train_t = torch.from_numpy(X_train).float()
-        y_train_t = torch.from_numpy(y_train).float().unsqueeze(1)
+        y_train_t = torch.from_numpy(y_train_classes).long()  # BUG FIX: long, not float
         X_val_t   = torch.from_numpy(X_val).float()
-        y_val_t   = torch.from_numpy(y_val).float().unsqueeze(1)
+        y_val_t   = torch.from_numpy(y_val_classes).long()
         X_test_t  = torch.from_numpy(X_test).float()
-        y_test_t  = torch.from_numpy(y_test).float().unsqueeze(1)
+        y_test_t  = torch.from_numpy(y_test_classes).long()
 
         # También guardar retornos continuos alineados con las secuencias
         # (para calcular precio predicho en inferencia)
@@ -529,6 +634,9 @@ def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> 
         _, y_test_ret  = create_sequences(test_scaled,  test_returns,  ws)
 
         print(f"📊 Split (ws={ws}): train={len(X_train_t)}, val={len(X_val_t)}, test={len(X_test_t)}")
+        print(
+            f"   Train class distribution: {np.bincount(y_train_classes[y_train_classes.size - len(y_train_t):], minlength=3)}"
+        )
 
         result[ws] = {
             "X_train": X_train_t,
@@ -568,3 +676,164 @@ def load_scaler(ticker: str) -> MinMaxScaler:
     with open(scaler_path, "rb") as f:
         scaler = pickle.load(f)
     return scaler
+
+
+def prepare_data_walk_forward(
+    ticker: str,
+    config: dict,
+    window_size: int = 30,
+    n_folds: int = 10,
+    gap_days: int = 5,
+) -> list:
+    """
+    Walk-Forward Validation: simula entrenamiento real dividiendo datos en ventanas.
+    
+    Cada fold representa un período de trading real:
+    - train: últimos N días de datos históricos
+    - val: siguientes M días (sin overlap)
+    - test: siguientes P días (gap entre train y test)
+    
+    Esto elimina el optimismo de test-bias y es más realista para trading.
+    
+    Args:
+        ticker: Símbolo del activo (ej: 'KO', 'TSLA').
+        config: Config dict con parametrización.
+        window_size: Window size para secuencias (default 30).
+        n_folds: Número de folds a crear (default 10).
+        gap_days: Días sin datos entre train y test para evitar leakage (default 5).
+    
+    Returns:
+        Lista de N dicts, cada uno con:
+        {
+            'fold': int,
+            'dates': dict con 'train', 'val', 'test',
+            'X_train', 'y_train', 'X_val', 'y_val', 'X_test', 'y_test' (all torch tensors),
+            'scaler': MinMaxScaler,
+            'threshold': float,
+            'class_weights': np.array,
+        }
+    """
+    print(f"\n[*] Preparando Walk-Forward Validation para {ticker} ({n_folds} folds)...")
+    
+    # 1. Descargar datos
+    raw_df = download_data(ticker)
+    include_market_context = get_asset_type(ticker) == "volatile"
+    feat_df = compute_features(raw_df, include_market_context=include_market_context, ticker=ticker)
+    feature_cols = get_feature_cols(ticker)
+    
+    # 2. Calcular features y targets
+    target = compute_target(feat_df)
+    feat_df = feat_df.copy()
+    feat_df["_target"] = target
+    feat_df.dropna(inplace=True)
+    
+    returns_array = feat_df["_target"].values
+    features_array = feat_df[feature_cols].values
+    dates_array = feat_df.index.values
+    
+    n = len(features_array)
+    
+    # Calcular tamaños de ventana para walk-forward
+    total_test_size = int(n * 0.2)  # 20% para testing en total
+    fold_test_size = max(10, total_test_size // n_folds)  # Al menos 10 datos por fold
+    fold_val_size = max(10, fold_test_size)  # Val = test size
+    fold_train_size = max(60, n // (n_folds * 2))  # 60 datos min para train
+    
+    # Calcular índice inicial (para dejar datos al inicio para calibración inicial)
+    min_idx = fold_train_size + fold_val_size + gap_days
+    
+    # Reajustar para que entren n_folds
+    available_data = n - min_idx
+    fold_step = max(1, available_data // (n_folds + 1))
+    
+    folds = []
+    
+    for fold_idx in range(n_folds):
+        # Índices para este fold
+        test_end = min_idx + (fold_idx + 1) * fold_step + fold_test_size
+        test_start = max(min_idx + (fold_idx + 1) * fold_step, test_end - fold_test_size)
+        
+        if test_end > n:
+            break  # No hay suficiente datos para este fold
+        
+        gap_start = test_start - gap_days
+        val_end = max(min_idx, gap_start - 1)
+        val_start = max(min_idx, val_end - fold_val_size)
+        
+        train_end = max(fold_train_size, val_start - 1)
+        train_start = max(0, train_end - fold_train_size)
+        
+        # Extraer datos
+        train_features = features_array[train_start:train_end]
+        train_returns = returns_array[train_start:train_end]
+        
+        val_features = features_array[val_start:val_end]
+        val_returns = returns_array[val_start:val_end]
+        
+        test_features = features_array[test_start:test_end]
+        test_returns = returns_array[test_start:test_end]
+        
+        dates_train = dates_array[train_start:train_end]
+        dates_val = dates_array[val_start:val_end]
+        dates_test = dates_array[test_start:test_end]
+        
+        # Escalar usando only training data (prevent leakage)
+        scaler = MinMaxScaler()
+        train_scaled = scaler.fit_transform(train_features)
+        val_scaled = scaler.transform(val_features)
+        test_scaled = scaler.transform(test_features)
+        
+        # Calcular threshold SOLO sobre train
+        dynamic_threshold = compute_dynamic_threshold(train_returns, percentile=60.0)
+        
+        # Convertir a clases
+        train_classes = returns_to_classes(train_returns, dynamic_threshold)
+        val_classes = returns_to_classes(val_returns, dynamic_threshold)
+        test_classes = returns_to_classes(test_returns, dynamic_threshold)
+        
+        # Class weights
+        class_counts = np.bincount(train_classes, minlength=3)
+        class_weights = 1.0 / (class_counts + 1e-8)
+        class_weights = class_weights / class_weights.sum() * 3
+        
+        # Crear secuencias
+        X_train, y_train_classes = create_sequences(train_scaled, train_returns, window_size)
+        X_val, y_val_classes = create_sequences(val_scaled, val_returns, window_size)
+        X_test, y_test_classes = create_sequences(test_scaled, test_returns, window_size)
+        
+        # Convertir a PyTorch
+        X_train_t = torch.from_numpy(X_train).float()
+        y_train_t = torch.from_numpy(returns_to_classes(y_train_classes, dynamic_threshold)).long()
+        X_val_t = torch.from_numpy(X_val).float()
+        y_val_t = torch.from_numpy(returns_to_classes(y_val_classes, dynamic_threshold)).long()
+        X_test_t = torch.from_numpy(X_test).float()
+        y_test_t = torch.from_numpy(returns_to_classes(y_test_classes, dynamic_threshold)).long()
+        
+        fold_data = {
+            "fold": fold_idx,
+            "dates": {
+                "train": dates_train,
+                "val": dates_val,
+                "test": dates_test,
+            },
+            "X_train": X_train_t,
+            "y_train": y_train_t,
+            "X_val": X_val_t,
+            "y_val": y_val_t,
+            "X_test": X_test_t,
+            "y_test": y_test_t,
+            "scaler": scaler,
+            "threshold": dynamic_threshold,
+            "class_weights": torch.tensor(class_weights, dtype=torch.float32),
+        }
+        
+        folds.append(fold_data)
+        
+        print(
+            f"  Fold {fold_idx:2d}: train=[{pd.Timestamp(dates_train[0]).date()}, {pd.Timestamp(dates_train[-1]).date()}] "
+            f"val=[{pd.Timestamp(dates_val[0]).date()}, {pd.Timestamp(dates_val[-1]).date()}] "
+            f"test=[{pd.Timestamp(dates_test[0]).date()}, {pd.Timestamp(dates_test[-1]).date()}]"
+        )
+    
+    print(f"[OK] Walk-Forward: {len(folds)} folds preparados\n")
+    return folds
