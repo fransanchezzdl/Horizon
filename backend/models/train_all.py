@@ -13,8 +13,9 @@ import sys
 from datetime import timedelta
 from typing import Dict
 
-from .config import TICKERS, USE_SENTIMENT
+from .config import TICKERS, USE_SENTIMENT, get_tickers_from_database
 from .ensemble import train_ensemble, predict_ensemble
+from .train_stacking import train_stacking_metalearner
 
 
 def main() -> None:
@@ -27,7 +28,14 @@ def main() -> None:
     Si sentiment_flag=false, también guarda los datos en la BD de Supabase
     usando las predicciones del ensemble.
     """
-    all_tickers = TICKERS["stable"] + TICKERS["volatile"]
+    # Cargar tickers desde BD si es posible, sino usar hardcoded
+    print("📡 Intentando cargar tickers desde BD...")
+    tickers_config = get_tickers_from_database()
+    all_tickers = tickers_config["stable"] + tickers_config["volatile"]
+    
+    if not all_tickers:
+        print("⚠️  No se cargaron tickers, usando configuración por defecto")
+        all_tickers = TICKERS["stable"] + TICKERS["volatile"]
     total_start = time.time()
     results = []
     
@@ -59,25 +67,41 @@ def main() -> None:
             metrics["elapsed_seconds"] = elapsed
             metrics["status"] = "OK"
             
+            # Entrenar meta-model de ensemble stacking (opcional, resiliente a errores)
+            try:
+                print(f"\n🔗 Entrenando Ensemble Stacking Meta-Model para {ticker}...")
+                stacking_metrics = train_stacking_metalearner(ticker, verbose=True)
+                metrics["stacking_available"] = True
+                metrics["stacking_accuracy"] = stacking_metrics.get("accuracy", 0)
+                print(f"   ✅ Stacking meta-model entrenado: {stacking_metrics['accuracy']:.2%}")
+            except Exception as stacking_error:
+                print(f"   ⚠️ Stacking no disponible: {stacking_error}")
+                metrics["stacking_available"] = False
+            
             # Si no usamos sentimiento, hacer predicciones y guardar en BD
             if use_db:
                 try:
                     print(f"\n📊 Realizando predicción para {ticker}...")
                     ensemble_pred = predict_ensemble(ticker)
                     
-                    # Guardar en BD con métricas del entrenamiento
+                    # Guardar en BD con métricas del entrenamiento (clasificación)
                     training_metrics_to_save = {
                         "avg_val_loss": metrics.get("avg_val_loss"),
-                        "avg_directional_accuracy": metrics.get("avg_directional_accuracy"),
-                        "avg_mae": metrics.get("avg_mae"),
-                        "avg_rmse": metrics.get("avg_rmse"),
+                        "avg_test_accuracy": metrics.get("avg_test_accuracy"),
+                        "avg_f1_weighted": metrics.get("avg_f1_weighted"),
                         "dynamic_threshold": metrics.get("dynamic_threshold"),
-                        "xgb_directional_accuracy": metrics.get("xgb_directional_accuracy"),
+                        "xgb_directional_accuracy": metrics.get("xgboost_metrics", {}).get("xgb_directional_accuracy"),
+                        "xgb_precision_up": metrics.get("xgboost_metrics", {}).get("xgb_precision_up"),
+                        "xgb_recall_up": metrics.get("xgboost_metrics", {}).get("xgb_recall_up"),
                     }
+                    
+                    # 🔧 IMPORTANTE: Reemplazar confianza por accuracy real
+                    ensemble_pred_corrected = ensemble_pred.copy()
+                    ensemble_pred_corrected["confidence"] = metrics.get("avg_test_accuracy", 0)
                     
                     success = ActivoUpdateService.guardar_datos_post_entrenamiento(
                         ticker,
-                        ensemble_pred,
+                        ensemble_pred_corrected,
                         training_metrics_to_save
                     )
                     
@@ -116,16 +140,15 @@ def main() -> None:
                     if r.get("dynamic_threshold") is not None
                     else ""
                 )
-                xgb_acc = r.get("xgb_directional_accuracy")
+                xgb_acc = r.get("xgboost_metrics", {}).get("xgb_directional_accuracy")
                 xgb_str = f"XGB Acc: {xgb_acc:.2%} | " if xgb_acc is not None else ""
                 db_status = "💾" if r.get("db_saved") else "❌"
                 print(
                     f"  ✅ {r['ticker']:10s} | "
                     f"Val Loss: {r['avg_val_loss']:.6f} | "
-                    f"Dir. Acc: {r['avg_directional_accuracy']:.2%} | "
+                    f"Test Acc: {r.get('avg_test_accuracy', 0):.2%} | "
+                    f"F1: {r.get('avg_f1_weighted', 0):.4f} | "
                     f"{xgb_str}"
-                    f"Prec↑: {r.get('avg_precision_up', 0):.2%} | "
-                    f"Rec↑: {r.get('avg_recall_up', 0):.2%} | "
                     f"{threshold_str}"
                     f"Tiempo: {r['elapsed_seconds']:.1f}s {db_status}"
                 )
