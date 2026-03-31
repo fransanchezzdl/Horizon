@@ -89,7 +89,7 @@ def train_ensemble(ticker: str) -> dict:
         # Evaluar en test
         model = _load_single_model(ticker, model_idx, model_config, device)
         test_metrics = evaluate_model(
-            model, data["X_test"], data["y_test"], device, threshold=dynamic_threshold
+            model, data["X_test"], data["y_test"], device
         )
         metrics.update(test_metrics)
         individual_metrics.append(metrics)
@@ -104,17 +104,17 @@ def train_ensemble(ticker: str) -> dict:
     avg_val_loss = float(
         np.mean([m["best_val_loss"] for m in individual_metrics])
     )
-    avg_dir_acc = float(
-        np.mean([m["directional_accuracy"] for m in individual_metrics])
+    avg_test_accuracy = float(
+        np.mean([m.get("accuracy", 0.0) for m in individual_metrics])
     )
-    avg_mae = float(np.mean([m["mae"] for m in individual_metrics]))
-    avg_rmse = float(np.mean([m["rmse"] for m in individual_metrics]))
-    avg_precision_up = float(np.mean([m["precision_up"] for m in individual_metrics]))
-    avg_recall_up = float(np.mean([m["recall_up"] for m in individual_metrics]))
+    avg_f1_weighted = float(
+        np.mean([m.get("f1_weighted", 0.0) for m in individual_metrics])
+    )
 
     print(f"\n✅ Ensemble {ticker} completado:")
     print(f"   Val Loss medio: {avg_val_loss:.6f}")
-    print(f"   Accuracy direccional media (test): {avg_dir_acc:.2%}")
+    print(f"   Test Accuracy media: {avg_test_accuracy:.2%}")
+    print(f"   Test F1 Weighted media: {avg_f1_weighted:.4f}")
     print(f"   Threshold dinámico: ±{dynamic_threshold:.4f} ({dynamic_threshold * 100:.2f}%)")
 
     # ── Entrenar XGBoost con los mismos datos ──────────────────────────────────
@@ -139,14 +139,8 @@ def train_ensemble(ticker: str) -> dict:
         "dynamic_threshold": dynamic_threshold,
         "metrics": {
             "avg_val_loss": avg_val_loss,
-            "avg_directional_accuracy": avg_dir_acc,
-            "avg_mae": avg_mae,
-            "avg_rmse": avg_rmse,
-            "avg_precision_up": avg_precision_up,
-            "avg_recall_up": avg_recall_up,
-            "naive_baseline_accuracy": individual_metrics[0].get(
-                "naive_baseline_accuracy", None
-            ),
+            "avg_test_accuracy": avg_test_accuracy,
+            "avg_f1_weighted": avg_f1_weighted,
         },
         "xgboost_metrics": xgb_metrics,
         "individual_models": [
@@ -156,11 +150,8 @@ def train_ensemble(ticker: str) -> dict:
                 "variation": variations[i],
                 "val_loss": m["best_val_loss"],
                 "epochs_trained": m["epochs_trained"],
-                "directional_accuracy": m["directional_accuracy"],
-                "mae": m["mae"],
-                "rmse": m["rmse"],
-                "precision_up": m["precision_up"],
-                "recall_up": m["recall_up"],
+                "test_accuracy": m.get("accuracy", 0.0),
+                "f1_weighted": m.get("f1_weighted", 0.0),
             }
             for i, m in enumerate(individual_metrics)
         ],
@@ -177,17 +168,10 @@ def train_ensemble(ticker: str) -> dict:
         "n_models": ENSEMBLE_SIZE,
         "individual_metrics": individual_metrics,
         "avg_val_loss": avg_val_loss,
-        "avg_directional_accuracy": avg_dir_acc,
-        "avg_mae": avg_mae,
-        "avg_rmse": avg_rmse,
-        "avg_precision_up": avg_precision_up,
-        "avg_recall_up": avg_recall_up,
-
+        "avg_test_accuracy": avg_test_accuracy,
+        "avg_f1_weighted": avg_f1_weighted,
         "dynamic_threshold": dynamic_threshold,
-        "xgb_directional_accuracy": xgb_metrics.get("xgb_directional_accuracy"),
-        "xgb_precision_up": xgb_metrics.get("xgb_precision_up"),
-        "xgb_recall_up": xgb_metrics.get("xgb_recall_up"),
-        "xgb_feature_importance": xgb_metrics.get("feature_importance", {}),
+        "xgboost_metrics": xgb_metrics,
     }
 
 
@@ -360,7 +344,13 @@ def predict_ensemble(ticker: str) -> dict:
 
         model.eval()
         with torch.no_grad():
-            pred_return = model(input_tensor).item()
+            logits = model(input_tensor)  # [1, 3] para 3 clases (BAJISTA, LATERAL, ALCISTA)
+            probs = torch.softmax(logits, dim=1)[0]  # [3] probabilidades
+            
+            # Convertir probabilidades a "retorno equivalente"
+            # ALCISTA (clase 2) - BAJISTA (clase 0)
+            # Esto mapea [0, 1] a [-1, 1] aproximadamente
+            pred_return = (probs[2] - probs[0]).item()
 
         individual_returns.append(pred_return)
 
@@ -394,8 +384,60 @@ def predict_ensemble(ticker: str) -> dict:
     xgb_result = predict_xgboost(ticker, last_features_raw)
     xgb_prob = xgb_result["probability"]
 
-    # Usar el módulo meta_ensemble para combinar predicciones
-    meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob)
+    # Intentar usar ensemble stacking si está disponible
+    stacking_available = False
+    try:
+        from .ensemble_stacking import load_stacking_metalearner
+        stacking_meta = load_stacking_metalearner(ticker, verbose=False)
+        if stacking_meta is not None:
+            # Generar predicciones de BiGRU para stacking
+            bigru_proba_stacking = []
+            for model in models:
+                proba = torch.softmax(
+                    model(torch.from_numpy(last_window_scaled).float().unsqueeze(0).to(device)),
+                    dim=1
+                ).detach().cpu().numpy()[0]  # [3] para ultima predicción
+                bigru_proba_stacking.append(proba)
+            bigru_proba_mean = np.mean(bigru_proba_stacking, axis=0)  # [3]
+            
+            # XGBoost predicción
+            xgb_pred = xgb_result.get("direction", 1)  # 0=BAJISTA, 1=LATERAL?, 2=ALCISTA
+            # Versión más robusta: usar argmax de probabilidades
+            xgb_pred = np.argmax(xgb_result.get("all_proba", [0, 0, 1]))  # fallback
+            
+            # Usar stacking para combinar
+            X_stacking = stacking_meta.create_stacking_features(
+                np.array([bigru_proba_mean]),  # (1, 3)
+                np.array([xgb_pred]),  # (1,)
+                np.array([xgb_result.get("all_proba", [0.33, 0.33, 0.33])])  # (1, 3)
+            )
+            y_stacking, proba_stacking = stacking_meta.predict_ensemble(
+                np.array([bigru_proba_mean]),
+                np.array([xgb_pred]),
+                np.array([xgb_result.get("all_proba", [0.33, 0.33, 0.33])])
+            )
+            
+            # Convertir predicción stacking a tendencia
+            stacking_pred = y_stacking[0]  # 0, 1, 2
+            stacking_proba = proba_stacking[0]  # [p0, p1, p2]
+            
+            if stacking_pred == 2:
+                stacking_trend = "ALCISTA"
+            elif stacking_pred == 0:
+                stacking_trend = "BAJISTA"
+            else:
+                stacking_trend = "LATERAL"
+            
+            meta_result = {"meta_trend": stacking_trend, "meta_score": float(stacking_proba.max())}
+            stacking_available = True
+            print(f"   🔗 Usando Ensemble Stacking: {stacking_trend} (confidence: {stacking_proba.max():.2%})")
+    except (ImportError, FileNotFoundError, Exception) as e:
+        # Si stacking no disponible, usar meta-ensemble original
+        meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob)
+
+    # Si stacking no disponible, usar meta-ensemble
+    if not stacking_available:
+        meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob)
 
     return {
         "trend": winning_trend,
