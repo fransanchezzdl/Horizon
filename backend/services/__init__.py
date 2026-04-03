@@ -9,6 +9,7 @@ from .gemini_service import GeminiService, gemini_service
 from .chat_service import ChatService
 from .activo_service import ActivoService
 from .reflexion_service import ReflexionService
+from .curso_service import CursoService
 from .activo_update_service import ActivoUpdateService
 from .user_service import UserService
 
@@ -28,6 +29,7 @@ __all__ = [
     "ChatService",
     "ActivoService",
     "ReflexionService",
+    "CursoService",
     "ActivoUpdateService",
     "UserService",
 ]

@@ -11,6 +11,7 @@ from .portfolio_dao import PortfolioDAO
 from .prediction_dao import PredictionDAO
 from .chat_dao import ChatDAO
 from .reflexion_dao import ReflexionDAO
+from .curso_dao import CursoDAO
 
 __all__ = [
     "UsuarioDAO", 
@@ -21,4 +22,5 @@ __all__ = [
     "PredictionDAO",
     "ChatDAO",
     "ReflexionDAO",
+    "CursoDAO",
 ]
