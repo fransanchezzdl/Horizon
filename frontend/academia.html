@@ -25,76 +25,78 @@
                 <div class="reflexion-card academy-progress-card">
                     <div class="reflexion-content">
                         <span class="reflexion-label">Tu Progreso Actual</span>
-                        <div class="reflexion-quote">Nivel: Intermedio</div>
+                        <div class="reflexion-quote" id="progreso-texto">¡Comienza tu viaje de aprendizaje!</div>
                         
                         <div class="progress-wrapper">
                             <div class="progress-info">
-                                <span>Progreso de nivel</span>
-                                <span>65%</span>
+                                <span>Cursos completados</span>
+                                <span id="cursos-completados">0</span>
                             </div>
                             <div class="progress-track">
-                                <div class="progress-fill" style="width: 65%;"></div>
+                                <div class="progress-fill" id="progress-fill-academy" style="width: 0%;"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-title uppercase text-bold">Diversificación</span>
-                            <span class="icon-placeholder">🤝</span>
-                        </div>
-                        <span class="metric-value">Excelente</span>
-                        <span class="badge badge-green">Nivel Pro</span>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-title uppercase text-bold">Volatilidad</span>
-                            <span class="icon-placeholder">🛡️</span>
-                        </div>
-                        <span class="metric-value">Baja</span>
-                        <span class="badge badge-blue">Estable</span>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-header">
-                            <span class="metric-title uppercase text-bold">Eficiencia</span>
-                            <span class="icon-placeholder">⚡</span>
-                        </div>
-                        <span class="metric-value">7.2/10</span>
-                        <span class="badge badge-orange">Mejorando</span>
-                    </div>
-                </div>
 
-                <div class="opts-section">
-                    <div class="card">
-                        <h3>Continuar Aprendiendo</h3>
-                        <div class="asset-item">
-                            <div class="asset-icon">📖</div>
-                            <div class="asset-info">
-                                <span class="asset-symbol">Análisis Cuantitativo</span>
-                                <span class="asset-name">15 min restantes</span>
-                            </div>
-                        </div>
-                        <a href="#" class="card-link">Reanudar curso →</a>
-                    </div>
 
-                    <div class="card" style="border: 1px solid var(--color-primary); background: rgba(37, 99, 235, 0.02);">
-                        <h3 style="color: var(--color-primary);">Próximos Desafíos</h3>
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <div class="asset-item">
-                                <div class="asset-icon">🏆</div>
-                                <div class="asset-info">
-                                    <span class="asset-symbol" style="color: var(--color-primary);">Examen Final</span>
-                                    <span class="asset-name">Bloqueado</span>
-                                </div>
-                            </div>
-                            <span>🔒</span>
-                        </div>
-                    </div>
+                <!-- Sección de cursos disponibles -->
+                <div class="opts-section" id="cursos-grid">
+                    <!-- Se llena dinámicamente con academia.js -->
                 </div>
             </div>
 
+        </div>
+    </div>
+
+    <!-- Modal de Carrusel de Diapositivas -->
+    <div id="curriculum-modal" class="curriculum-modal" style="display: none;">
+        <div class="curriculum-modal-content">
+            <!-- Header Modal -->
+            <div class="curriculum-header">
+                <h2 id="modal-titulo-curso">Título del Curso</h2>
+                <button id="btn-cerrar-modal" class="btn-close-modal">&times;</button>
+            </div>
+
+            <!-- Contenedor del Carrusel -->
+            <div class="curriculum-carousel">
+                <!-- Diapositiva Actual -->
+                <div class="carousel-slide">
+                    <div id="contenido-diapositiva" class="slide-content">
+                        <!-- Contenido HTML de la diapositiva -->
+                    </div>
+                </div>
+
+                <!-- Timer Indicator (solo visible en 1ª visita) -->
+                <div id="timer-indicator" class="timer-indicator">
+                    <div class="timer-bar"></div>
+                </div>
+            </div>
+
+            <!-- Navegación Carrusel -->
+            <div class="carousel-nav">
+                <button id="btn-anterior" class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+
+                <div class="carousel-progress">
+                    <span id="diapositiva-actual">1</span> / <span id="diapositivas-total">1</span>
+                </div>
+
+                <button id="btn-siguiente" class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Indicador de Completación -->
+            <div id="completado-indicator" class="completado-indicator" style="display: none;">
+                <p>✅ ¡Curso Completado!</p>
+            </div>
         </div>
     </div>
 
