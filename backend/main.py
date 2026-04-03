@@ -4,7 +4,7 @@ from .database import supabase
 
 # Entidades
 from .dtos import *
-from .daos import usuario_dao, ActivoDAO, ReflexionDAO, ChatDAO, PortfolioDAO
+from .daos import usuario_dao, ActivoDAO, ReflexionDAO, ChatDAO, PortfolioDAO, CursoDAO
 from .services import (
     AuthService,
     GeminiService,
@@ -12,6 +12,7 @@ from .services import (
     ActivoService,
     ReflexionService,
     PortfolioService,
+    CursoService,
     UserService,
     storage_service,
 )
@@ -42,6 +43,7 @@ chat_service = ChatService(usuario_dao, chat_dao, gemini_service)
 activo_service = ActivoService(ActivoDAO)
 reflexion_service = ReflexionService(ReflexionDAO)
 portfolio_service = PortfolioService(portfolio_dao=PortfolioDAO)
+curso_service = CursoService(CursoDAO)
 user_service = UserService(usuario_dao, storage_service)
 
 
@@ -281,3 +283,59 @@ def agregar_activo_portfolio(id_portfolio: int, datos: StockInPortfolioRequest, 
 @app.delete("/portfolios/{id_portfolio}/activos/{id_posicion}")
 def eliminar_activo_portfolio(id_portfolio: int, id_posicion: int, user_id: str = Depends(auth_service.get_current_user)):
     return portfolio_service.eliminar_activo_portfolio_usuario(user_id, id_portfolio, id_posicion)
+
+
+# ─── Endpoints de Cursos ────────────────────────────────────────────
+
+@app.get("/cursos", response_model=list[CursoListResponse])
+def listar_cursos(user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Lista todos los cursos disponibles para el usuario.
+    """
+    return curso_service.listar_cursos_disponibles()
+
+
+@app.get("/cursos/resumen/progreso")
+def obtener_resumen_progreso_academia(user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Devuelve el número total de cursos completados por el usuario.
+    """
+    return curso_service.obtener_resumen_usuario(user_id)
+
+
+@app.get("/cursos/{id_curso}", response_model=CursoDetailResponse)
+def obtener_curso_detalle(id_curso: int, user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Obtiene un curso específico con todas sus diapositivas reales.
+    Automáticamente crea un registro de progreso si es la 1ª visita del usuario.
+    """
+    # Llama al service que obtiene el progreso o lo crea (1ª visita)
+    _ = curso_service.obtener_o_crear_progreso(user_id, id_curso)
+    
+    # Retorna el detalle del curso con las diapositivas
+    return curso_service.obtener_curso_con_diapositivas(id_curso)
+
+
+@app.get("/cursos/{id_curso}/progreso", response_model=ProgresoResponse)
+def obtener_progreso_curso(id_curso: int, user_id: str = Depends(auth_service.get_current_user)):
+    """
+    Obtiene el progreso actual del usuario en un curso específico.
+    """
+    return curso_service.obtener_o_crear_progreso(user_id, id_curso)
+
+
+@app.post("/cursos/{id_curso}/progreso", response_model=ProgresoResponse)
+def guardar_progreso_curso(
+    id_curso: int,
+    datos: ProgresoDiapositivaRequest,
+    user_id: str = Depends(auth_service.get_current_user)
+):
+    """
+    Registra que el usuario avanzó a una diapositiva específica.
+    Auto-marca el curso como completado si llega a la última diapositiva.
+    """
+    return curso_service.avanzar_diapositiva(
+        user_id=user_id,
+        id_curso=id_curso,
+        numero_diapositiva=datos.diapositiva_numero
+    )
