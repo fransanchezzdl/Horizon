@@ -45,6 +45,13 @@ from .reflexion_dto import (
     ReflexionCardResponse,
     ReflexionArticuloResponse,
 )
+from .curso_dto import (
+    CursoListResponse,
+    CursoDetailResponse,
+    DiapositivaResponse,
+    ProgresoResponse,
+    ProgresoDiapositivaRequest,
+)
 
 __all__ = [
     "UsuarioResponse",
@@ -88,4 +95,10 @@ __all__ = [
     # Reflexión DTOs
     "ReflexionCardResponse",
     "ReflexionArticuloResponse",
+    # Curso DTOs
+    "CursoListResponse",
+    "CursoDetailResponse",
+    "DiapositivaResponse",
+    "ProgresoResponse",
+    "ProgresoDiapositivaRequest",
 ]
