@@ -12,7 +12,7 @@
   {
     "table_name": "activos",
     "column_name": "estabilidad",
-    "data_type": "boolean"labb
+    "data_type": "boolean"
   },
   {
     "table_name": "activos",
@@ -48,6 +48,41 @@
     "table_name": "activos",
     "column_name": "updated_at",
     "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "cursos",
+    "column_name": "id",
+    "data_type": "bigint"
+  },
+  {
+    "table_name": "cursos",
+    "column_name": "titulo",
+    "data_type": "character varying"
+  },
+  {
+    "table_name": "cursos",
+    "column_name": "descripcion",
+    "data_type": "character varying"
+  },
+  {
+    "table_name": "diapositivas",
+    "column_name": "id",
+    "data_type": "bigint"
+  },
+  {
+    "table_name": "diapositivas",
+    "column_name": "id_curso",
+    "data_type": "bigint"
+  },
+  {
+    "table_name": "diapositivas",
+    "column_name": "contenido",
+    "data_type": "text"
+  },
+  {
+    "table_name": "diapositivas",
+    "column_name": "num_pag",
+    "data_type": "bigint"
   },
   {
     "table_name": "historico_activos",
@@ -133,6 +168,36 @@
     "table_name": "portfolios",
     "column_name": "updated_at",
     "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "progreso_cursos",
+    "column_name": "id",
+    "data_type": "bigint"
+  },
+  {
+    "table_name": "progreso_cursos",
+    "column_name": "id_usuario",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "progreso_cursos",
+    "column_name": "id_curso",
+    "data_type": "bigint"
+  },
+  {
+    "table_name": "progreso_cursos",
+    "column_name": "diapositiva_alcanzada",
+    "data_type": "bigint"
+  },
+  {
+    "table_name": "progreso_cursos",
+    "column_name": "completado",
+    "data_type": "boolean"
+  },
+  {
+    "table_name": "progreso_cursos",
+    "column_name": "puntuacion",
+    "data_type": "bigint"
   },
   {
     "table_name": "reflexiones",
