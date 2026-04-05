@@ -76,11 +76,26 @@ function poblarPagina(data) {
     // Contenido — cada párrafo separado por doble salto de línea
     const contenidoEl = document.getElementById('articulo-contenido');
     if (contenidoEl && data.contenido) {
-        contenidoEl.innerHTML = data.contenido
-            .split('\n\n')
-            .filter(p => p.trim())
-            .map(p => `<p>${p.trim()}</p>`)
-            .join('');
+        const contenido = String(data.contenido).trim();
+        const porBloques = contenido
+            .split(/\r?\n\s*\r?\n/)
+            .map(p => p.trim())
+            .filter(Boolean);
+
+        // Fallback: si no hay líneas en blanco, separar por salto simple.
+        const parrafos = porBloques.length > 1
+            ? porBloques
+            : contenido
+                .split(/\r?\n/)
+                .map(p => p.trim())
+                .filter(Boolean);
+
+        contenidoEl.innerHTML = '';
+        parrafos.forEach((parrafo) => {
+            const p = document.createElement('p');
+            p.textContent = parrafo;
+            contenidoEl.appendChild(p);
+        });
     }
 
     // Tags
