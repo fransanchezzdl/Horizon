@@ -1520,7 +1520,7 @@ body > main,
 body > section {
     margin-left: var(--sidebar-width);
     transition: margin-left 0.3s ease, padding-bottom 0.3s ease;
-    padding: 32px 32px 0px 32px;
+    padding: 32px;
     box-sizing: border-box;
     min-height: 100vh;
     background: var(--gradient-app-bg);
