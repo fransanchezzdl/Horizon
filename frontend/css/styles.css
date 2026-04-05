@@ -278,6 +278,10 @@
 [data-theme="dark"] .advisor-sidebar.collapsed:hover {
     box-shadow: 0 0 0 2px var(--color-white), 0 6px 18px var(--color-primary-a30);
 }
+
+[data-theme="dark"] .academy-progress-card .progress-fill {
+    background: var(--color-surface-dark-soft);
+}
 /* #endregion MODO OSCURO */
 
 body {
@@ -1516,14 +1520,9 @@ body > main,
 body > section {
     margin-left: var(--sidebar-width);
     transition: margin-left 0.3s ease, padding-bottom 0.3s ease;
-    padding: 32px;
+    padding: 32px 32px 0px 32px;
+    box-sizing: border-box;
     min-height: 100vh;
-}
-
-#dashboard-contenido,
-body > main,
-body > section,
-.main-content {
     background: var(--gradient-app-bg);
 }
 
@@ -1768,7 +1767,7 @@ body > section,
 /* --- Elementos de la Academia (Columna izquierda) --- */
 
 .academy-progress-card {
-    min-height: auto !important;
+    min-height: auto;
     padding: var(--spacing-xl);
     margin-bottom: var(--spacing-xl);
 }
@@ -1983,7 +1982,6 @@ body > section,
     justify-content: space-between;
     padding: var(--spacing-lg) var(--spacing-xl);
     border-top: 1px solid var(--color-border);
-    background: var(--color-surface);
     flex-shrink: 0;
 }
 
@@ -2226,17 +2224,6 @@ body > section,
 /* #region PAGINA DE PERFIL */
 /* #region PAGINA DE PERFIL - CONTENIDO */
 /* ==================== PAGINA DE PERFIL ==================== */
-.main-content {
-    margin-left: var(--sidebar-width);
-    padding: var(--spacing-2xl);
-    min-height: 100vh;
-    transition: margin-left 0.3s ease;
-}
-
-.main-content.sidebar-collapsed {
-    margin-left: var(--sidebar-width-collapsed);
-}
-
 /* Encabezado del Perfil */
 .profile-header {
     margin-bottom: var(--spacing-2xl);
@@ -2799,7 +2786,6 @@ body > section,
 }
 
 #dashboard-contenido.analysis-home {
-    min-height: calc(100vh - 64px);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -3019,11 +3005,6 @@ body > section,
         grid-template-columns: 1fr;
     }
 
-    .main-content {
-        margin-left: 0;
-        padding: var(--spacing-lg);
-    }
-
     .profile-banner {
         height: 120px;
     }
@@ -3062,7 +3043,6 @@ body > section,
     }
 
     #dashboard-contenido.analysis-home {
-        min-height: calc(100vh - 100px);
         justify-content: center;
     }
 
