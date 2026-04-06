@@ -289,6 +289,8 @@ function initSearch() {
     const confirmAddPortfolioBtn = document.getElementById('confirmAddPortfolioBtn');
     const createPortfolioFromAnalysisBtn = document.getElementById('createPortfolioFromAnalysisBtn');
     let activeIndex = -1;
+    let suggestionResults = [];
+    let recommendedIndex = -1;
     let debounceTimer = null;
 
     if (!input) return;
@@ -315,16 +317,41 @@ function initSearch() {
     confirmAddPortfolioBtn && confirmAddPortfolioBtn.addEventListener('click', addTickerToSelectedPortfolio);
     createPortfolioFromAnalysisBtn && createPortfolioFromAnalysisBtn.addEventListener('click', openExistingCreatePortfolioFlow);
 
+    function updateSuggestionVisualState() {
+        const items = suggestions.querySelectorAll('.suggestion-item');
+
+        items.forEach((item, idx) => {
+            const isActive = idx === activeIndex;
+            const isRecommended = idx === recommendedIndex && activeIndex === -1;
+
+            item.classList.toggle('active', isActive);
+
+            // Reutiliza tokens existentes para sugerencia recomendada en gris.
+            if (isRecommended) {
+                item.classList.add('text-muted');
+                item.style.background = 'var(--color-bg-lighter)';
+            } else {
+                item.classList.remove('text-muted');
+                item.style.background = '';
+            }
+        });
+    }
+
     // Renderiza la lista de sugerencias de ticker en el dropdown.
     function renderSuggestions(list) {
+        suggestionResults = Array.isArray(list) ? list : [];
         suggestions.innerHTML = '';
-        if (list.length === 0) {
+        if (suggestionResults.length === 0) {
+            recommendedIndex = -1;
+            activeIndex = -1;
             suggestions.hidden = true;
             return;
         }
 
+        recommendedIndex = 0;
+        activeIndex = -1;
         suggestions.hidden = false;
-        list.forEach((t) => {
+        suggestionResults.forEach((t, idx) => {
             const li = document.createElement('li');
             li.className = 'suggestion-item';
             li.tabIndex = 0;
@@ -334,8 +361,14 @@ function initSearch() {
                 suggestions.hidden = true;
                 seleccionarActivo(t.ticker);
             });
+            li.addEventListener('mouseenter', () => {
+                activeIndex = idx;
+                updateSuggestionVisualState();
+            });
             suggestions.appendChild(li);
         });
+
+        updateSuggestionVisualState();
     }
 
     // Busca activos por texto libre en la API.
@@ -398,6 +431,9 @@ function initSearch() {
     input.addEventListener('input', () => {
         const q = input.value.trim();
         if (q.length === 0) {
+            suggestionResults = [];
+            recommendedIndex = -1;
+            activeIndex = -1;
             suggestions.hidden = true;
             return;
         }
@@ -406,7 +442,6 @@ function initSearch() {
         debounceTimer = setTimeout(async () => {
             const results = await buscarActivos(q);
             renderSuggestions(results);
-            activeIndex = -1;
         }, 250);
     });
 
@@ -427,7 +462,7 @@ function initSearch() {
                 searchBtn && searchBtn.click();
             }
         }
-        items.forEach((it, idx) => it.classList.toggle('active', idx === activeIndex));
+        updateSuggestionVisualState();
     });
 
     // Cierra sugerencias cuando el usuario hace click fuera del buscador.
@@ -438,9 +473,21 @@ function initSearch() {
     // Ejecuta busqueda manual al pulsar el boton principal.
     searchBtn && searchBtn.addEventListener('click', () => {
         const val = input.value.trim();
-        if (!val) return;
+
+        let tickerToSearch = '';
+        if (activeIndex >= 0 && suggestionResults[activeIndex]) {
+            tickerToSearch = suggestionResults[activeIndex].ticker;
+        } else if (recommendedIndex >= 0 && suggestionResults[recommendedIndex]) {
+            tickerToSearch = suggestionResults[recommendedIndex].ticker;
+        } else if (val) {
+            tickerToSearch = val.toUpperCase();
+        }
+
+        if (!tickerToSearch) return;
+
+        input.value = tickerToSearch;
         suggestions.hidden = true;
-        seleccionarActivo(val.toUpperCase());
+        seleccionarActivo(tickerToSearch);
     });
 
     // Si llega ticker por query param (desde portfolio), lo carga al iniciar.
