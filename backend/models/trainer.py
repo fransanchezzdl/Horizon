@@ -250,8 +250,10 @@ def train_single_model(
         )
     
     # DataLoaders — y_train son clases (long)
+    # CRITICAL FIX: shuffle=False para preservar orden temporal en series de tiempo
+    # Mezclar datos temporales rompe las dependencias y causa leakage
     train_dataset = TensorDataset(data["X_train"], data["y_train"])
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 
     val_X = data["X_val"].to(device)
     val_y = data["y_val"].to(device)  # long tensor [batch]
