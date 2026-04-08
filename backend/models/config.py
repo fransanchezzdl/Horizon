@@ -49,13 +49,13 @@ def get_tickers_from_database():
                     volatile.append(activo.ticker)
         
         if stable or volatile:
-            print(f"✅ Cargados {len(stable) + len(volatile)} tickers de BD:")
+            print(f"[OK] Cargados {len(stable) + len(volatile)} tickers de BD:")
             print(f"   • Stable: {stable}")
             print(f"   • Volatile: {volatile}")
             return {"stable": stable, "volatile": volatile}
     
     except Exception as e:
-        print(f"⚠️  No se pudo cargar de BD: {e}")
+        print(f"[WARNING] No se pudo cargar de BD: {e}")
     
     # Fallback a hardcoded
     return TICKERS
@@ -191,15 +191,31 @@ TRAIN_RATIO = 0.70
 VAL_RATIO = 0.15
 TEST_RATIO = 0.15
 
-# Configuración XGBoost
-XGBOOST_CONFIG = {
-    "n_estimators": 300,
-    "max_depth": 6,
-    "learning_rate": 0.05,
-    "subsample": 0.8,
-    "colsample_bytree": 0.8,
-    "early_stopping_rounds": 20,
+# Configuración XGBoost - SEGREGADA por tipo de activo
+# STABLE: menos agresivo, datos más predecibles
+# OPTIMIZADO: ajustes finos para máximo F1
+XGBOOST_STABLE_CONFIG = {
+    "n_estimators": 550,      # ↓ 600→550: reduce overfitting
+    "max_depth": 5,           # ✓ mantener: profundidad óptima
+    "learning_rate": 0.045,   # ↑ 0.04→0.045: mejora convergencia
+    "subsample": 0.92,        # ↑ 0.9→0.92: menos regularización
+    "colsample_bytree": 0.92, # ↑ 0.9→0.92: menos regularización
+    "early_stopping_rounds": 25,  # ✓ mantener
 }
+
+# VOLATILE: más cautela, pero menos regularización para mejorar recall
+# OPTIMIZADO: max_depth 3→4 (CRÍTICO para recall!), reduce regularización
+XGBOOST_VOLATILE_CONFIG = {
+    "n_estimators": 700,      # ↓ 800→700: reduce overfitting
+    "max_depth": 4,           # ↑↑ 3→4: MÁS profundidad (CRÍTICO! fix recall)
+    "learning_rate": 0.025,   # ↑ 0.02→0.025: learning rate ligeramente mejor
+    "subsample": 0.8,         # ↑ 0.75→0.8: reduce regularización excesiva
+    "colsample_bytree": 0.8,  # ↑ 0.75→0.8: reduce regularización excesiva
+    "early_stopping_rounds": 35,  # ↓ 40→35: menos paciencia
+}
+
+# Para compatibilidad (usar el default stable)
+XGBOOST_CONFIG = XGBOOST_STABLE_CONFIG
 
 # Pesos del meta-ensemble (BiGRU + XGBoost)
 META_ENSEMBLE_WEIGHTS = {
