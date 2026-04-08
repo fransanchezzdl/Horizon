@@ -110,7 +110,7 @@ def train_xgboost_all() -> None:
     
     # Cargar tickers
     print("\n" + "="*80)
-    print("🌳 ENTRENAMIENTO XGBOOST SOLO — Con guardado en BD")
+    print("[*] ENTRENAMIENTO XGBOOST SOLO - Con guardado en BD")
     print("="*80)
     
     tickers_config = get_tickers_from_database()
@@ -118,9 +118,9 @@ def train_xgboost_all() -> None:
     
     if not all_tickers:
         all_tickers = TICKERS["stable"] + TICKERS["volatile"]
-        print("⚠️  Usando configuración hardcoded")
+        print("[WARNING] Usando configuración hardcoded")
     
-    print(f"\n📍 Tickers a entrenar: {all_tickers}\n")
+    print(f"\n[INFO] Tickers a entrenar: {all_tickers}\n")
     
     results = []
     total_start = time.time()
@@ -128,16 +128,16 @@ def train_xgboost_all() -> None:
     # Importar servicio de BD
     try:
         use_db = True
-        print("✅ Guardado en BD activado")
+        print("[OK] Guardado en BD activado")
     except Exception as e:
         use_db = False
-        print(f"⚠️  No se puede guardar en BD: {e}")
+        print(f"[WARNING] No se puede guardar en BD: {e}")
     
     for ticker in all_tickers:
         ticker_start = time.time()
         try:
             print(f"\n{'─'*80}")
-            print(f"🔄 {ticker}")
+            print(f"[*] {ticker}")
             print(f"{'─'*80}")
             
             config = get_config(ticker)
@@ -152,29 +152,29 @@ def train_xgboost_all() -> None:
             max_ws = max(unique_window_sizes)
             data = all_data[max_ws]
             
-            # Entrenar XGBoost
-            print(f"   📚 Entrenando XGBoost...")
-            xgb_metrics = train_xgboost(ticker, data, feature_cols)
+            # Entrenar XGBoost con configuración segregada por tipo de activo
+            print(f"   [TRAIN] Entrenando XGBoost ({asset_type})...")
+            xgb_metrics = train_xgboost(ticker, data, feature_cols, asset_type=asset_type)
             
             elapsed = time.time() - ticker_start
             
-            # Extraer accuracy
-            xgb_acc = xgb_metrics.get("xgb_directional_accuracy", 0)
+            # Extraer accuracy - HONESTO: usar Balanced Accuracy en lugar de Directional
+            xgb_acc = xgb_metrics.get("xgb_balanced_accuracy", 0)  # Métrica multi-clase
             xgb_prec = xgb_metrics.get("xgb_precision_up", 0)
             xgb_rec = xgb_metrics.get("xgb_recall_up", 0)
             
             if use_db:
                 # Guardar accuracy directamente sin predicción
-                print(f"   💾 Guardando en BD...")
+                print(f"   [SAVE] Guardando en BD...")
                 try:
                     from backend.daos.activo_dao import ActivoDAO
                     update_data = {
                         "confianza_bygru": xgb_acc,  # Usar XGBoost accuracy como confianza
                     }
                     success = ActivoDAO.actualizar(ticker, update_data)
-                    result_status = "✅ BD OK" if success else "❌ BD FAIL"
+                    result_status = "[OK] BD OK" if success else "[ERROR] BD FAIL"
                 except Exception as bd_err:
-                    print(f"      ⚠️  Error guardando: {bd_err}")
+                    print(f"      [ERROR] Error guardando: {bd_err}")
                     result_status = "❌ BD ERROR"
             else:
                 result_status = "⏭️  No BD"
@@ -189,7 +189,7 @@ def train_xgboost_all() -> None:
                 "db_status": result_status
             }
             
-            print(f"\n   ✅ {ticker} completado:")
+            print(f"\n   [DONE] {ticker} completado:")
             print(f"      • XGBoost Accuracy: {xgb_acc:.2%}")
             print(f"      • Precision (UP): {xgb_prec:.2%}")
             print(f"      • Recall (UP): {xgb_rec:.2%}")
@@ -213,7 +213,7 @@ def train_xgboost_all() -> None:
     total_elapsed = time.time() - total_start
     
     print(f"\n{'='*80}")
-    print(f"📊 RESUMEN FINAL — XGBOOST SOLO")
+    print(f"[SUMMARY] RESUMEN FINAL - XGBOOST SOLO")
     print(f"{'='*80}\n")
     
     successful = [r for r in results if r["status"] == "OK"]
@@ -241,8 +241,8 @@ def train_xgboost_all() -> None:
         print(f"   Por ticker (promedio): {avg_time:.1f}s")
         
         # Contar guardados
-        db_saves = sum(1 for r in results if "✅ BD OK" in r.get("db_status", ""))
-        print(f"\n💾 Guardados en BD: {db_saves}/{len(results)}")
+        db_saves = sum(1 for r in results if "[OK] BD OK" in r.get("db_status", ""))
+        print(f"\n[SAVED] Guardados en BD: {db_saves}/{len(results)}")
     
     else:
         print("❌ Todos los entrenamientos fallaron")
