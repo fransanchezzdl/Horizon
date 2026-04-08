@@ -41,7 +41,7 @@ def _get_xgb_classifier():
         )
 
 
-def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str = "stable") -> dict:
+def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str = "stable", seed: int = 42) -> dict:
     """
     Entrena el clasificador XGBoost con los datos del pipeline.
 
@@ -63,6 +63,7 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
                           (todos son tensores PyTorch).
         feature_cols: Lista de nombres de features (solo para logs).
         asset_type:   Tipo de activo ('stable' o 'volatile') para seleccionar config.
+        seed:         Random seed para reproducibilidad (default=42 para Phase 3, 123/456 para Phase 4 ensemble).
 
     Returns:
         Diccionario con métricas de test:
@@ -165,7 +166,7 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
         objective="binary:logistic",
         scale_pos_weight=scale_pos_weight,  # CRÍTICO: balancea el sesgo alcista
         verbosity=0,
-        random_state=42,
+        random_state=seed,
     )
 
     model.fit(
