@@ -158,6 +158,8 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
         learning_rate=cfg["learning_rate"],
         subsample=cfg["subsample"],
         colsample_bytree=cfg["colsample_bytree"],
+        min_child_weight=cfg.get("min_child_weight", 1.0),  # finer splits
+        gamma=cfg.get("gamma", 0.0),  # complexity penalty
         early_stopping_rounds=cfg["early_stopping_rounds"],
         eval_metric="logloss",
         objective="binary:logistic",
@@ -175,7 +177,13 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
 
     # ── Métricas en test ───────────────────────────────────────────────────────
     y_pred_binary = model.predict(X_test)
-    y_prob = model.predict_proba(X_test)[:, 1]  # probabilidad de clase 1 (ALCISTA)
+    y_proba_full = model.predict_proba(X_test)  # shape: (n_samples, 2) - probabilidades completas
+    y_prob = y_proba_full[:, 1]  # probabilidad de clase 1 (ALCISTA)
+    
+    # ⭐ CONFIANZA: Promedio de máximas probabilidades (predicción más confiada)
+    # Para cada muestra, tomar max(P(class_0), P(class_1)) y promediar
+    max_probabilities = np.max(y_proba_full, axis=1)  # array de max probs por sample
+    confidence_score = float(np.mean(max_probabilities))  # promedio de confianzas
     
     # ⭐ v4 - RECALL-TARGET BASED THRESHOLD CALIBRATION (NEW)
     # En lugar de usar percentiles, busca DIRECTAMENTE el threshold que da recall ~50%
@@ -329,10 +337,11 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
     # Resumen de métricas
     print(f"\n🌳 XGBoost {ticker} VALIDATION RESULTS:")
     print(f"   Directional Accuracy: {dir_acc:.2%}")
-    print(f"   Balanced Accuracy:    {balanced_acc:.2%} (metrics principal)")
+    print(f"   Balanced Accuracy:    {balanced_acc:.2%} (optimization metric)")
     print(f"   Macro F1 Score:       {macro_f1:.2%}")
     print(f"   Precision (ALCISTA):  {precision_up:.2%}")
     print(f"   Recall (ALCISTA):     {recall_up:.2%}")
+    print(f"   ✨ Confidence Score:  {confidence_score:.2%} (for confianza_bygru) ✨")
     print(f"   Confusion Matrix (binary): TN={cm_dict['tn']} FP={cm_dict['fp']} FN={cm_dict['fn']} TP={cm_dict['tp']}")
     print(f"   Thresholds: DOWN≤{down_threshold:.4f} | LATERAL | UP≥{up_threshold:.4f}")
     print(f"   Scale Pos Weight:     {scale_pos_weight:.2f}")
@@ -343,6 +352,7 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
         "xgb_macro_f1": macro_f1,
         "xgb_precision_up": precision_up,
         "xgb_recall_up": recall_up,
+        "xgb_confidence_score": confidence_score,  # ⭐ Confianza de probabilidades máximas
         "xgb_confusion_matrix": cm_dict,
         "xgb_class_distribution": {
             "train": {"BAJISTA": train_dist[0], "LATERAL": train_dist[1], "ALCISTA": train_dist[2]},

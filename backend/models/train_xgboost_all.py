@@ -96,7 +96,7 @@ def get_xgboost_prediction(ticker: str):
         }
     
     except Exception as e:
-        print(f"❌ Error en predicción de {ticker}: {e}")
+        print(f"[ERROR] Error en predicción de {ticker}: {e}")
         return None
 
 
@@ -158,18 +158,19 @@ def train_xgboost_all() -> None:
             
             elapsed = time.time() - ticker_start
             
-            # Extraer accuracy - HONESTO: usar Balanced Accuracy en lugar de Directional
-            xgb_acc = xgb_metrics.get("xgb_balanced_accuracy", 0)  # Métrica multi-clase
+            # Extraer métricas
+            xgb_acc = xgb_metrics.get("xgb_balanced_accuracy", 0)  # Métrica multi-clase (para compatibilidad)
+            xgb_confidence = xgb_metrics.get("xgb_confidence_score", 0)  # ⭐ CONFIANZA NUEVA (para BD)
             xgb_prec = xgb_metrics.get("xgb_precision_up", 0)
             xgb_rec = xgb_metrics.get("xgb_recall_up", 0)
             
             if use_db:
-                # Guardar accuracy directamente sin predicción
+                # Guardar confianza basada en probabilidades máximas
                 print(f"   [SAVE] Guardando en BD...")
                 try:
                     from backend.daos.activo_dao import ActivoDAO
                     update_data = {
-                        "confianza_bygru": xgb_acc,  # Usar XGBoost accuracy como confianza
+                        "confianza_bygru": xgb_confidence,  # ⭐ Confianza de probabilidades máximas (más realista)
                     }
                     success = ActivoDAO.actualizar(ticker, update_data)
                     result_status = "[OK] BD OK" if success else "[ERROR] BD FAIL"
@@ -182,6 +183,7 @@ def train_xgboost_all() -> None:
             result = {
                 "ticker": ticker,
                 "xgb_accuracy": xgb_acc,
+                "xgb_confidence": xgb_confidence,  # ⭐ Guardado en BD
                 "xgb_precision": xgb_prec,
                 "xgb_recall": xgb_rec,
                 "elapsed": elapsed,
@@ -190,7 +192,8 @@ def train_xgboost_all() -> None:
             }
             
             print(f"\n   [DONE] {ticker} completado:")
-            print(f"      • XGBoost Accuracy: {xgb_acc:.2%}")
+            print(f"      • XGBoost Accuracy (BA): {xgb_acc:.2%}")
+            print(f"      • ✨ Confianza (guardado): {xgb_confidence:.2%} ✨")
             print(f"      • Precision (UP): {xgb_prec:.2%}")
             print(f"      • Recall (UP): {xgb_rec:.2%}")
             print(f"      • Tiempo: {elapsed:.1f}s")
@@ -200,7 +203,7 @@ def train_xgboost_all() -> None:
             
         except Exception as e:
             elapsed = time.time() - ticker_start
-            print(f"\n   ❌ Error en {ticker}: {e}")
+            print(f"\n   [ERROR] Error en {ticker}: {e}")
             results.append({
                 "ticker": ticker,
                 "status": "ERROR",
@@ -237,7 +240,7 @@ def train_xgboost_all() -> None:
         avg_time = sum(r["elapsed"] for r in successful) / len(successful)
         
         print(f"{'PROMEDIO':<12} {avg_acc:>10.2%}")
-        print(f"\n⏱️  Tiempo total: {str(timedelta(seconds=int(total_elapsed)))}")
+        print(f"\n[TIME] Tiempo total: {str(timedelta(seconds=int(total_elapsed)))}")
         print(f"   Por ticker (promedio): {avg_time:.1f}s")
         
         # Contar guardados
@@ -245,19 +248,19 @@ def train_xgboost_all() -> None:
         print(f"\n[SAVED] Guardados en BD: {db_saves}/{len(results)}")
     
     else:
-        print("❌ Todos los entrenamientos fallaron")
+        print("[FAILED] Todos los entrenamientos fallaron")
     
     # Errores
     failed = [r for r in results if r["status"] == "ERROR"]
     if failed:
-        print(f"\n⚠️  Errores ({len(failed)}):")
+        print(f"\n[ERRORS] Errores ({len(failed)}):")
         for r in failed:
-            print(f"   • {r['ticker']}: {r.get('error', 'desconocido')}")
+            print(f"   - {r['ticker']}: {r.get('error', 'desconocido')}")
     
     print(f"\n{'='*80}\n")
     
     # Resumen ejecutivo
-    print("\n📋 RESUMEN EJECUTIVO:")
+    print("\n[SUMMARY] RESUMEN EJECUTIVO:")
     print(f"   • Tickers entrenados: {len(successful)}/{len(all_tickers)}")
     print(f"   • Accuracy promedio: {avg_acc:.2%}")
     print(f"   • Tiempo total: {str(timedelta(seconds=int(total_elapsed)))}")
