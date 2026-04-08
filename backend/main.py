@@ -10,6 +10,7 @@ from .services import (
     GeminiService,
     ChatService,
     ActivoService,
+    TickerNewsService,
     ReflexionService,
     PortfolioService,
     CursoService,
@@ -41,6 +42,7 @@ gemini_service = GeminiService()
 chat_dao = ChatDAO()
 chat_service = ChatService(usuario_dao, chat_dao, gemini_service)
 activo_service = ActivoService(ActivoDAO)
+ticker_news_service = TickerNewsService()
 reflexion_service = ReflexionService(ReflexionDAO)
 portfolio_service = PortfolioService(portfolio_dao=PortfolioDAO)
 curso_service = CursoService(CursoDAO)
@@ -116,6 +118,16 @@ def obtener_activo(ticker: str):
     if not activo:
         raise HTTPException(status_code=404, detail="Activo no encontrado")
     return activo
+
+
+@app.get("/activos/{ticker}/noticias")
+def obtener_noticias_activo(ticker: str, limit: int = 3):
+    """Conector API -> service para noticias recientes del ticker con sentimiento IA."""
+    activo = activo_service.obtener_activo(ticker)
+    if not activo:
+        raise HTTPException(status_code=404, detail="Activo no encontrado")
+
+    return ticker_news_service.obtener_noticias_ticker(ticker=ticker, limit=limit)
 
 
 @app.post("/chat", response_model=ChatMessageResponse)
