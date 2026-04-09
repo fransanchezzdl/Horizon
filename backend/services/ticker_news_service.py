@@ -164,13 +164,10 @@ class TickerNewsService:
             if not title or not url:
                 continue
 
-            titulo_es = self._translate_to_spanish(title)
-            resumen_es = self._translate_to_spanish(summary)
-
             normalized.append(
                 {
-                    "titulo": titulo_es,
-                    "resumen": self._short_summary(resumen_es),
+                    "titulo": title,
+                    "resumen": summary,
                     "url": url,
                     "fuente": source,
                     "fecha": fecha_iso,
@@ -184,6 +181,8 @@ class TickerNewsService:
         selected = (simple_candidates or normalized)[:limit]
 
         for item in selected:
+            item["titulo"] = self._translate_to_spanish(item.get("titulo", ""))
+            item["resumen"] = self._short_summary(self._translate_to_spanish(item.get("resumen", "")))
             item.pop("_ranking", None)
         return selected
 
@@ -277,7 +276,7 @@ class TickerNewsService:
                     "dt": "t",
                     "q": text[:1200],
                 },
-                timeout=8,
+                timeout=2,
             )
             response.raise_for_status()
             payload = response.json()
