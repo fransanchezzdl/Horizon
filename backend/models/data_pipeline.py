@@ -255,12 +255,56 @@ def compute_features(
             df["sentiment_score"] = 0.0
             df["sentiment_magnitude"] = 0.0
             df["news_volume"] = 0
+        
+        # === AGREGAR FEATURES MEJORADAS DE SENTIMIENTO CON LAG ===
+        # Crear features temporales (lag 1-5 días) para capturar predictibilidad
+        try:
+            from .sentiment_improved import ImprovedSentimentAnalyzer
+            
+            analyzer = ImprovedSentimentAnalyzer(window_size=30)
+            print(f"[*] Agregando features mejoradas de sentimiento con LAG para {ticker}...")
+            
+            # Asegurar que sentiment_score existe (puede ser 0.0)
+            if "sentiment_score" not in df.columns:
+                df["sentiment_score"] = 0.0
+            
+            # Calcular volatilidad si no existe
+            if "volatility_std" not in df.columns:
+                returns = df["Close"].pct_change()
+                df["volatility_std"] = returns.rolling(window=5).std()
+                df["volatility_std"].fillna(0.01, inplace=True)
+            
+            # Crear features de lag
+            df_improved = analyzer.create_sentiment_features_with_lag(
+                df, 
+                sentiment_column='sentiment_score',
+                volatility_column='volatility_std'
+            )
+            
+            # Agregar nuevas features al dataframe original
+            for col in analyzer.get_feature_names():
+                if col in df_improved.columns:
+                    df[col] = df_improved[col]
+            
+            print(f"[OK] {len(analyzer.get_feature_names())} features de sentimiento CON LAG agregadas")
+            
+        except Exception as exc:
+            logging.getLogger(__name__).warning(
+                "No se pudieron crear features mejoradas de sentimiento: %s",
+                exc
+            )
+            # Continuar si falla (features de lag no son críticos)
 
     # Seleccionar columnas base + avanzadas (todo lo que ya está en df)
-    # Las columnas de sentimiento y macro se añaden después
+    # Las columnas de sentimiento BÁSICAS (3) se reagregan después
+    # Las columnas de sentimiento con LAG (12) se mantienen
     all_feature_cols = get_feature_cols(ticker)
-    # Excluir sentiment y macro features que se agregan después
-    non_sentiment_cols = [c for c in all_feature_cols if c not in SENTIMENT_FEATURE_COLS and c not in MACRO_COMMODITY_COLS]
+    
+    # Excluir SOLO los 3 features básicos de sentimiento (que se reagregacn después)
+    # MANTENER los 12 lag features que ya fueron creados
+    BASIC_SENTIMENT_COLS = ["sentiment_score", "sentiment_magnitude", "news_volume"]
+    non_sentiment_cols = [c for c in all_feature_cols 
+                         if c not in BASIC_SENTIMENT_COLS and c not in MACRO_COMMODITY_COLS]
     tech_df = df[non_sentiment_cols].copy()
 
     # === FEATURES MACRO PARA COMMODITIES (GC=F, SI=F) ===
@@ -288,8 +332,12 @@ def compute_features(
             sentiment_df = sentiment_df.ffill(limit=5).fillna(
                 {"sentiment_score": 0.0, "sentiment_magnitude": 0.0, "news_volume": 0}
             )
-            for col in SENTIMENT_FEATURE_COLS:
-                tech_df[col] = sentiment_df[col].values
+            # Solo agregar los 3 features BÁSICOS de sentimiento
+            # Los 12 lag features ya fueron agregados en líneas 257-291
+            BASIC_SENTIMENT_COLS = ["sentiment_score", "sentiment_magnitude", "news_volume"]
+            for col in BASIC_SENTIMENT_COLS:
+                if col not in tech_df.columns:  # Solo si no existen ya
+                    tech_df[col] = sentiment_df[col].values
         except Exception as exc:
             import logging
             logging.getLogger(__name__).warning(
@@ -297,11 +345,14 @@ def compute_features(
                 "Usando valores neutros.",
                 ticker, exc
             )
-            for col in SENTIMENT_FEATURE_COLS:
-                if col == "news_volume":
-                    tech_df[col] = 0
-                else:
-                    tech_df[col] = 0.0
+            # Solo llenar campos BÁSICOS si no existen
+            BASIC_SENTIMENT_COLS = ["sentiment_score", "sentiment_magnitude", "news_volume"]
+            for col in BASIC_SENTIMENT_COLS:
+                if col not in tech_df.columns:
+                    if col == "news_volume":
+                        tech_df[col] = 0
+                    else:
+                        tech_df[col] = 0.0
 
     return tech_df
 
