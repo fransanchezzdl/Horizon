@@ -34,7 +34,7 @@ function initSidebar() {
                 </a>
                 <a href="academia.html" class="nav-item">
                     <svg class="nav-icon" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l-5.5 9h11z M17.5 13c1.93 0 3.5 1.57 3.5 3.5S19.43 20 17.5 20 14 18.43 14 16.5s1.57-3.5 3.5-3.5z M3 13.5h8v8H3z"/>
+                        <path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3zm0 13-7-3.82V16l7 4 7-4v-3.82L12 16z"/>
                     </svg>
                     <span class="nav-label">AcademIA</span>
                 </a>
@@ -122,7 +122,7 @@ function initSidebar() {
             </a>
             <a href="academia.html" class="bottom-navbar-item" title="Academia">
                 <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l-5.5 9h11z M17.5 13c1.93 0 3.5 1.57 3.5 3.5S19.43 20 17.5 20 14 18.43 14 16.5s1.57-3.5 3.5-3.5z M3 13.5h8v8H3z"/>
+                    <path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3zm0 13-7-3.82V16l7 4 7-4v-3.82L12 16z"/>
                 </svg>
                 <span>AcademIA</span>
             </a>
