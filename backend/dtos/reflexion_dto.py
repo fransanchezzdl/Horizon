@@ -26,7 +26,6 @@ class ReflexionArticuloResponse(BaseModel):
     tema: str
     titulo_articulo: str
     contenido: str
-    imagen_url: Optional[str] = None
     tiempo_lectura: Optional[int] = None
     tags: Optional[List[str]] = None
     created_at: datetime
