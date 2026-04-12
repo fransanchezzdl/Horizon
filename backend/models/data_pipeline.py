@@ -302,9 +302,11 @@ def compute_features(
     
     # Excluir SOLO los 3 features básicos de sentimiento (que se reagregacn después)
     # MANTENER los 12 lag features que ya fueron creados
+    # IMPORTANTE: Filtrar SOLO features que existen en el DataFrame (algunos no se crean si include_market_context=False)
     BASIC_SENTIMENT_COLS = ["sentiment_score", "sentiment_magnitude", "news_volume"]
     non_sentiment_cols = [c for c in all_feature_cols 
-                         if c not in BASIC_SENTIMENT_COLS and c not in MACRO_COMMODITY_COLS]
+                         if c not in BASIC_SENTIMENT_COLS and c not in MACRO_COMMODITY_COLS
+                         and c in df.columns]  # Asegurar que la columna existe
     tech_df = df[non_sentiment_cols].copy()
 
     # === FEATURES MACRO PARA COMMODITIES (GC=F, SI=F) ===
