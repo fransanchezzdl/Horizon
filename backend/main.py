@@ -282,6 +282,17 @@ def eliminar_portfolio(id_portfolio: int, user_id: str = Depends(auth_service.ge
     return portfolio_service.eliminar_portfolio_usuario(user_id, id_portfolio)
 
 
+# ── XAI Routes (Explicabilidad) ──────────────────────────────────────
+# Importar y registrar rutas XAI
+try:
+    from .routes.xai_routes import router as xai_router
+    app.include_router(xai_router)
+except ImportError:
+    print("⚠️ XAI routes no disponibles (SHAP no instalado)")
+except Exception as e:
+    print(f"⚠️ Error registrando XAI routes: {e}")
+
+
 @app.get("/portfolios/{id_portfolio}/activos", response_model=list[StockInPortfolioResponse])
 def listar_activos_portfolio(id_portfolio: int, user_id: str = Depends(auth_service.get_current_user)):
     return portfolio_service.listar_activos_portfolio_usuario(user_id, id_portfolio)

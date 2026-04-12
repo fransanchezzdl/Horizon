@@ -266,6 +266,34 @@ def train_xgboost_all() -> None:
     print(f"   • Tiempo total: {str(timedelta(seconds=int(total_elapsed)))}")
     print(f"   • Tickers guardados en BD: {db_saves}/{len(results)}")
     print(f"\n{'='*80}\n")
+    
+    # ── Generar explicaciones XAI (dinámico) ────────────────────────────────────
+    print("\n[XAI] Iniciando generación automática de explicaciones XAI...")
+    print(f"{'='*80}\n")
+    
+    try:
+        # Import dinámico para evitar dependencias circulares
+        from tests.generate_xai_explanations import generar_explicaciones_todos
+        
+        xai_success = generar_explicaciones_todos()
+        
+        if xai_success:
+            print("\n[XAI] ✅ Explicaciones XAI generadas exitosamente para todos los tickers")
+        else:
+            print("\n[XAI] ⚠️ Algunas explicaciones XAI fallaron, pero el entrenamiento fue exitoso")
+    
+    except ImportError:
+        print("\n[XAI] ⚠️ módulo generate_xai_explanations no disponible")
+        print("      Instala SHAP: pip install shap")
+        print("      Luego ejecuta manualmente: python tests/generate_xai_explanations.py --all")
+    
+    except Exception as e:
+        print(f"\n[XAI] ⚠️ Error en generación XAI: {e}")
+        print("      El entrenamiento fue exitoso, pero sin explicaciones XAI")
+        import traceback
+        traceback.print_exc()
+    
+    print(f"\n{'='*80}\n")
 
 
 if __name__ == "__main__":
