@@ -357,6 +357,35 @@ def obtener_curso_detalle(id_curso: int, user_id: str = Depends(auth_service.get
     return curso_service.obtener_curso_con_diapositivas(id_curso)
 
 
+# ─── Endpoints de Fiabilidad del Modelo ────────────────────────────
+
+@app.get("/activos/{ticker}/reliability")
+def obtener_fiabilidad_activo(ticker: str):
+    """
+    Devuelve las métricas de fiabilidad del modelo para un ticker.
+
+    Combina:
+    - Walk-forward offline (BA, F1, folds) desde walk_forward_results.json
+    - Predicciones live registradas en prediction_log (Supabase)
+
+    No requiere autenticación: es información pública del modelo.
+
+    Ejemplo de respuesta:
+    {
+        "ticker": "KO",
+        "walk_forward": {"ba_mean": 37.19, "ba_std": 4.95, "f1_mean": 35.91, "n_folds": 5},
+        "live": {"total": 10, "resueltas": 5, "correctas": 3, "accuracy": 60.0, "por_clase": {...}},
+        "baseline": 33.33,
+        "señal": "MODERADA"
+    }
+    """
+    from .services.prediction_log_service import get_reliability_stats
+    activo = activo_service.obtener_activo(ticker)
+    if not activo:
+        raise HTTPException(status_code=404, detail="Activo no encontrado")
+    return get_reliability_stats(ticker.upper())
+
+
 @app.get("/cursos/{id_curso}/progreso", response_model=ProgresoResponse)
 def obtener_progreso_curso(id_curso: int, user_id: str = Depends(auth_service.get_current_user)):
     """
