@@ -2886,6 +2886,26 @@ body > section {
     gap: 8px;
 }
 
+.news-item-card.news-item-card-status {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    min-height: 90px;
+}
+
+.news-card {
+    justify-content: flex-start;
+}
+
+.news-card .news-list {
+    flex: 1;
+}
+
+.news-card .news-item-card.news-item-card-status {
+    margin-block: auto;
+    width: 100%;
+}
+
 .news-item-title {
     color: var(--color-text-primary);
     font-weight: 700;

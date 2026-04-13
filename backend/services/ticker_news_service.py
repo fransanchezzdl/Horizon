@@ -8,6 +8,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 import requests
+from ..daos.activo_dao import ActivoDAO
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,7 @@ class TickerNewsService:
 
     ALPHA_VANTAGE_URL = "https://www.alphavantage.co/query"
     TRANSLATION_MODEL_NAME = "Helsinki-NLP/opus-mt-en-es"
-    CACHE_TTL_MINUTES = 5
-    CACHE_STALE_FALLBACK_MINUTES = 60
+    CACHE_REFRESH_MINUTES = 60
 
     PREFERRED_SOURCES = {
         "reuters",
@@ -72,7 +72,6 @@ class TickerNewsService:
         )
         self._translator_pipeline = None
         self._translator_init_attempted = False
-        self._news_cache: dict[str, dict[str, Any]] = {}
 
     def obtener_noticias_ticker(self, ticker: str, limit: int = 3, days_back: int = 7) -> dict[str, Any]:
         """Devuelve noticias recientes con sentimiento para un ticker."""
@@ -82,9 +81,16 @@ class TickerNewsService:
         if not ticker_normalized:
             return {"ticker": "", "noticias": []}
 
-        cached_fresh = self._get_cached_news(ticker_normalized, max_age_minutes=self.CACHE_TTL_MINUTES)
-        if cached_fresh is not None:
-            return {"ticker": ticker_normalized, "noticias": cached_fresh[:safe_limit]}
+        cached_payload = self._load_db_news_cache(ticker_normalized)
+        cached_items = self._extract_cached_items(cached_payload)
+
+        if self._is_cache_fresh(cached_payload, self.CACHE_REFRESH_MINUTES) and cached_items:
+            return {
+                "ticker": ticker_normalized,
+                "noticias": cached_items[:safe_limit],
+                "cached_at": cached_payload.get("cached_at"),
+                "source": cached_payload.get("source", "alphavantage"),
+            }
 
         feed, fetch_status = self._fetch_alpha_vantage_feed(
             ticker=ticker_normalized,
@@ -94,20 +100,26 @@ class TickerNewsService:
         noticias = self._build_news_payload(feed, limit=safe_limit)
 
         if noticias:
-            self._set_cached_news(ticker_normalized, noticias)
+            cached_record = self._build_db_cache_payload(noticias)
+            if not ActivoDAO.actualizar_noticias(ticker_normalized, cached_record):
+                logger.warning("No se pudo persistir noticias en BD para %s", ticker_normalized)
             return {
                 "ticker": ticker_normalized,
                 "noticias": noticias,
+                "cached_at": cached_record.get("cached_at"),
+                "source": cached_record.get("source", "alphavantage"),
             }
 
-        # Fallback: si API falla/rate-limit, devolver cache reciente para no romper UX.
-        cached_stale = self._get_cached_news(
-            ticker_normalized,
-            max_age_minutes=self.CACHE_STALE_FALLBACK_MINUTES,
-        )
-        if cached_stale is not None:
-            logger.info("Usando cache de noticias para %s (status=%s)", ticker_normalized, fetch_status)
-            return {"ticker": ticker_normalized, "noticias": cached_stale[:safe_limit]}
+        # Fallback: si API falla/rate-limit, devolver ultimas noticias guardadas en BD.
+        if cached_items:
+            logger.info("Usando cache persistente de noticias para %s (status=%s)", ticker_normalized, fetch_status)
+            return {
+                "ticker": ticker_normalized,
+                "noticias": cached_items[:safe_limit],
+                "cached_at": cached_payload.get("cached_at") if cached_payload else None,
+                "source": cached_payload.get("source", "alphavantage") if cached_payload else "alphavantage",
+                "stale": True,
+            }
 
         return {
             "ticker": ticker_normalized,
@@ -205,27 +217,66 @@ class TickerNewsService:
 
         return score
 
-    def _get_cached_news(self, ticker: str, max_age_minutes: int) -> list[dict[str, Any]] | None:
-        cached = self._news_cache.get(ticker)
-        if not cached:
+    def _load_db_news_cache(self, ticker: str) -> dict[str, Any] | None:
+        try:
+            activo = ActivoDAO.obtener_por_ticker(ticker)
+            if not activo:
+                return None
+
+            noticias_raw = getattr(activo, "noticias", None)
+            return noticias_raw if isinstance(noticias_raw, dict) else None
+        except Exception as exc:
+            logger.warning("Error leyendo cache de noticias en BD para %s: %s", ticker, exc)
             return None
 
-        saved_at = cached.get("saved_at")
-        if not isinstance(saved_at, datetime):
-            return None
+    def _extract_cached_items(self, cache_payload: dict[str, Any] | None) -> list[dict[str, Any]]:
+        if not isinstance(cache_payload, dict):
+            return []
 
-        age = datetime.now(timezone.utc) - saved_at
-        if age > timedelta(minutes=max_age_minutes):
-            return None
+        items = cache_payload.get("items")
+        if not isinstance(items, list):
+            return []
 
-        noticias = cached.get("noticias")
-        return noticias if isinstance(noticias, list) else None
+        normalized_items: list[dict[str, Any]] = []
+        for item in items:
+            if not isinstance(item, dict):
+                continue
+            if not item.get("titulo") or not item.get("url"):
+                continue
+            normalized_items.append(item)
+        return normalized_items
 
-    def _set_cached_news(self, ticker: str, noticias: list[dict[str, Any]]) -> None:
-        self._news_cache[ticker] = {
-            "saved_at": datetime.now(timezone.utc),
-            "noticias": noticias,
+    def _is_cache_fresh(self, cache_payload: dict[str, Any] | None, max_age_minutes: int) -> bool:
+        if not isinstance(cache_payload, dict):
+            return False
+
+        cached_at_raw = cache_payload.get("cached_at")
+        cached_at = self._parse_datetime_utc(cached_at_raw)
+        if cached_at is None:
+            return False
+
+        age = datetime.now(timezone.utc) - cached_at
+        return age <= timedelta(minutes=max_age_minutes)
+
+    def _build_db_cache_payload(self, noticias: list[dict[str, Any]]) -> dict[str, Any]:
+        return {
+            "cached_at": datetime.now(timezone.utc).isoformat(),
+            "source": "alphavantage",
+            "items": noticias,
         }
+
+    def _parse_datetime_utc(self, value: Any) -> datetime | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+
+        raw = value.strip().replace("Z", "+00:00")
+        try:
+            parsed = datetime.fromisoformat(raw)
+            if parsed.tzinfo is None:
+                return parsed.replace(tzinfo=timezone.utc)
+            return parsed.astimezone(timezone.utc)
+        except ValueError:
+            return None
 
     def _short_summary(self, text: str, max_chars: int = 200) -> str:
         cleaned = (text or "").strip()
