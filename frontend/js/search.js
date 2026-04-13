@@ -303,7 +303,7 @@ function renderNewsCards(ticker, noticias) {
 
     if (!Array.isArray(noticias) || noticias.length === 0) {
         newsList.innerHTML = `
-            <div class="news-item-card">
+            <div class="news-item-card news-item-card-status">
                 <strong>No hay noticias recientes para ${escapeHtml((ticker || '').toUpperCase())}</strong>
                 <p class="opt-info" style="margin-top:6px;">Prueba de nuevo en unos minutos.</p>
             </div>
@@ -329,7 +329,7 @@ async function loadTickerNews(ticker) {
     const newsList = document.getElementById('newsList');
     if (newsList) {
         newsList.innerHTML = `
-            <div class="news-item-card">
+            <div class="news-item-card news-item-card-status">
                 <strong>Cargando noticias...</strong>
             </div>
         `;
