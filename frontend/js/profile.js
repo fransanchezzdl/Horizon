@@ -419,9 +419,99 @@ function initProfileEvents() {
     // --- 2. LÓGICA PENDIENTE (Contraseña, 2FA, Planes) ---
     // Cambiar Contraseña
     const btnChangePassword = document.getElementById('btnChangePassword');
+    const modalChangePassword = document.getElementById('modalChangePassword');
+    const formChangePassword = document.getElementById('formChangePassword');
+    const btnCancelPassword = document.getElementById('btnCancelPassword');
+    const btnSavePassword = document.getElementById('btnSavePassword');
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const newPasswordInput = document.getElementById('newPassword');
+    const confirmNewPasswordInput = document.getElementById('confirmNewPassword');
+    const passwordMessage = document.getElementById('passwordMessage');
+
+    const openChangePasswordModal = () => {
+        if (!modalChangePassword) return;
+        if (formChangePassword) formChangePassword.reset();
+        if (passwordMessage) passwordMessage.innerHTML = '';
+        if (btnSavePassword) btnSavePassword.disabled = false;
+        modalChangePassword.style.display = 'flex';
+    };
+
+    const closeChangePasswordModal = () => {
+        if (!modalChangePassword) return;
+        modalChangePassword.style.display = 'none';
+        if (formChangePassword) formChangePassword.reset();
+        if (passwordMessage) passwordMessage.innerHTML = '';
+    };
+
     if (btnChangePassword) {
-        btnChangePassword.addEventListener('click', () => {
-            alert('Funcionalidad de cambio de contraseña en desarrollo');
+        btnChangePassword.addEventListener('click', openChangePasswordModal);
+    }
+
+    if (btnCancelPassword) {
+        btnCancelPassword.addEventListener('click', closeChangePasswordModal);
+    }
+
+    if (modalChangePassword) {
+        modalChangePassword.addEventListener('click', (event) => {
+            if (event.target === modalChangePassword) {
+                closeChangePasswordModal();
+            }
+        });
+    }
+
+    if (formChangePassword) {
+        formChangePassword.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (!btnSavePassword || !passwordMessage) return;
+            
+            btnSavePassword.disabled = true;
+            btnSavePassword.textContent = 'Actualizando...';
+            passwordMessage.innerHTML = '';
+            
+            const password_actual = (currentPasswordInput?.value || '').trim();
+            const password_nueva = (newPasswordInput?.value || '').trim();
+            const confirmPassword = (confirmNewPasswordInput?.value || '').trim();
+            
+            // Validar que las contraseñas nuevas coincidan
+            if (password_nueva !== confirmPassword) {
+                passwordMessage.innerHTML = `<span style="color: red;">Las contraseñas nuevas no coinciden.</span>`;
+                btnSavePassword.disabled = false;
+                btnSavePassword.textContent = 'Guardar Cambios';
+                return;
+            }
+            
+            try {
+                const response = await window.fetchWithAuth(`${window.API_BASE}/auth/change-password`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        password_actual,
+                        password_nueva
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    passwordMessage.innerHTML = `<span style="color: green;">${data.mensaje || 'Contraseña actualizada correctamente'}</span>`;
+                    if (formChangePassword) formChangePassword.reset();
+                    
+                    setTimeout(() => {
+                        closeChangePasswordModal();
+                    }, 2000);
+                } else {
+                    passwordMessage.innerHTML = `<span style="color: red;">Error: ${data.detail || 'No se pudo actualizar la contraseña'}</span>`;
+                }
+            } catch (error) {
+                console.error('Error al cambiar contraseña:', error);
+                passwordMessage.innerHTML = `<span style="color: red;">Error de conexión.</span>`;
+            } finally {
+                btnSavePassword.disabled = false;
+                btnSavePassword.textContent = 'Guardar Cambios';
+            }
         });
     }
 

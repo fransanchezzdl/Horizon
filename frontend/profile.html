@@ -227,5 +227,35 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal de Cambio de Contraseña -->
+     <div id="modalChangePassword" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0;">Cambiar Contraseña</h2>
+            </div>
+            <form id="formChangePassword" style="padding: var(--spacing-xl);">
+                <div class="form-group">
+                    <label for="currentPassword">Contraseña Actual</label>
+                    <input type="password" id="currentPassword" placeholder="Tu contraseña actual" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Nueva Contraseña</label>
+                    <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmNewPassword">Repetir Nueva Contraseña</label>
+                    <input type="password" id="confirmNewPassword" placeholder="Repite tu nueva contraseña" required>
+                </div>
+                <div id="passwordMessage" style="font-size: 0.9em; margin-top: 10px; font-weight: 500;"></div>
+
+                <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <button type="button" class="btn-secondary" id="btnCancelPassword" style="background: var(--color-bg-light); color: var(--color-text-primary); border: 1px solid var(--color-border); flex: 1;">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSavePassword" style="flex: 1;">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- FIN Modal de Cambio de Contraseña -->
 </body>
 </html>
