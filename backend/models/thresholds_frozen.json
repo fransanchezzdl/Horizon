@@ -1,18 +1,18 @@
 {
   "_meta": {
     "version": "1.0",
-    "calibrated_at": "2026-04-13T20:43:43.907146",
+    "calibrated_at": "2026-04-13T20:57:42.150095",
     "method": "percentile_33.33_66.67",
     "horizon_days": 3,
     "split": "train_only_70pct",
     "description": "Umbrales fijos de etiquetado calibrados UNA SOLA VEZ sobre la portion train de retornos log a 3 d\u00edas (cambiado de 5d tras comparativa emp\u00edrica walk-forward 2026-04-13). NO MODIFICAR: la reproducibilidad del modelo depende de que estos valores sean inmutables. Si se necesita recalibrar, hacer en una nueva version del modelo."
   },
   "KO": {
-    "bajista": -0.005187,
+    "bajista": -0.005188,
     "alcista": 0.012016,
     "n_train_samples": 1387,
     "min_return": -0.235495,
-    "max_return": 0.180723,
+    "max_return": 0.180722,
     "std_return": 0.02831
   },
   "AAPL": {
@@ -43,7 +43,7 @@
     "bajista": -0.009872,
     "alcista": 0.018807,
     "n_train_samples": 1387,
-    "min_return": -0.167898,
+    "min_return": -0.167899,
     "max_return": 0.144602,
     "std_return": 0.040237
   },
@@ -51,8 +51,8 @@
     "bajista": -0.006914,
     "alcista": 0.020213,
     "n_train_samples": 1387,
-    "min_return": -0.178708,
-    "max_return": 0.164103,
+    "min_return": -0.178707,
+    "max_return": 0.164102,
     "std_return": 0.035904
   },
   "TSLA": {
