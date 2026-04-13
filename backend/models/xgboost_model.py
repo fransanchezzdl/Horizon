@@ -23,7 +23,12 @@ from typing import Dict, Tuple
 import numpy as np
 
 from .config import SAVED_MODELS_DIR, XGBOOST_CONFIG, LABELING_FIXED_THRESHOLDS
-from .platt_scaling_calibration_v2 import load_calibrator
+try:
+    from .platt_scaling_calibration_v2 import load_calibrator
+except ModuleNotFoundError:
+    def load_calibrator(_ticker: str):
+        """Fallback temporal cuando no existe el modulo de calibracion."""
+        return None
 
 logger = logging.getLogger(__name__)
 
