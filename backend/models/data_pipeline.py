@@ -50,7 +50,7 @@ def download_data(ticker: str) -> pd.DataFrame:
     Raises:
         ValueError: Si no se pueden descargar datos o el DataFrame está vacío.
     """
-    print(f"📥 Descargando datos de {ticker} desde 2018-01-01...")
+    print(f"[Downloading {ticker} from 2018-01-01...]")
     df = yf.download(ticker, start="2018-01-01", progress=False, auto_adjust=True)
 
     if df.empty:
@@ -146,6 +146,26 @@ def compute_features(
 
     # 3. Volatilidad realizada 20 días: régimen de volatilidad actual
     df["Realized_Vol"] = df["Log_Return"].rolling(20).std() * (252 ** 0.5)  # anualizada
+
+    # 4. Régimen de mercado discreto (−1/0/+1) basado en SMA200 + zona neutra ±2%
+    #    +1 = uptrend  (precio > SMA200 * 1.02): señal técnica más fiable al alza
+    #    -1 = downtrend(precio < SMA200 * 0.98): señal técnica más fiable a la baja
+    #     0 = neutro   (precio dentro de ±2% de SMA200): zona de incertidumbre
+    #
+    #    SHAP puede interpretar esta feature igual que cualquier otra continua/ordinal.
+    #    El modelo aprende implícitamente a condicionar sus predicciones al régimen,
+    #    sin necesidad de reglas hard-coded externas.
+    #
+    #    Referencia: Faber (2007) "A Quantitative Approach to Tactical Asset Allocation"
+    df["SMA200_Regime"] = np.where(
+        df["Close"] > sma200 * 1.02,  1.0,   # uptrend
+        np.where(
+            df["Close"] < sma200 * 0.98, -1.0,  # downtrend
+            0.0                                  # neutro
+        )
+    )
+    # Rellenar NaN del warmup de SMA200 con 0 (neutro)
+    df["SMA200_Regime"] = df["SMA200_Regime"].fillna(0.0)
     # === PHASE 2 FEATURES (12 nuevos indicadores técnicos) ===
     # Se agregan después de los indicadores base para tener acceso a OHLCV
     try:
