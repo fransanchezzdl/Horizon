@@ -17,6 +17,7 @@ class AuthService:
         self.usuario_dao = usuario_dao_instance
         self.storage_service = storage_service_instance
 
+
     def iniciar_sesion(self, email: str, password: str) -> tuple[str, UsuarioResponse]:
         try:
             auth_response = self.db.auth.sign_in_with_password({"email": email, "password": password})
@@ -50,6 +51,7 @@ class AuthService:
             raise
         except Exception:
             raise HTTPException(status_code=401, detail="Email o contraseña incorrectos")
+
 
     def registrar_usuario(self, email: str, password: str, nombre: str | None = None, apellidos: str | None = None, foto_perfil: str | None = None) -> tuple[str | None, UsuarioResponse | None]:
         try:
@@ -97,6 +99,7 @@ class AuthService:
         except Exception as e:
             raise HTTPException(status_code=400, detail=str(e))
     
+
     def validar_token(self, token: str) -> str:
         """
         Valida un token JWT de Supabase y extrae el user_id.
@@ -145,6 +148,7 @@ class AuthService:
             print(f"[AUTH] Error validando token: {str(e)}")
             raise HTTPException(status_code=401, detail="Token inválido o expirado")
     
+
     def get_current_user(self, authorization: str = Header(None)) -> str:
         """
         Dependency para validar autenticación JWT en endpoints protegidos.
@@ -192,6 +196,58 @@ class AuthService:
         except Exception as e:
             print(f"❌ AUTH: Error inesperado: {e}")
             raise HTTPException(status_code=401, detail="Error validando token")
+    
+
+    def cambiar_contrasena(self, id_usuario: str, password_actual: str, password_nueva: str) -> dict:
+        """
+        Cambia la contraseña del usuario.
+        
+        Verifica que la contraseña actual sea correcta y, si es válida,
+        actualiza a la nueva contraseña en Supabase Auth.
+        
+        Args:
+            id_usuario: ID del usuario autenticado
+            password_actual: Contraseña actual del usuario
+            password_nueva: Nueva contraseña a establecer
+            
+        Returns:
+            dict: {"mensaje": "Contraseña actualizada correctamente"}
+            
+        Raises:
+            HTTPException(404): Si el usuario no existe
+            HTTPException(400): Si la contraseña actual es incorrecta o falla la actualización
+        """
+        # 1. Obtener el correo del usuario
+        usuario = self.usuario_dao.obtener_por_id(id_usuario)
+        if not usuario:
+            raise HTTPException(status_code=404, detail="Usuario no encontrado")
+        
+        try:
+            # 2. Verificar que la contraseña actual es correcta
+            self.db.auth.sign_in_with_password({
+                "email": usuario.email,
+                "password": password_actual
+            })
+            
+            # 3. Si el login es exitoso, actualizar la contraseña
+            self.db.auth.update_user({"password": password_nueva})
+            
+            # 4. Cerrar la sesión temporal del backend
+            try:
+                self.db.auth.sign_out()
+            except Exception:
+                pass
+            
+            return {"mensaje": "Contraseña actualizada correctamente"}
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"[AUTH] Error al cambiar contraseña: {str(e)}")
+            raise HTTPException(
+                status_code=400,
+                detail="La contraseña actual es incorrecta o hubo un error al actualizarla."
+            )
 
 
 # Instanciamos el servicio listo para inyectar en controladores

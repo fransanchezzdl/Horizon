@@ -97,6 +97,24 @@ def register(datos: RegisterRequest):
     )
 
 
+@app.post("/auth/change-password")
+def cambiar_contrasena(
+    datos: ChangePasswordRequest,
+    user_id: str = Depends(auth_service.get_current_user)
+):
+    """
+    Cambia la contraseña del usuario autenticado.
+    
+    Requiere autenticación (Bearer token en header Authorization).
+    Valida la contraseña actual y si es correcta, la actualiza a la nueva.
+    """
+    return auth_service.cambiar_contrasena(
+        id_usuario=user_id,
+        password_actual=datos.password_actual,
+        password_nueva=datos.password_nueva
+    )
+
+
 # ─── Endpoints de Activos ───────────────────────────────────────────
 
 @app.get("/activos")

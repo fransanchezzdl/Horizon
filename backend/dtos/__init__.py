@@ -1,6 +1,7 @@
 from .usuario_dto import (
     UsuarioResponse, 
     PerfilUpdateDTO,
+    ChangePasswordRequest,
 )
 from .activo_dto import (
     ActivoCreateRequest,
@@ -56,6 +57,7 @@ from .curso_dto import (
 __all__ = [
     "UsuarioResponse",
     "PerfilUpdateDTO",
+    "ChangePasswordRequest",
     # Activo DTOs
     "ActivoCreateRequest",
     "ActivoUpdateRequest",
