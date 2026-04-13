@@ -1,5 +1,7 @@
 // Configuracion global del frontend
-window.API_BASE = 'http://localhost:8000';
+const localHosts = ['localhost', '127.0.0.1', '::1'];
+const isLocalHost = localHosts.includes(window.location.hostname);
+window.API_BASE = isLocalHost ? 'http://localhost:8000' : `${window.location.origin}/api`;
 
 window.STORAGE_KEYS = {
     ACCESS_TOKEN: 'access_token',
