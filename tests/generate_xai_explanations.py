@@ -83,12 +83,22 @@ def generar_explicacion_para_ticker(
             xgb_model = pickle.load(f)
         logger.info(f"✓ XGBoost model cargado para {ticker}")
         
-        # 3️⃣ Cargar feature names
+        # 3️⃣ Cargar feature names (last, mean, std, trend por cada feature)
         feature_names = []
         feature_names_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_feature_names.pkl")
         if os.path.exists(feature_names_path):
             with open(feature_names_path, "rb") as f:
                 feature_names = pickle.load(f)
+        if not feature_names:
+            # Reconstruir en base a feature_cols y la agregación [last, mean, std, trend]
+            from backend.models.config import get_feature_cols as _gfc
+            _fc = _gfc(ticker)
+            feature_names = (
+                [f"{c}_last"  for c in _fc] +
+                [f"{c}_mean"  for c in _fc] +
+                [f"{c}_std"   for c in _fc] +
+                [f"{c}_trend" for c in _fc]
+            )
         logger.info(f"✓ {len(feature_names)} feature names cargados")
         
         # 4️⃣ Obtener datos recientes (usar misma configuración que training)
