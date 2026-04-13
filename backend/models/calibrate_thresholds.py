@@ -96,11 +96,12 @@ def main():
             "version": "1.0",
             "calibrated_at": datetime.now().isoformat(),
             "method": f"percentile_{PERCENTILE_LOWER}_{PERCENTILE_UPPER}",
-            "horizon_days": 5,
+            "horizon_days": 3,
             "split": "train_only_70pct",
             "description": (
                 "Umbrales fijos de etiquetado calibrados UNA SOLA VEZ sobre la "
-                "portion train de retornos log a 5 días. NO MODIFICAR: la "
+                "portion train de retornos log a 3 días (cambiado de 5d tras "
+                "comparativa empírica walk-forward 2026-04-13). NO MODIFICAR: la "
                 "reproducibilidad del modelo depende de que estos valores sean "
                 "inmutables. Si se necesita recalibrar, hacer en una nueva "
                 "version del modelo."

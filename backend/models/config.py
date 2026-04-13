@@ -195,7 +195,13 @@ FEATURE_COLS = BASE_FEATURE_COLS
 ENSEMBLE_SIZE = 1  # Cambiar a 1 para pruebas rápidas, 5 para producción
 
 # Predicción
-PREDICTION_HORIZON = 5  # 5 días de trading
+# Comparativa empírica 3d vs 5d (walk-forward 15 tickers, 2026-04-13):
+#   - 3d gana: KO+5pp, NVDA+5pp, NFLX+7pp, BABA+4pp → activos con señal técnica corta
+#   - 5d gana: AAPL+7pp, META+7pp, INTC+8pp, MSFT+6pp → activos con memoria más larga
+#   - Media: 5d = 35.09% BA  vs  3d = 34.01% BA  → 5d es mejor en promedio
+# Conclusión: horizonte óptimo es heterogéneo por activo; 5d es el mejor default global.
+# Para mejora futura: horizonte per-ticker calibrado individualmente.
+PREDICTION_HORIZON = 5  # 5 días de trading (default global óptimo)
 
 # Split de datos
 TRAIN_RATIO = 0.70
