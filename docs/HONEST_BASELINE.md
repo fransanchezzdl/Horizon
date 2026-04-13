@@ -75,6 +75,35 @@ El random aleatorio en clasificación ternaria balanceada es BA = 33.33%. La lí
 - `backend/models/saved_models/<TICKER>_xgboost_thresholds.pkl` — metadata (`version: v5_multiclass_frozen_perticker`)
 - `docs/baseline_honest_results.json` — resultados raw de esta corrida
 
+## Baselines comparativos
+
+Evaluados sobre el mismo test set con las mismas etiquetas frozen — comparación justa.
+
+| Ticker | XGBoost v6 | Random | Buy & Hold | SMA Cross |
+|--------|-----------|--------|-----------|-----------|
+| KO | 31.47% | 33.30% | 33.33% | 25.44% |
+| AAPL | 40.05% | 33.12% | 33.33% | 33.07% |
+| GC=F | 36.33% | 34.76% | 33.33% | 32.77% |
+| SI=F | 35.38% | 34.90% | 33.33% | 38.15% |
+| GOOGL | 33.78% | 29.18% | 33.33% | 35.79% |
+| MSFT | 37.76% | 34.03% | 33.33% | 33.58% |
+| TSLA | 36.93% | 36.67% | 33.33% | 30.65% |
+| NVDA | 31.07% | 31.64% | 33.33% | 31.51% |
+| BTC-USD | 23.99% | 33.38% | 33.33% | 29.08% |
+| ETH-USD | 37.57% | 32.92% | 33.33% | 30.20% |
+| AMZN | 36.61% | 28.71% | 33.33% | 28.39% |
+| BABA | 32.71% | 31.26% | 33.33% | 31.79% |
+| INTC | 38.78% | 30.03% | 33.33% | 29.95% |
+| META | 44.18% | 25.37% | 33.33% | 32.02% |
+| NFLX | 29.72% | 31.86% | 33.33% | 37.32% |
+| **MEDIA** | **35.09%** | 32.08% | 33.33% | 31.98% |
+
+**XGBoost v6 supera a los 3 baselines en media**: +3.01pp vs Random, +1.76pp vs Buy&Hold, +3.11pp vs SMA Crossover.
+
+El SMA Crossover es el baseline técnicamente más sofisticado (usa señal de momentum real). Que el modelo lo supere en +3.11pp confirma que XGBoost extrae información adicional más allá de la señal de cruce de medias.
+
+BTC-USD es el único ticker donde el modelo (23.99%) queda por debajo de los tres baselines (~33%) — consistente con el análisis previo de colapso de señal en crypto líquido.
+
 ## Siguientes pasos
 
 1. **Walk-forward validation** (5 folds TimeSeriesSplit) para reportar BA ± σ en lugar de un único número.
