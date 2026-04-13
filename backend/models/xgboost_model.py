@@ -13,17 +13,51 @@ Funciones:
     - predict_xgboost(ticker, features)         → {"direction": 0/1, "probability": float}
 """
 
+import json
 import os
 import pickle
 import logging
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Tuple
 
 import numpy as np
 
-from .config import SAVED_MODELS_DIR, XGBOOST_CONFIG
+from .config import SAVED_MODELS_DIR, XGBOOST_CONFIG, LABELING_FIXED_THRESHOLDS
+from .platt_scaling_calibration_v2 import load_calibrator
 
 logger = logging.getLogger(__name__)
+
+THRESHOLDS_FROZEN_FILE = os.path.join(os.path.dirname(__file__), "thresholds_frozen.json")
+
+
+def _load_frozen_thresholds(ticker: str) -> Tuple[float, float]:
+    """
+    Carga los umbrales de etiquetado FROZEN para un ticker desde JSON versionado.
+
+    Si el archivo no existe o el ticker no está calibrado, hace fallback al
+    universal LABELING_FIXED_THRESHOLDS y emite warning. En producción debe
+    haberse ejecutado `calibrate_thresholds.py` previamente.
+
+    Returns: (down_threshold, up_threshold)
+    """
+    if os.path.exists(THRESHOLDS_FROZEN_FILE):
+        try:
+            with open(THRESHOLDS_FROZEN_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if ticker in data:
+                return data[ticker]["bajista"], data[ticker]["alcista"]
+            logger.warning(
+                f"[{ticker}] no calibrado en {THRESHOLDS_FROZEN_FILE}. "
+                f"Ejecutar: python -m backend.models.calibrate_thresholds"
+            )
+        except Exception as e:
+            logger.warning(f"No se pudo cargar {THRESHOLDS_FROZEN_FILE}: {e}")
+    else:
+        logger.warning(
+            f"{THRESHOLDS_FROZEN_FILE} no existe. "
+            f"Usando LABELING_FIXED_THRESHOLDS universal como fallback."
+        )
+    return LABELING_FIXED_THRESHOLDS["bajista"], LABELING_FIXED_THRESHOLDS["alcista"]
 
 
 def _get_xgb_classifier():
@@ -80,8 +114,8 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
     from sklearn.metrics import balanced_accuracy_score, f1_score, confusion_matrix
 
     # ── Construir features temporales agregadas ────────────────────────────────
-    # Usamos estadísticas de toda la ventana: last, mean, std, trend por feature.
-    # Esto da al XGBoost información temporal sin necesitar secuencias.
+    # Estadísticas de la ventana completa: last, mean, std, trend por feature.
+    # Esto da al XGBoost señal temporal sin necesitar secuencias recurrentes.
     def build_xgb_features(X_tensor):
         X = X_tensor.numpy()  # [n, window, features]
         last  = X[:, -1, :]
@@ -94,219 +128,131 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
     X_val   = build_xgb_features(data["X_val"])
     X_test  = build_xgb_features(data["X_test"])
 
-    # TEMPORAL TARGET SIN LEAKAGE: Convertir retornos continuos (y) a clases ternarias
-    # 0 = BAJISTA (retorno < -threshold)
-    # 1 = LATERAL (retorno en [-threshold, +threshold])
-    # 2 = ALCISTA (retorno > +threshold)
-    # 
-    # El threshold se calibra dinámicamente sobre validación para maximizar balanced accuracy
-    
-    # CRÍTICO: Usar los retornos CONTINUOS, no las clases ya hechas
-    y_train_continuous = data.get("y_train_returns", data["y_train"].numpy() if hasattr(data["y_train"], 'numpy') else data["y_train"].cpu().numpy()).ravel()
-    y_val_continuous = data.get("y_val_returns", data["y_val"].numpy() if hasattr(data["y_val"], 'numpy') else data["y_val"].cpu().numpy()).ravel()
-    y_test_continuous = data.get("y_test_returns", data["y_test"].numpy() if hasattr(data["y_test"], 'numpy') else data["y_test"].cpu().numpy()).ravel()
-    
-    # Calibrar umbrales TEMPORALES basado en distribución de train
-    # Percentil 33.33 para BAJISTA, 66.67 para ALCISTA
-    down_threshold = np.percentile(y_train_continuous, 33.33)
-    up_threshold = np.percentile(y_train_continuous, 66.67)
-    
-    def returns_to_classes(returns, down_th, up_th):
-        """Convierte retornos continuos a 3 clases con umbrales."""
-        classes = np.ones(len(returns), dtype=int)  # default: LATERAL (1)
+    # ── Obtener retornos continuos ─────────────────────────────────────────────
+    # Preferir y_*_returns (retornos continuos) si existen; si no, usar y_* directamente
+    def _get_returns(split_key: str) -> np.ndarray:
+        val = data.get(f"y_{split_key}_returns", None)
+        if val is None:
+            val = data[f"y_{split_key}"]
+        arr = val.numpy() if hasattr(val, "numpy") else np.array(val)
+        return arr.ravel()
+
+    y_train_continuous = _get_returns("train")
+    y_val_continuous   = _get_returns("val")
+    y_test_continuous  = _get_returns("test")
+
+    # ── Etiquetas FROZEN per-ticker (reproducibles + adaptadas a volatilidad) ──
+    # Calibradas UNA VEZ con calibrate_thresholds.py y versionadas en JSON.
+    # Mismo retorno → mismo label siempre, independientemente de cuándo se reentrene.
+    down_threshold, up_threshold = _load_frozen_thresholds(ticker)
+    logger.info(
+        f"[{ticker}] frozen thresholds: BAJISTA<={down_threshold:+.4f} | ALCISTA>={up_threshold:+.4f}"
+    )
+
+    def returns_to_classes(returns: np.ndarray, down_th: float, up_th: float) -> np.ndarray:
+        classes = np.ones(len(returns), dtype=int)  # LATERAL por defecto
         classes[returns <= down_th] = 0  # BAJISTA
-        classes[returns >= up_th] = 2     # ALCISTA
+        classes[returns >= up_th]   = 2  # ALCISTA
         return classes
-    
+
     y_train = returns_to_classes(y_train_continuous, down_threshold, up_threshold)
-    y_val = returns_to_classes(y_val_continuous, down_threshold, up_threshold)
-    y_test = returns_to_classes(y_test_continuous, down_threshold, up_threshold)
-    
-    # Distribuci n de clases para logging
+    y_val   = returns_to_classes(y_val_continuous,   down_threshold, up_threshold)
+    y_test  = returns_to_classes(y_test_continuous,  down_threshold, up_threshold)
+
+    # Distribución de clases para logging
     train_dist = np.bincount(y_train, minlength=3) / len(y_train) * 100
-    val_dist = np.bincount(y_val, minlength=3) / len(y_val) * 100
-    test_dist = np.bincount(y_test, minlength=3) / len(y_test) * 100
-    
+    val_dist   = np.bincount(y_val,   minlength=3) / len(y_val)   * 100
+    test_dist  = np.bincount(y_test,  minlength=3) / len(y_test)  * 100
+
     logger.info(f"📊 Class distribution TRAIN: BAJISTA={train_dist[0]:.1f}% LATERAL={train_dist[1]:.1f}% ALCISTA={train_dist[2]:.1f}%")
     logger.info(f"📊 Class distribution VAL:   BAJISTA={val_dist[0]:.1f}% LATERAL={val_dist[1]:.1f}% ALCISTA={val_dist[2]:.1f}%")
     logger.info(f"📊 Class distribution TEST:  BAJISTA={test_dist[0]:.1f}% LATERAL={test_dist[1]:.1f}% ALCISTA={test_dist[2]:.1f}%")
-    
-    # Calcular scale_pos_weight para balancear desbalance binario
-    # Comparar ALCISTA vs BAJISTA+LATERAL
-    n_alcista = np.sum(y_train == 2)
-    n_not_alcista = np.sum(y_train != 2)
-    scale_pos_weight = n_not_alcista / max(n_alcista, 1)  # Sin multiplicador: honesto
-    
-    logger.info(f"🎯 scale_pos_weight={scale_pos_weight:.2f} (n_up={n_alcista}, n_down/lateral={n_not_alcista})")
 
-    # Convertir a binario para XGBoost: 0=BAJISTA+LATERAL, 1=ALCISTA
-    y_train_binary = (y_train == 2).astype(int)
-    y_val_binary = (y_val == 2).astype(int)
-    y_test_binary = (y_test == 2).astype(int)
+    # ── Pesos de muestra para balanceo multi-clase ─────────────────────────────
+    # Cada clase pesa inversamente proporcional a su frecuencia en train.
+    # Equivalente a sample_weight para multi:softprob.
+    class_counts = np.bincount(y_train, minlength=3)
+    sample_weights = np.ones(len(y_train), dtype=float)
+    for cls in range(3):
+        if class_counts[cls] > 0:
+            sample_weights[y_train == cls] = len(y_train) / (3.0 * class_counts[cls])
+    logger.info(f"🎯 Class counts: BAJISTA={class_counts[0]}, LATERAL={class_counts[1]}, ALCISTA={class_counts[2]}")
 
-    # Seleccionar configuración según tipo de activo
+    # ── Seleccionar configuración por tipo de activo ───────────────────────────
     from .config import XGBOOST_STABLE_CONFIG, XGBOOST_VOLATILE_CONFIG
-    if asset_type == "volatile":
-        cfg = XGBOOST_VOLATILE_CONFIG
-        logger.info(f"🎯 Usando config VOLATILE para {ticker}")
-    else:
-        cfg = XGBOOST_STABLE_CONFIG
-        logger.info(f"🎯 Usando config STABLE para {ticker}")
-    
+    cfg = XGBOOST_VOLATILE_CONFIG if asset_type == "volatile" else XGBOOST_STABLE_CONFIG
+    logger.info(f"🎯 Usando config {asset_type.upper()} para {ticker}")
+
+    # ── Modelo multi-clase nativo ──────────────────────────────────────────────
+    # multi:softprob predice directamente P(BAJISTA), P(LATERAL), P(ALCISTA).
+    # Sin post-procesado de umbrales: el argmax ya da la clase final.
     model = XGBClassifier(
         n_estimators=cfg["n_estimators"],
         max_depth=cfg["max_depth"],
         learning_rate=cfg["learning_rate"],
         subsample=cfg["subsample"],
         colsample_bytree=cfg["colsample_bytree"],
-        min_child_weight=cfg.get("min_child_weight", 1.0),  # finer splits
-        gamma=cfg.get("gamma", 0.0),  # complexity penalty
+        min_child_weight=cfg.get("min_child_weight", 1.0),
+        gamma=cfg.get("gamma", 0.0),
         early_stopping_rounds=cfg["early_stopping_rounds"],
-        eval_metric="logloss",
-        objective="binary:logistic",
-        scale_pos_weight=scale_pos_weight,  # CRÍTICO: balancea el sesgo alcista
+        objective="multi:softprob",
+        num_class=3,
+        eval_metric="mlogloss",
         verbosity=0,
         random_state=seed,
     )
 
     model.fit(
         X_train,
-        y_train_binary,
-        eval_set=[(X_val, y_val_binary)],
+        y_train,
+        sample_weight=sample_weights,
+        eval_set=[(X_val, y_val)],
         verbose=False,
     )
 
-    # ── Métricas en test ───────────────────────────────────────────────────────
-    y_pred_binary = model.predict(X_test)
-    y_proba_full = model.predict_proba(X_test)  # shape: (n_samples, 2) - probabilidades completas
-    y_prob = y_proba_full[:, 1]  # probabilidad de clase 1 (ALCISTA)
-    
-    # ⭐ CONFIANZA: Promedio de máximas probabilidades (predicción más confiada)
-    # Para cada muestra, tomar max(P(class_0), P(class_1)) y promediar
-    max_probabilities = np.max(y_proba_full, axis=1)  # array de max probs por sample
-    confidence_score = float(np.mean(max_probabilities))  # promedio de confianzas
-    
-    # ⭐ v4 - RECALL-TARGET BASED THRESHOLD CALIBRATION (NEW)
-    # En lugar de usar percentiles, busca DIRECTAMENTE el threshold que da recall ~50%
-    # Esto garantiza recall consistente entre tickers, eliminando la variancia observada en v2/v3
-    y_prob_val = model.predict_proba(X_val)[:, 1]
-    
-    TARGET_RECALL = 0.50  # Objetivo: 50% recall (40-60% acceptable)
-    TOLERANCE = 0.10     # Tolerancia: ±10% alrededor del objetivo
-    
-    best_ba = -1
-    best_down = np.percentile(y_prob_val, 25)  # fallback
-    best_up = np.percentile(y_prob_val, 75)    # fallback
-    best_recall_up = 0
-    best_distance_to_target = float('inf')
-    
-    # Generar rango de thresholds a probar
-    # Usar percentiles del 5% al 95% como límites de búsqueda
-    min_prob = np.percentile(y_prob_val, 5)
-    max_prob = np.percentile(y_prob_val, 95)
-    
-    # Crear grid fino de thresholds para buscar
-    threshold_candidates = np.linspace(min_prob, max_prob, 60)
-    
-    # Para cada threshold, buscar la mejor combinación DOWN + UP
-    for up_threshold in threshold_candidates:
-        # DOWN threshold: más restrictivo, usar percentiles bajos
-        for down_threshold in np.linspace(min_prob, min_prob * 0.9, 15):
-            if down_threshold >= up_threshold - 0.02:  # Asegurar gap de al menos 0.02
-                continue
-            
-            # Predecir ternario
-            y_pred_candidate = np.ones(len(y_prob_val), dtype=int)
-            y_pred_candidate[y_prob_val >= up_threshold] = 2      # ALCISTA
-            y_pred_candidate[y_prob_val <= down_threshold] = 0    # BAJISTA
-            
-            # Calcular métricas
-            ba_candidate = balanced_accuracy_score(y_val, y_pred_candidate)
-            
-            # Matriz de confusión
-            cm = confusion_matrix(y_val, y_pred_candidate, labels=[0, 1, 2])
-            tp_candidate = cm[2, 2]
-            fp_candidate = np.sum(cm[:, 2]) - tp_candidate
-            fn_candidate = np.sum(cm[2, :]) - tp_candidate
-            recall_candidate = tp_candidate / (tp_candidate + fn_candidate) if (tp_candidate + fn_candidate) > 0 else 0
-            
-            # CRITERIO DE SELECCIÓN: 
-            # 1. Priorizar recall cercano al target (40-60%)
-            # 2. Entre candidatos con recall similar, elegir mayor BA
-            distance_to_target = abs(recall_candidate - TARGET_RECALL)
-            
-            # Si recall está en rango aceptable, usar esta métrica
-            if distance_to_target <= TOLERANCE:
-                if distance_to_target < best_distance_to_target or \
-                   (distance_to_target == best_distance_to_target and ba_candidate > best_ba):
-                    best_ba = ba_candidate
-                    best_down = down_threshold
-                    best_up = up_threshold
-                    best_recall_up = recall_candidate
-                    best_distance_to_target = distance_to_target
-    
-    prob_25 = best_down
-    prob_75 = best_up
-    
-    # DEBUG: Log con nueva versión
-    import sys
-    percentile_down_pct = np.searchsorted(np.sort(y_prob_val), best_down) / len(y_prob_val) * 100
-    percentile_up_pct = np.searchsorted(np.sort(y_prob_val), best_up) / len(y_prob_val) * 100
-    print(f"  v4 Recall-Target: DOWN={best_down:.4f} ({percentile_down_pct:.1f}%ile), UP={best_up:.4f} ({percentile_up_pct:.1f}%ile), BA={best_ba:.4f}, Recall={best_recall_up:.3f} | Target={TARGET_RECALL:.0%}", file=sys.stderr)
-    
-    # Convertir probabilidades a 3 clases usando BALANCED SMART THRESHOLDS
-    # Evita extremos, prefiere balance precision/recall
-    # - Si prob <= prob_down: BAJISTA (likely DOWN)
-    # - Si prob >= prob_up: ALCISTA (likely UP)
-    # - Si prob_down < prob < prob_up: LATERAL (zona neutral)
-    
-    y_pred_ternary = np.ones(len(y_prob), dtype=int)  # default: LATERAL
-    y_pred_ternary[y_prob >= prob_75] = 2  # ALCISTA
-    y_pred_ternary[y_prob <= prob_25] = 0  # BAJISTA
+    # ── Predicciones multi-clase ───────────────────────────────────────────────
+    y_pred  = model.predict(X_test)        # shape [n], valores 0/1/2
+    y_proba = model.predict_proba(X_test)  # shape [n, 3]: P(BAJ), P(LAT), P(ALC)
 
-    # Métricas binarias (compatibilidad)
-    dir_acc = float(np.mean(y_pred_binary == y_test_binary))
-    
-    # Métricas robustas para problema desbalanceado (3-class)
-    balanced_acc = float(balanced_accuracy_score(y_test, y_pred_ternary))
-    macro_f1 = float(f1_score(y_test, y_pred_ternary, average='macro', zero_division=0))
-    
-    # Matriz de confusión (3-class para diagnóstico del ALCISTA)
-    cm_ternary = confusion_matrix(y_test, y_pred_ternary, labels=[0, 1, 2])
-    
-    # Extraer métricas del ALCISTA (clase 2) para compatibilidad
-    # TP: True positives para ALCISTA  (diag[2, 2])
-    # FP: False positives para ALCISTA (sum de col 2 minus TP)
-    # FN: False negatives para ALCISTA (sum de row 2 minus TP)
-    # TN: Samples no-Alcista predichos como no-Alcista
+    # ── Calibración Platt Scaling (opcional) ──────────────────────────────────
+    # Ajusta la magnitud de la confianza máxima, sin alterar el argmax.
+    calibrator = load_calibrator(ticker)
+    if calibrator is not None:
+        logger.info(f"📊 Applying Platt Scaling calibration for {ticker}")
+        max_conf = np.max(y_proba, axis=1).reshape(-1, 1)
+        cal_conf = calibrator.predict_proba(max_conf)[:, 1]
+        cal_conf = np.clip(cal_conf, 0.0, 1.0)
+        scale_factor = cal_conf / (max_conf.flatten() + 1e-10)
+        scale_factor = np.clip(scale_factor, 0.5, 2.0)
+        y_proba = y_proba * scale_factor.reshape(-1, 1)
+        y_proba = y_proba / (y_proba.sum(axis=1, keepdims=True) + 1e-10)
+        logger.info(f"✅ Calibration applied. Confidence range: {cal_conf.min():.2%} - {cal_conf.max():.2%}")
+
+    # Confianza = promedio de la probabilidad máxima por muestra
+    confidence_score = float(np.mean(np.max(y_proba, axis=1)))
+
+    # ── Métricas (multi-clase) ────────────────────────────────────────────────
+    dir_acc      = float(np.mean(y_pred == y_test))
+    balanced_acc = float(balanced_accuracy_score(y_test, y_pred))
+    macro_f1     = float(f1_score(y_test, y_pred, average="macro", zero_division=0))
+
+    cm_ternary = confusion_matrix(y_test, y_pred, labels=[0, 1, 2])
+
+    # Métricas del ALCISTA (clase 2) para compatibilidad
     tp = int(cm_ternary[2, 2])
-    fn = int(np.sum(cm_ternary[2, :]) - tp)  # Alcistas predichos como no-Alcista
-    fp = int(np.sum(cm_ternary[:, 2]) - tp)  # No-Alcistas predichos como Alcista
+    fn = int(np.sum(cm_ternary[2, :]) - tp)
+    fp = int(np.sum(cm_ternary[:, 2]) - tp)
     tn = int(np.sum(cm_ternary) - tp - fp - fn)
-    
-    cm_dict = {
-        "tn": tn,
-        "fp": fp,
-        "fn": fn,
-        "tp": tp,
-    }
 
-    # Precision y recall para clase 2 (ALCISTA)
-    tp = cm_dict["tp"]
-    fp = cm_dict["fp"]
-    fn = cm_dict["fn"]
-
+    cm_dict = {"tn": tn, "fp": fp, "fn": fn, "tp": tp}
     precision_up = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-    recall_up = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    recall_up    = tp / (tp + fn) if (tp + fn) > 0 else 0.0
 
     # ── Importancia de features (top 10) ──────────────────────────────────────
-    # Las features expandidas son 4x (last, mean, std, trend), pero solo
-    # reportamos las del último timestep (primeras n_features columnas)
     importances = model.feature_importances_
-    n_features = len(feature_cols)
-    # Tomar solo las importancias del bloque "last" (primeras n_features)
-    last_importances = importances[:n_features]
-    top_n = min(10, n_features)
+    n_features  = len(feature_cols)
+    last_importances = importances[:n_features]  # bloque "last" del build_xgb_features
+    top_n    = min(10, n_features)
     top_indices = np.argsort(last_importances)[::-1][:top_n]
     feature_importance = {
         feature_cols[i]: round(float(last_importances[i]), 6)
@@ -319,150 +265,146 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
     with open(model_path, "wb") as f:
         pickle.dump(model, f)
     logger.info("XGBoost guardado en %s", model_path)
-    
-    # Guardar umbrales calibrados para inferencia posterior
+
     thresholds = {
-        "down_threshold": float(down_threshold),  # Por compatibilidad (return value)
-        "up_threshold": float(up_threshold),      # Por compatibilidad (return value)
-        "prob_25": float(prob_25),                # NOVO: 25 percentil de probabilidades
-        "prob_75": float(prob_75),                # NOVO: 75 percentil de probabilidades
-        "ticker": ticker,
-        "timestamp": datetime.now().isoformat(),
-        "scale_pos_weight": float(scale_pos_weight),
+        "down_threshold": down_threshold,
+        "up_threshold":   up_threshold,
+        "ticker":         ticker,
+        "timestamp":      datetime.now().isoformat(),
+        "version":        "v5_multiclass_frozen_perticker",
+        "source":         "thresholds_frozen.json",
     }
     thresholds_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_xgboost_thresholds.pkl")
     with open(thresholds_path, "wb") as f:
         pickle.dump(thresholds, f)
-    logger.info(f"Thresholds saved: down={down_threshold:.4f}, up={up_threshold:.4f}, prob_25={prob_25:.4f}, prob_75={prob_75:.4f}")
+    logger.info(f"Thresholds saved: BAJISTA<={down_threshold:.3f}, ALCISTA>={up_threshold:.3f}")
 
-    # Resumen de métricas
-    print(f"\n🌳 XGBoost {ticker} VALIDATION RESULTS:")
-    print(f"   Directional Accuracy: {dir_acc:.2%}")
-    print(f"   Balanced Accuracy:    {balanced_acc:.2%} (optimization metric)")
+    # Resumen
+    print(f"\n🌳 XGBoost {ticker} TEST RESULTS (v5 multi-clase, etiquetas fijas):")
+    print(f"   Balanced Accuracy:    {balanced_acc:.2%}")
     print(f"   Macro F1 Score:       {macro_f1:.2%}")
+    print(f"   Directional Accuracy: {dir_acc:.2%}")
     print(f"   Precision (ALCISTA):  {precision_up:.2%}")
     print(f"   Recall (ALCISTA):     {recall_up:.2%}")
-    print(f"   ✨ Confidence Score:  {confidence_score:.2%} (for confianza_bygru) ✨")
-    print(f"   Confusion Matrix (binary): TN={cm_dict['tn']} FP={cm_dict['fp']} FN={cm_dict['fn']} TP={cm_dict['tp']}")
-    print(f"   Thresholds: DOWN≤{down_threshold:.4f} | LATERAL | UP≥{up_threshold:.4f}")
-    print(f"   Scale Pos Weight:     {scale_pos_weight:.2f}")
+    print(f"   Confidence Score:     {confidence_score:.2%}")
+    print(f"   Class dist [TRAIN]:   B={train_dist[0]:.1f}% L={train_dist[1]:.1f}% A={train_dist[2]:.1f}%")
+    print(f"   Class dist [TEST]:    B={test_dist[0]:.1f}% L={test_dist[1]:.1f}% A={test_dist[2]:.1f}%")
+    print(f"   Fixed thresholds:     BAJISTA<={down_threshold:.3f} | LATERAL | ALCISTA>={up_threshold:.3f}")
 
     return {
         "xgb_directional_accuracy": dir_acc,
-        "xgb_balanced_accuracy": balanced_acc,
-        "xgb_macro_f1": macro_f1,
-        "xgb_precision_up": precision_up,
-        "xgb_recall_up": recall_up,
-        "xgb_confidence_score": confidence_score,  # ⭐ Confianza de probabilidades máximas
-        "xgb_confusion_matrix": cm_dict,
+        "xgb_balanced_accuracy":    balanced_acc,
+        "xgb_macro_f1":             macro_f1,
+        "xgb_precision_up":         precision_up,
+        "xgb_recall_up":            recall_up,
+        "xgb_confidence_score":     confidence_score,
+        "xgb_confusion_matrix":     cm_dict,
         "xgb_class_distribution": {
             "train": {"BAJISTA": train_dist[0], "LATERAL": train_dist[1], "ALCISTA": train_dist[2]},
-            "val": {"BAJISTA": val_dist[0], "LATERAL": val_dist[1], "ALCISTA": val_dist[2]},
-            "test": {"BAJISTA": test_dist[0], "LATERAL": test_dist[1], "ALCISTA": test_dist[2]},
+            "val":   {"BAJISTA": val_dist[0],   "LATERAL": val_dist[1],   "ALCISTA": val_dist[2]},
+            "test":  {"BAJISTA": test_dist[0],  "LATERAL": test_dist[1],  "ALCISTA": test_dist[2]},
         },
-        "xgb_down_threshold": float(down_threshold),
-        "xgb_up_threshold": float(up_threshold),
-        "xgb_scale_pos_weight": float(scale_pos_weight),
-        "feature_importance": feature_importance,
+        "xgb_down_threshold":    down_threshold,
+        "xgb_up_threshold":      up_threshold,
+        "xgb_scale_pos_weight":  1.0,  # Mantenido por compatibilidad (ahora se usa sample_weight)
+        "feature_importance":    feature_importance,
     }
 
 
-def predict_xgboost(ticker: str, features: np.ndarray) -> Dict:
+def predict_xgboost(ticker: str, features: np.ndarray, confidence_tau: float = 0.0) -> Dict:
     """
-    Realiza una predicción de dirección con el modelo XGBoost guardado.
-    
-    MEJORAS:
-    - Usa umbrales calibrados (dual threshold) para 3 clases: BAJISTA/LATERAL/ALCISTA
-    - Persiste probabilidades para auditoría
-    - Trazabilidad completa de por qué se predice cada clase
+    Predicción multi-clase con XGBoost (v5).
+
+    El modelo predice directamente P(BAJISTA), P(LATERAL), P(ALCISTA).
+    La clase final es argmax de las probabilidades — sin post-procesado de umbrales.
 
     Args:
-        ticker:   Símbolo del activo.
-        features: Array 1D o 2D con las features del ÚLTIMO timestep.
-                  Forma esperada: [n_features] o [1, n_features].
+        ticker:          Símbolo del activo.
+        features:        Array 1D o 2D con las features del ÚLTIMO timestep.
+                         Forma esperada: [n_features] o [1, n_features].
+        confidence_tau:  Umbral mínimo de confianza para emitir una predicción
+                         direccional. Si max(proba) < tau → devuelve LATERAL
+                         con abstained=True. Default 0.0 (sin abstención,
+                         comportamiento original).
+                         Valores recomendados: 0.40 (moderado), 0.45 (estricto).
 
     Returns:
         Diccionario con:
-            - direction:   0 (bajista), 1 (lateral), 2 (alcista)
-            - probability: probabilidad cruda [0.0, 1.0]
-            - down_threshold: umbral para BAJISTA (usado en decisión)
-            - up_threshold: umbral para ALCISTA (usado en decisión)
-            - model_id: identificador del modelo
-            - timestamp: cuándo se hizo la predicción
+            - direction:       0=BAJISTA, 1=LATERAL, 2=ALCISTA
+            - probability:     P(ALCISTA) — para compatibilidad con meta_ensemble
+            - confidence:      max(probabilidades) — confianza real de la predicción
+            - all_proba:       [P(BAJ), P(LAT), P(ALC)] — para stacking
+            - abstained:       True si se abstuvo por baja confianza
+            - model_id:        identificador del modelo
+            - timestamp:       cuándo se hizo la predicción
 
-    En caso de error devuelve direction=1 (LATERAL), probability=0.5 (neutral).
+    En caso de error devuelve direction=1 (LATERAL), probability=0.5.
     """
     model_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_xgboost.pkl")
-    thresholds_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_xgboost_thresholds.pkl")
-    
+
     if not os.path.exists(model_path):
         logger.warning("Modelo XGBoost no encontrado para %s: %s", ticker, model_path)
         return {
-            "direction": 1,  # LATERAL por defecto
+            "direction": 1,
             "probability": 0.5,
-            "error": "Model not found"
+            "confidence": 0.5,
+            "all_proba": [0.33, 0.34, 0.33],
+            "abstained": False,
+            "error": "Model not found",
         }
 
     try:
-        # Cargar modelo
         with open(model_path, "rb") as f:
             model = pickle.load(f)
-        
-        # Cargar umbrales percentile calibrados
-        thresholds = {}
-        if os.path.exists(thresholds_path):
-            try:
-                with open(thresholds_path, "rb") as f:
-                    thresholds = pickle.load(f)
-            except Exception as e:
-                logger.debug("Could not load thresholds: %s", e)
-        
-        prob_25 = thresholds.get("prob_25", 0.25)
-        prob_75 = thresholds.get("prob_75", 0.35)
-        
-        # Fixed probability thresholds for 3-class prediction
-        # (0.35 = bajista, 0.65 = alcista, rest = lateral)
-        
+
         arr = np.array(features)
         if arr.ndim == 1:
             arr = arr.reshape(1, -1)
 
-        # Predicción binaria
-        direction_binary = int(model.predict(arr)[0])
-        
-        # Probabilidad de clase ALCISTA
-        probs = model.predict_proba(arr)[0]
-        probability = float(probs[1]) if len(probs) > 1 else 0.5
-        
-        # Convertir a 3 clases usando PERCENTILES calibrados
-        # - Si prob >= 75%ile: ALCISTA (top tercio: likely UP)
-        # - Si prob <= 25%ile: BAJISTA (bottom tercio: likely DOWN)
-        # - Si 25%ile < prob < 75%ile: LATERAL (zona neutral)
-        
-        if probability >= prob_75:
-            direction_ternary = 2  # ALCISTA
-            confidence_level = "high"
-        elif probability <= prob_25:
-            direction_ternary = 0  # BAJISTA
-            confidence_level = "high"
+        # Probabilidades multi-clase: [P(BAJISTA), P(LATERAL), P(ALCISTA)]
+        probs = model.predict_proba(arr)[0]  # shape [3]
+        confidence = float(np.max(probs))
+
+        # Abstención por baja confianza: si el modelo no está seguro de ninguna
+        # clase, devolver LATERAL sin forzar una predicción errónea.
+        # Esto mejora la precision de las predicciones direccionales emitidas.
+        abstained = False
+        if confidence_tau > 0.0 and confidence < confidence_tau:
+            direction = 1  # LATERAL por defecto
+            abstained = True
+            logger.debug(
+                f"[{ticker}] Abstención: conf={confidence:.3f} < tau={confidence_tau:.3f}"
+            )
         else:
-            direction_ternary = 1  # LATERAL (zona de incertidumbre)
-            confidence_level = "low"
-        
+            direction = int(np.argmax(probs))  # 0, 1 o 2
+
+        prob_bajista = float(probs[0])
+        prob_lateral = float(probs[1])
+        prob_alcista = float(probs[2])
+
         return {
-            "direction": direction_ternary,
-            "direction_binary": direction_binary,  # Para compatibilidad
-            "probability": probability,
-            "probability_not_alcista": float(probs[0]) if len(probs) > 1 else 0.5,
-            "confidence_level": confidence_level,  # Basado en distancia del 0.5
-            "model_id": f"{ticker}_xgboost",
-            "timestamp": datetime.now().isoformat(),
+            "direction":               direction,
+            "direction_binary":        1 if direction == 2 else 0,  # Compatibilidad legacy
+            "probability":             prob_alcista,    # Compatibilidad meta_ensemble
+            "confidence":              confidence,      # Confianza real (max prob)
+            "probability_alcista":     prob_alcista,
+            "probability_lateral":     prob_lateral,
+            "probability_bajista":     prob_bajista,
+            "probability_not_alcista": prob_bajista + prob_lateral,
+            "all_proba":               [prob_bajista, prob_lateral, prob_alcista],
+            "abstained":               abstained,
+            "confidence_tau":          confidence_tau,
+            "model_id":                f"{ticker}_xgboost_v5",
+            "timestamp":               datetime.now().isoformat(),
         }
 
     except Exception as exc:
         logger.warning("Error en predict_xgboost para %s: %s", ticker, exc)
         return {
-            "direction": 1,  # LATERAL
+            "direction": 1,
             "probability": 0.5,
-            "error": str(exc)
+            "confidence": 0.5,
+            "all_proba": [0.33, 0.34, 0.33],
+            "abstained": False,
+            "error": str(exc),
         }
