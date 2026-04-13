@@ -2,17 +2,15 @@
 Apply Platt Scaling calibration to XGBoost predictions and update Supabase BD
 =========================================================================
 This script:
-1. Loads calibration parameters (a, b) for each ticker
-2. Creates a platt_scale.pkl file with the parameters
-3. Applies calibration to confidence scores (already computed from max proba)
-4. Updates confianza_bygru in Supabase with calibrated values
+1. Loads calibrators (LogisticRegression models) for each ticker
+2. Applies calibration to confidence scores (raw BiGRU/XGBoost predictions)
+3. Updates confianza_bygru in Supabase with calibrated values
 """
 
 import os
 import pickle
 import numpy as np
 import pandas as pd
-from scipy.special import logit, expit  # logit = log(p/(1-p)), expit = sigmoid
 from supabase import create_client
 from dotenv import load_dotenv
 from datetime import datetime
@@ -28,58 +26,69 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# Platt Scaling parameters (from calibration analysis)
-PLATT_PARAMS = {
-    "AAPL": {"a": 0.0614, "b": 1.7121},
-    "AMZN": {"a": 3.4973, "b": 4.3757},
-    "BABA": {"a": 0.4045, "b": 1.8344},
-    "GOOGL": {"a": 0.0936, "b": 1.7232},
-    "INTC": {"a": 0.2217, "b": 0.9073},
-    "KO": {"a": 0.3142, "b": 1.9663},
-    "META": {"a": 0.2997, "b": 2.2009},
-    "MSFT": {"a": -0.5166, "b": 1.1386},
-    "NFLX": {"a": 0.1967, "b": 2.8291},
-    "NVDA": {"a": 0.2512, "b": 1.8784},
-    "TSLA": {"a": 0.9481, "b": 2.1403},
-    "VXX": {"a": 1.0060, "b": 1.4131},
-}
+# Calibrators directory
+CALIBRATORS_DIR = "backend/models/saved_models"
 
-def apply_platt_scaling(confidence, ticker):
+def load_calibrator(ticker):
     """
-    Apply Platt Scaling: P_calib = sigmoid(a * logit(P_pred) + b)
+    Load pre-trained Platt Scaling calibrator (LogisticRegression)
     
     Args:
-        confidence: confidence score (0-1, typically from max probability)
-        ticker: ticker symbol to get correct parameters
+        ticker: ticker symbol
+    
+    Returns:
+        calibrator: fitted LogisticRegression model or None
+    """
+    calibrator_path = os.path.join(CALIBRATORS_DIR, f"{ticker}_calibrator_platt.pkl")
+    
+    if not os.path.exists(calibrator_path):
+        logger.warning(f"[{ticker}] Calibrator not found at {calibrator_path}")
+        return None
+    
+    try:
+        with open(calibrator_path, "rb") as f:
+            calibrator = pickle.load(f)
+        logger.debug(f"[{ticker}] Calibrator loaded successfully")
+        return calibrator
+    except Exception as e:
+        logger.error(f"[{ticker}] Error loading calibrator: {e}")
+        return None
+
+def apply_platt_scaling(confidence, ticker, calibrator=None):
+    """
+    Apply Platt Scaling calibration using pre-trained LogisticRegression
+    
+    Args:
+        confidence: confidence score (0-1, raw probability)
+        ticker: ticker symbol (for loading calibrator if not provided)
+        calibrator: pre-loaded calibrator (optional)
     
     Returns:
         calibrated_confidence: calibrated score (0-1)
     """
-    if ticker not in PLATT_PARAMS:
-        logger.warning(f"Ticker {ticker} not in calibration params, returning original")
+    # Load calibrator if not provided
+    if calibrator is None:
+        calibrator = load_calibrator(ticker)
+    
+    if calibrator is None:
+        logger.debug(f"[{ticker}] No calibrator, returning original confidence: {confidence:.4f}")
         return confidence
     
-    # Clamp to avoid logit singularities
-    confidence = np.clip(confidence, 1e-5, 1 - 1e-5)
+    try:
+        # Clamp to avoid edge cases
+        confidence = np.clip(confidence, 1e-5, 1 - 1e-5)
+        
+        # Reshape for sklearn: expected (n_samples, 1)
+        confidence_reshaped = np.array([[confidence]])
+        
+        # Apply calibrator: predict_proba returns [[prob_class_0, prob_class_1]]
+        calibrated_confidence = calibrator.predict_proba(confidence_reshaped)[0, 1]
+        
+        return float(calibrated_confidence)
     
-    params = PLATT_PARAMS[ticker]
-    a = params["a"]
-    b = params["b"]
-    
-    # Apply Platt Scaling: sigmoid(a * logit(P) + b)
-    log_odds = logit(confidence)
-    calibrated_log_odds = a * log_odds + b
-    calibrated_confidence = expit(calibrated_log_odds)
-    
-    return float(calibrated_confidence)
-
-
-def save_calibration_params():
-    """Save calibration parameters to pickle for easy loading"""
-    save_path = "backend/models/platt_scaling_params.pkl"
-    with open(save_path, "wb") as f:
-        pickle.dump(PLATT_PARAMS, f)
-    logger.info(f"✓ Calibration parameters saved to {save_path}")
+    except Exception as e:
+        logger.error(f"[{ticker}] Error applying calibration: {e}")
+        return confidence
 
 
 def update_bd_with_calibration():
@@ -90,21 +99,40 @@ def update_bd_with_calibration():
     logger.info("APPLYING PLATT SCALING TO BD")
     logger.info("=" * 80)
     
+    # Pre-load all calibrators for efficiency
+    logger.info("Loading calibrators...")
+    calibrators_cache = {}
+    
+    for file in os.listdir(CALIBRATORS_DIR):
+        if file.endswith("_calibrator_platt.pkl"):
+            ticker = file.replace("_calibrator_platt.pkl", "")
+            calibrator = load_calibrator(ticker)
+            if calibrator is not None:
+                calibrators_cache[ticker] = calibrator
+    
+    logger.info(f"✓ Loaded {len(calibrators_cache)} calibrators")
+    
     # Fetch all activos from BD
     response = supabase.table("activos").select("*").execute()
     activos = response.data
     
-    logger.info(f"Fetched {len(activos)} registros from BD")
+    logger.info(f"✓ Fetched {len(activos)} registros from BD")
     
     updates_summary = {}
     total_updated = 0
     
     for activo in activos:
-        ticker = activo["ticker"]
+        ticker = activo.get("ticker")
+        if not ticker:
+            continue
+        
         old_confidence = float(activo.get("confianza_bygru", 0.5))
         
+        # Get calibrator (from cache or None)
+        calibrator = calibrators_cache.get(ticker)
+        
         # Apply calibration
-        new_confidence = apply_platt_scaling(old_confidence, ticker)
+        new_confidence = apply_platt_scaling(old_confidence, ticker, calibrator)
         change = new_confidence - old_confidence
         
         # Only update if change is meaningful (>0.001)
@@ -125,6 +153,8 @@ def update_bd_with_calibration():
                     "after": new_confidence,
                     "change": change
                 })
+                
+                logger.debug(f"[{ticker}] {old_confidence:.4f} → {new_confidence:.4f} ({change:+.4f})")
                 
             except Exception as e:
                 logger.error(f"Error updating activo {ticker}: {e}")
@@ -152,10 +182,11 @@ def update_bd_with_calibration():
 
 
 if __name__ == "__main__":
-    # Save calibration parameters
-    save_calibration_params()
+    logger.info("[START] Aplicando Platt Scaling a confianza_bygru en BD...")
     
-    # Update BD
+    # Update BD with new calibrators
     update_bd_with_calibration()
+    
+    logger.info("[SUCCESS] Calibracion completada!")
     
     logger.info("\n✅ ALL DONE: Platt Scaling applied to Supabase BD")

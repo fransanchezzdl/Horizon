@@ -1,0 +1,197 @@
+{
+  "KO": {
+    "type": "stable",
+    "BA": 31.43,
+    "F1": 27.53,
+    "conf": 37.72,
+    "prec_alc": 40.0,
+    "rec_alc": 9.09,
+    "test_dist": {
+      "BAJISTA": 39.4,
+      "LATERAL": 28.5,
+      "ALCISTA": 32.1
+    }
+  },
+  "AAPL": {
+    "type": "stable",
+    "BA": 42.41,
+    "F1": 41.46,
+    "conf": 35.32,
+    "prec_alc": 47.37,
+    "rec_alc": 32.93,
+    "test_dist": {
+      "BAJISTA": 37.2,
+      "LATERAL": 32.8,
+      "ALCISTA": 29.9
+    }
+  },
+  "GC=F": {
+    "type": "stable",
+    "BA": 37.82,
+    "F1": 18.46,
+    "conf": 34.33,
+    "prec_alc": 83.33,
+    "rec_alc": 3.27,
+    "test_dist": {
+      "BAJISTA": 29.0,
+      "LATERAL": 14.7,
+      "ALCISTA": 56.2
+    }
+  },
+  "SI=F": {
+    "type": "stable",
+    "BA": 37.38,
+    "F1": 27.35,
+    "conf": 34.58,
+    "prec_alc": 64.29,
+    "rec_alc": 12.68,
+    "test_dist": {
+      "BAJISTA": 23.2,
+      "LATERAL": 24.6,
+      "ALCISTA": 52.2
+    }
+  },
+  "GOOGL": {
+    "type": "stable",
+    "BA": 29.67,
+    "F1": 27.43,
+    "conf": 35.19,
+    "prec_alc": 28.36,
+    "rec_alc": 15.83,
+    "test_dist": {
+      "BAJISTA": 29.2,
+      "LATERAL": 27.0,
+      "ALCISTA": 43.8
+    }
+  },
+  "MSFT": {
+    "type": "stable",
+    "BA": 37.04,
+    "F1": 32.05,
+    "conf": 37.3,
+    "prec_alc": 29.17,
+    "rec_alc": 10.29,
+    "test_dist": {
+      "BAJISTA": 36.5,
+      "LATERAL": 38.7,
+      "ALCISTA": 24.8
+    }
+  },
+  "TSLA": {
+    "type": "volatile",
+    "BA": 33.07,
+    "F1": 26.25,
+    "conf": 41.64,
+    "prec_alc": 26.0,
+    "rec_alc": 21.67,
+    "test_dist": {
+      "BAJISTA": 30.3,
+      "LATERAL": 45.1,
+      "ALCISTA": 24.6
+    }
+  },
+  "NVDA": {
+    "type": "volatile",
+    "BA": 27.81,
+    "F1": 19.25,
+    "conf": 34.16,
+    "prec_alc": 23.53,
+    "rec_alc": 57.97,
+    "test_dist": {
+      "BAJISTA": 25.0,
+      "LATERAL": 46.7,
+      "ALCISTA": 28.3
+    }
+  },
+  "BTC-USD": {
+    "type": "volatile",
+    "BA": 23.81,
+    "F1": 23.55,
+    "conf": 33.72,
+    "prec_alc": 22.22,
+    "rec_alc": 10.87,
+    "test_dist": {
+      "BAJISTA": 30.8,
+      "LATERAL": 45.3,
+      "ALCISTA": 23.8
+    }
+  },
+  "ETH-USD": {
+    "type": "volatile",
+    "BA": 33.37,
+    "F1": 32.09,
+    "conf": 35.27,
+    "prec_alc": 30.11,
+    "rec_alc": 46.49,
+    "test_dist": {
+      "BAJISTA": 32.1,
+      "LATERAL": 38.3,
+      "ALCISTA": 29.5
+    }
+  },
+  "AMZN": {
+    "type": "volatile",
+    "BA": 37.0,
+    "F1": 23.66,
+    "conf": 35.69,
+    "prec_alc": 59.09,
+    "rec_alc": 15.29,
+    "test_dist": {
+      "BAJISTA": 28.7,
+      "LATERAL": 36.5,
+      "ALCISTA": 34.8
+    }
+  },
+  "BABA": {
+    "type": "volatile",
+    "BA": 32.58,
+    "F1": 30.8,
+    "conf": 43.7,
+    "prec_alc": 33.33,
+    "rec_alc": 15.38,
+    "test_dist": {
+      "BAJISTA": 31.1,
+      "LATERAL": 31.6,
+      "ALCISTA": 37.3
+    }
+  },
+  "INTC": {
+    "type": "volatile",
+    "BA": 39.65,
+    "F1": 34.64,
+    "conf": 35.7,
+    "prec_alc": 53.45,
+    "rec_alc": 54.39,
+    "test_dist": {
+      "BAJISTA": 32.4,
+      "LATERAL": 20.9,
+      "ALCISTA": 46.7
+    }
+  },
+  "META": {
+    "type": "volatile",
+    "BA": 45.73,
+    "F1": 45.75,
+    "conf": 33.77,
+    "prec_alc": 63.64,
+    "rec_alc": 29.58,
+    "test_dist": {
+      "BAJISTA": 33.6,
+      "LATERAL": 37.3,
+      "ALCISTA": 29.1
+    }
+  },
+  "NFLX": {
+    "type": "volatile",
+    "BA": 30.1,
+    "F1": 24.72,
+    "conf": 33.89,
+    "prec_alc": 15.15,
+    "rec_alc": 8.62,
+    "test_dist": {
+      "BAJISTA": 36.1,
+      "LATERAL": 40.2,
+      "ALCISTA": 23.8
+    }
+  }
+}

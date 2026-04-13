@@ -400,10 +400,8 @@ def predict_ensemble(ticker: str) -> dict:
                 bigru_proba_stacking.append(proba)
             bigru_proba_mean = np.mean(bigru_proba_stacking, axis=0)  # [3]
             
-            # XGBoost predicción
-            xgb_pred = xgb_result.get("direction", 1)  # 0=BAJISTA, 1=LATERAL?, 2=ALCISTA
-            # Versión más robusta: usar argmax de probabilidades
-            xgb_pred = np.argmax(xgb_result.get("all_proba", [0, 0, 1]))  # fallback
+            # XGBoost predicción (v5: direction ya es ternario 0/1/2)
+            xgb_pred = xgb_result.get("direction", 1)  # 0=BAJISTA, 1=LATERAL, 2=ALCISTA
             
             # Usar stacking para combinar
             X_stacking = stacking_meta.create_stacking_features(
@@ -453,8 +451,8 @@ def predict_ensemble(ticker: str) -> dict:
         "meta_trend": meta_result["meta_trend"],
         "meta_score": round(meta_result["meta_score"], 6),
 
-        # XGBoost results
-        "xgboost_direction": "ALCISTA" if xgb_result["direction"] == 1 else "BAJISTA",
+        # XGBoost results (v5: direction es ternario 0=BAJISTA, 1=LATERAL, 2=ALCISTA)
+        "xgboost_direction": {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}.get(xgb_result["direction"], "LATERAL"),
         "xgboost_probability": round(xgb_prob, 6),
 
         # Individual predictions
