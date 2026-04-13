@@ -103,12 +103,15 @@ MARKET_CONTEXT_TICKERS = {
     "NASDAQ": "^IXIC",   # Índice NASDAQ Composite
 }
 
-# Features base (9 features, para todos los activos)
+# Features base (10 features, para todos los activos)
 BASE_FEATURE_COLS = [
     "Close", "Volume", "RSI", "MACD", "EMA",
     "Bollinger_PctB", "ATR", "Log_Return", "Volume_Ratio",
-    # Features de régimen de mercado (3) — siempre incluidas
+    # Features de régimen de mercado (4) — siempre incluidas
     "SMA200_Dist", "SMA50_Slope", "Realized_Vol",
+    # Régimen discreto: +1 uptrend, 0 neutro, -1 downtrend (Faber 2007)
+    # SHAP la interpreta como cualquier feature ordinal.
+    "SMA200_Regime",
 ]
 
 # Features adicionales para activos volátiles (2 extras)
@@ -228,6 +231,17 @@ XGBOOST_VOLATILE_CONFIG = {
 
 # Para compatibilidad (usar el default stable)
 XGBOOST_CONFIG = XGBOOST_STABLE_CONFIG
+
+# Umbrales FIJOS de etiquetado (reproducibles entre reentrenamientos)
+# Basados en la distribución histórica de retornos log a 5 días:
+#   - BTC/ETH: σ ≈ 0.08, ±1.5% cubre ~30% de cada cola
+#   - TSLA/NVDA: σ ≈ 0.06, ±1.5% cubre ~35% de cada cola
+#   - KO/AAPL: σ ≈ 0.025, ±1.5% cubre ~30% de cada cola
+# Usar percentile 60 del dataset histórico daría ~0.014–0.018, por lo que ±0.015 es empíricamente razonable.
+LABELING_FIXED_THRESHOLDS = {
+    "bajista": -0.015,  # retorno log a 5 días < -1.5% → BAJISTA
+    "alcista":  0.015,  # retorno log a 5 días > +1.5% → ALCISTA
+}
 
 # Pesos del meta-ensemble (BiGRU + XGBoost)
 META_ENSEMBLE_WEIGHTS = {

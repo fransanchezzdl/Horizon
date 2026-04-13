@@ -1,0 +1,130 @@
+{
+  "_meta": {
+    "version": "1.0",
+    "calibrated_at": "2026-04-13T20:30:40.224503",
+    "method": "percentile_33.33_66.67",
+    "horizon_days": 5,
+    "split": "train_only_70pct",
+    "description": "Umbrales fijos de etiquetado calibrados UNA SOLA VEZ sobre la portion train de retornos log a 5 d\u00edas. NO MODIFICAR: la reproducibilidad del modelo depende de que estos valores sean inmutables. Si se necesita recalibrar, hacer en una nueva version del modelo."
+  },
+  "KO": {
+    "bajista": -0.005187,
+    "alcista": 0.012016,
+    "n_train_samples": 1387,
+    "min_return": -0.235495,
+    "max_return": 0.180723,
+    "std_return": 0.02831
+  },
+  "AAPL": {
+    "bajista": -0.007786,
+    "alcista": 0.021983,
+    "n_train_samples": 1387,
+    "min_return": -0.192744,
+    "max_return": 0.169017,
+    "std_return": 0.041171
+  },
+  "GC=F": {
+    "bajista": -0.005727,
+    "alcista": 0.008912,
+    "n_train_samples": 1374,
+    "min_return": -0.119494,
+    "max_return": 0.10974,
+    "std_return": 0.02099
+  },
+  "SI=F": {
+    "bajista": -0.010645,
+    "alcista": 0.014997,
+    "n_train_samples": 1374,
+    "min_return": -0.354568,
+    "max_return": 0.234548,
+    "std_return": 0.044359
+  },
+  "GOOGL": {
+    "bajista": -0.009872,
+    "alcista": 0.018807,
+    "n_train_samples": 1387,
+    "min_return": -0.167899,
+    "max_return": 0.144602,
+    "std_return": 0.040237
+  },
+  "MSFT": {
+    "bajista": -0.006915,
+    "alcista": 0.020213,
+    "n_train_samples": 1387,
+    "min_return": -0.178708,
+    "max_return": 0.164102,
+    "std_return": 0.035904
+  },
+  "TSLA": {
+    "bajista": -0.026768,
+    "alcista": 0.040127,
+    "n_train_samples": 1357,
+    "min_return": -0.562925,
+    "max_return": 0.44773,
+    "std_return": 0.094289
+  },
+  "NVDA": {
+    "bajista": -0.015604,
+    "alcista": 0.036773,
+    "n_train_samples": 1357,
+    "min_return": -0.333463,
+    "max_return": 0.264141,
+    "std_return": 0.070199
+  },
+  "BTC-USD": {
+    "bajista": -0.018812,
+    "alcista": 0.026839,
+    "n_train_samples": 2019,
+    "min_return": -0.583591,
+    "max_return": 0.267203,
+    "std_return": 0.079562
+  },
+  "ETH-USD": {
+    "bajista": -0.024762,
+    "alcista": 0.03832,
+    "n_train_samples": 2019,
+    "min_return": -0.75006,
+    "max_return": 0.502438,
+    "std_return": 0.104098
+  },
+  "AMZN": {
+    "bajista": -0.013231,
+    "alcista": 0.019635,
+    "n_train_samples": 1357,
+    "min_return": -0.227563,
+    "max_return": 0.164456,
+    "std_return": 0.049876
+  },
+  "BABA": {
+    "bajista": -0.024788,
+    "alcista": 0.01944,
+    "n_train_samples": 1357,
+    "min_return": -0.239169,
+    "max_return": 0.404161,
+    "std_return": 0.063993
+  },
+  "INTC": {
+    "bajista": -0.014786,
+    "alcista": 0.018627,
+    "n_train_samples": 1357,
+    "min_return": -0.239035,
+    "max_return": 0.189767,
+    "std_return": 0.050013
+  },
+  "META": {
+    "bajista": -0.015118,
+    "alcista": 0.023577,
+    "n_train_samples": 1357,
+    "min_return": -0.370746,
+    "max_return": 0.251769,
+    "std_return": 0.060559
+  },
+  "NFLX": {
+    "bajista": -0.017936,
+    "alcista": 0.022759,
+    "n_train_samples": 1357,
+    "min_return": -0.563669,
+    "max_return": 0.247582,
+    "std_return": 0.068165
+  }
+}

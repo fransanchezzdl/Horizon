@@ -32,6 +32,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from backend.models.config import get_tickers_from_database, get_config, SAVED_MODELS_DIR, ENSEMBLE_VARIATIONS, get_asset_type
 from backend.models.xai_explanation_engine import XAIEngine, load_xai_engine
 from backend.models.data_pipeline import download_data, compute_features, get_feature_cols, prepare_data_multi_window
+from backend.models.platt_scaling_calibration_v2 import load_calibrator
 from backend.services.xai_update_service import XAIUpdateService
 from backend.daos.activo_dao import ActivoDAO
 from backend.daos.explicacion_xai_dao import ExplicacionXAIDAO
@@ -141,7 +142,20 @@ def generar_explicacion_para_ticker(
         
         # Convertir a tendencia
         senal_prediccion = {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}.get(y_pred, "LATERAL")
-        confianza_prediccion = float(np.max(y_proba))
+        
+        # 🔧 APLICAR CALIBRACIÓN PLATT SCALING
+        calibrator = load_calibrator(ticker)
+        if calibrator is not None:
+            logger.info(f"📊 Aplicando Platt Scaling para {ticker}")
+            # Probabilidades máximas crudas
+            y_conf_raw = np.max(y_proba).reshape(1, 1)
+            # Aplicar calibrador
+            y_conf_calibrated = calibrator.predict_proba(y_conf_raw)[0, 1]
+            confianza_prediccion = float(y_conf_calibrated)
+            logger.info(f"   Confianza raw: {float(np.max(y_proba)):.2%} → calibrada: {confianza_prediccion:.2%}")
+        else:
+            confianza_prediccion = float(np.max(y_proba))
+            logger.warning(f"⚠️  No calibrator found, using raw confidence: {confianza_prediccion:.2%}")
         
         logger.info(f"✓ Predicción: {senal_prediccion} (confianza: {confianza_prediccion:.2%})")
         
