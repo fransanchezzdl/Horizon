@@ -507,6 +507,59 @@ function initSearch() {
         if (senalValue) senalValue.textContent = formatSignal(activo.senal_ia);
 
         loadTickerNews(selectedTicker);
+        loadReliabilityStats(selectedTicker);
+    }
+
+    // Carga y muestra las métricas de fiabilidad del modelo para el ticker.
+    async function loadReliabilityStats(ticker) {
+        const valueEl = document.getElementById('reliabilityValue');
+        const subEl   = document.getElementById('reliabilitySub');
+        if (!valueEl || !subEl) return;
+
+        valueEl.textContent = '--';
+        subEl.textContent   = 'Cargando...';
+
+        try {
+            const response = await fetch(`${API_BASE}/activos/${encodeURIComponent(ticker)}/reliability`);
+            if (!response.ok) {
+                subEl.textContent = 'Sin datos';
+                return;
+            }
+
+            const data = await response.json();
+            const wf   = data.walk_forward;
+            const live = data.live;
+
+            // Valor principal: BA del walk-forward si disponible
+            if (wf && wf.ba_mean != null) {
+                valueEl.textContent = `${wf.ba_mean.toFixed(1)}%`;
+            } else {
+                valueEl.textContent = '--';
+            }
+
+            // Subtexto: señal + conteo live
+            const señalLabel = {
+                FUERTE:    'Señal fuerte',
+                MODERADA:  'Señal moderada',
+                DÉBIL:     'Señal débil',
+                SIN_SEÑAL: 'Sin señal clara',
+                SIN_DATOS: 'Sin datos offline',
+            }[data.señal] || data.señal;
+
+            let subParts = [`${señalLabel} · Base azar: ${data.baseline}%`];
+
+            if (live.resueltas > 0) {
+                subParts.push(`Live: ${live.correctas}/${live.resueltas} correctas (${live.accuracy}%)`);
+            } else if (live.total > 0) {
+                subParts.push(`${live.total} pred. en seguimiento`);
+            }
+
+            subEl.textContent = subParts.join(' | ');
+
+        } catch (err) {
+            console.error('Error cargando fiabilidad:', err);
+            subEl.textContent = 'No disponible';
+        }
     }
 
     // Gestiona la escritura en el input con debounce para autocompletado.
