@@ -13,6 +13,7 @@
   let _candleSeries = null;
   let _currentTicker = '';
   let _currentDays = 30;
+  let _resizeHandler = null;
 
   // ── Colores ─────────────────────────────────────────────────────────────────
   const COLORS = {
@@ -77,6 +78,10 @@
   }
 
   function _destroyChart() {
+    if (_resizeHandler) {
+      window.removeEventListener('resize', _resizeHandler);
+      _resizeHandler = null;
+    }
     if (_chart) {
       _chart.remove();
       _chart = null;
@@ -114,12 +119,13 @@
       wickDownColor:  COLORS.DOWN_CANDLE,
     });
 
-    // Responsivo: reajusta ancho al redimensionar ventana
-    window.addEventListener('resize', () => {
+    // Responsivo: reajusta ancho al redimensionar ventana (handler guardado para poder eliminarlo)
+    _resizeHandler = () => {
       if (_chart && container) {
         _chart.resize(container.clientWidth, 300);
       }
-    });
+    };
+    window.addEventListener('resize', _resizeHandler);
   }
 
   async function _loadData(ticker, days) {
