@@ -144,11 +144,94 @@ CREATE TRIGGER trg_portfolio_activo_updated_at
 
 
 -- =====================================================
--- PASO 5: ELIMINAR tabla chat_historial
+-- PASO 5: RATE LIMIT DEL CHAT EN BASE DE DATOS
 -- =====================================================
 
--- CASCADE elimina también FKs y dependencias que pudiera tener
+-- Elimínamos restos de una implementación anterior si existieran
 DROP TABLE IF EXISTS public.chat_historial CASCADE;
+
+DROP TABLE IF EXISTS public.chat_rate_limits CASCADE;
+
+CREATE TABLE IF NOT EXISTS public.chat_rate_limits (
+  id_usuario     UUID        PRIMARY KEY
+                 REFERENCES public.usuarios(id_usuario) ON DELETE CASCADE,
+  window_start   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  message_count  INT4        NOT NULL DEFAULT 0,
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS chat_rate_limits_updated_at_idx
+  ON public.chat_rate_limits(updated_at DESC);
+
+DROP FUNCTION IF EXISTS public.verificar_y_registrar_chat_rate_limit(UUID, INT4, INT4);
+
+CREATE OR REPLACE FUNCTION public.verificar_y_registrar_chat_rate_limit(
+  p_id_usuario UUID,
+  p_limite INT4,
+  p_window_seconds INT4 DEFAULT 60
+)
+RETURNS TABLE (
+  puede_enviar BOOLEAN,
+  mensajes_enviados INT4,
+  limite INT4
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  ahora TIMESTAMPTZ := NOW();
+  registro RECORD;
+BEGIN
+  INSERT INTO public.chat_rate_limits (id_usuario, window_start, message_count, updated_at)
+  VALUES (p_id_usuario, ahora, 0, ahora)
+  ON CONFLICT (id_usuario) DO NOTHING;
+
+  SELECT window_start, message_count
+    INTO registro
+  FROM public.chat_rate_limits
+  WHERE id_usuario = p_id_usuario
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT FALSE, 0, p_limite;
+    RETURN;
+  END IF;
+
+  IF registro.window_start <= ahora - make_interval(secs => p_window_seconds) THEN
+    UPDATE public.chat_rate_limits
+       SET window_start = ahora,
+           message_count = 1,
+           updated_at = ahora
+     WHERE id_usuario = p_id_usuario;
+
+    RETURN QUERY SELECT TRUE, 1, p_limite;
+    RETURN;
+  END IF;
+
+  IF registro.message_count < p_limite THEN
+    UPDATE public.chat_rate_limits
+       SET message_count = registro.message_count + 1,
+           updated_at = ahora
+     WHERE id_usuario = p_id_usuario;
+
+    RETURN QUERY SELECT TRUE, registro.message_count + 1, p_limite;
+  ELSE
+    RETURN QUERY SELECT FALSE, registro.message_count, p_limite;
+  END IF;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.verificar_y_registrar_chat_rate_limit(UUID, INT4, INT4)
+TO authenticated, anon;
+
+ALTER TABLE public.chat_rate_limits ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS chat_rate_limits_service ON public.chat_rate_limits;
+CREATE POLICY chat_rate_limits_service ON public.chat_rate_limits
+  FOR ALL TO service_role
+  USING (TRUE)
+  WITH CHECK (TRUE);
 
 
 -- =====================================================
