@@ -305,6 +305,16 @@
     "data_type": "service_role only; acceso directo desde cliente denegado"
   },
   {
+    "table_name": "activos_rls",
+    "column_name": "enabled",
+    "data_type": "true"
+  },
+  {
+    "table_name": "activos_rls",
+    "column_name": "policy",
+    "data_type": "SELECT anon, authenticated; WRITE anon"
+  },
+  {
     "table_name": "usuarios",
     "column_name": "id_usuario",
     "data_type": "uuid"
