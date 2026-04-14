@@ -34,6 +34,7 @@ class PriceHistoryService:
             }
         """
         if days not in (7, 30, 90):
+            logger.warning(f"[PriceHistoryService] days={days} no válido, usando 30")
             days = 30
 
         end_date = datetime.utcnow()
@@ -56,7 +57,7 @@ class PriceHistoryService:
                 auto_adjust=True
             )
 
-            if data is None or data.empty:
+            if data.empty:
                 logger.warning(f"[PriceHistoryService] Sin datos OHLC para {ticker}")
                 return []
 
@@ -102,16 +103,17 @@ class PriceHistoryService:
                 except ValueError:
                     continue
 
-                if fecha_dt < start_date:
+                fecha_dt_naive = fecha_dt.replace(tzinfo=None)
+                if fecha_dt_naive < start_date:
                     continue
 
                 resuelta = pred.get("resuelta", False)
                 correct: Optional[bool] = pred.get("correcta") if resuelta else None
 
                 signals.append({
-                    "time": fecha_dt.strftime("%Y-%m-%d"),
+                    "time": fecha_dt_naive.strftime("%Y-%m-%d"),
                     "signal": pred.get("tendencia_predicha", ""),
-                    "confidence": pred.get("confianza_ensemble"),
+                    "confidence": pred.get("confianza_ensemble") or 0.0,
                     "correct": correct,
                 })
 
