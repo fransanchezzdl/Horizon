@@ -8,7 +8,6 @@
   'use strict';
 
   // ── Estado interno ──────────────────────────────────────────────────────────
-  let _currentTicker = '';
   let _currentData   = null;
   let _resizeHandler = null;
 
@@ -37,6 +36,94 @@
     return document.documentElement.getAttribute('data-theme') === 'dark'
       ? COLORS_DARK
       : COLORS_LIGHT;
+  }
+
+  // ── Mapeo de nombres de features a español legible ───────────────────────────
+
+  const FEATURE_LABELS = {
+    // Precio y volumen base
+    close:                    'Precio de cierre',
+    volume:                   'Volumen',
+    log_return:               'Retorno logarítmico',
+    volume_ratio:             'Ratio de volumen',
+    high_low_ratio:           'Ratio máximo / mínimo',
+    close_range_pct:          'Rango de cierre %',
+    price_acceleration:       'Aceleración del precio',
+
+    // Medias móviles y tendencia
+    ema:                      'Media móvil exponencial',
+    sma200_dist:              'Distancia SMA 200',
+    sma50_slope:              'Pendiente SMA 50',
+    sma200_regime:            'Régimen SMA 200',
+
+    // Momentum y osciladores
+    rsi:                      'RSI',
+    rsi_14:                   'RSI 14 períodos',
+    macd:                     'MACD',
+    macd_signal:              'Señal MACD',
+    momentum_5d:              'Momentum 5 días',
+    roc_10:                   'Tasa de cambio 10d',
+    cci:                      'Índice canal (CCI)',
+    tsi:                      'Fuerza verdadera (TSI)',
+    kst:                      'Know Sure Thing (KST)',
+    cmo:                      'Oscilador Chande (CMO)',
+    ultimate_osc:             'Oscilador último',
+    dx:                       'Índice direccional (DX)',
+
+    // Volatilidad
+    bollinger_pctb:           'Bandas Bollinger %B',
+    bbands_pct:               'Bandas Bollinger %B',
+    atr:                      'Rango medio verdadero (ATR)',
+    atr_14:                   'ATR 14 períodos',
+    realized_vol:             'Volatilidad realizada',
+    volatility_std:           'Volatilidad estándar',
+    vix_close:                'VIX (índice de volatilidad)',
+
+    // Volumen avanzado
+    obv:                      'Volumen en balance (OBV)',
+    obv_momentum:             'Momentum OBV',
+    cmf:                      'Flujo de dinero Chaikin',
+    volume_sma_ratio:         'Ratio volumen / SMA',
+
+    // Aroon
+    aroon_up:                 'Aroon alcista',
+    aroon_down:               'Aroon bajista',
+
+    // Macro / mercado
+    nasdaq_return:            'Retorno NASDAQ',
+    dollar_proxy:             'Proxy del dólar',
+    real_rates_proxy:         'Tipos de interés reales',
+    risk_sentiment:           'Sentimiento de riesgo',
+    industrial_demand:        'Demanda industrial',
+
+    // Sentimiento de noticias
+    sentiment_score:          'Puntuación de sentimiento',
+    sentiment_magnitude:      'Magnitud del sentimiento',
+    news_volume:              'Volumen de noticias',
+    sentiment_lag_1d:         'Sentimiento hace 1 día',
+    sentiment_lag_2d:         'Sentimiento hace 2 días',
+    sentiment_lag_3d:         'Sentimiento hace 3 días',
+    sentiment_lag_4d:         'Sentimiento hace 4 días',
+    sentiment_lag_5d:         'Sentimiento hace 5 días',
+    sentiment_ma_3d:          'Media sentimiento 3d',
+    sentiment_ma_5d:          'Media sentimiento 5d',
+    sentiment_vol_normalized: 'Sentimiento vol. normalizado',
+    sentiment_vol_norm_lag_1d:'Sent. vol. norm. hace 1d',
+    sentiment_vol_norm_lag_2d:'Sent. vol. norm. hace 2d',
+    sentiment_momentum_5d:    'Momentum sentimiento 5d',
+    sentiment_deviation:      'Desviación del sentimiento',
+  };
+
+  /**
+   * Devuelve la etiqueta legible en español para un nombre de feature técnico.
+   * Fallback: reemplaza guiones bajos por espacios y capitaliza la primera letra.
+   */
+  function _labelFeature(name) {
+    if (!name) return '';
+    const key = name.toLowerCase();
+    if (FEATURE_LABELS[key]) return FEATURE_LABELS[key];
+    // Fallback: underscores → espacios, primera letra mayúscula
+    return name.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
   }
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -148,7 +235,7 @@
         .attr('fill',        C.TEXT)
         .attr('font-size',   '12px')
         .attr('font-family', 'Inter, system-ui, sans-serif')
-        .text(d => d.feature);
+        .text(d => _labelFeature(d.feature));
 
     // Etiquetas de valor SHAP (junto a la barra, mismo color que barra)
     svg.selectAll('.shap-label-shap')
@@ -235,7 +322,6 @@
   // ── API pública ──────────────────────────────────────────────────────────────
 
   window.initShapWaterfall = function (ticker) {
-    _currentTicker = ticker;
     _loadData(ticker);
   };
 
@@ -246,8 +332,7 @@
     }
     const c = _getChartContainer();
     if (c) c.innerHTML = '';
-    _currentData   = null;
-    _currentTicker = '';
+    _currentData = null;
     const section = _getSection();
     if (section) section.style.display = 'none';
   };
