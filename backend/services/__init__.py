@@ -13,6 +13,7 @@ from .curso_service import CursoService
 from .activo_update_service import ActivoUpdateService
 from .user_service import UserService
 from .ticker_news_service import TickerNewsService
+from .price_history_service import PriceHistoryService
 
 __all__ = [
     "AuthService", 
@@ -34,4 +35,5 @@ __all__ = [
     "ActivoUpdateService",
     "UserService",
     "TickerNewsService",
+    "PriceHistoryService",
 ]
