@@ -366,21 +366,42 @@ ALTER TABLE public.portfolios
 
 ---
 
-## 6. ELIMINAR tabla `chat_historial`
+## 6. RATE LIMIT DEL CHAT EN BASE DE DATOS
 
 ### SQL
 
 ```sql
--- Eliminar tabla de forma segura (verificar dependencias primero)
 DROP TABLE IF EXISTS public.chat_historial CASCADE;
+DROP TABLE IF EXISTS public.chat_rate_limits CASCADE;
+
+CREATE TABLE public.chat_rate_limits (
+  id_usuario UUID PRIMARY KEY REFERENCES public.usuarios(id_usuario) ON DELETE CASCADE,
+  window_start TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  message_count INT4 NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE OR REPLACE FUNCTION public.verificar_y_registrar_chat_rate_limit(
+  p_id_usuario UUID,
+  p_limite INT4,
+  p_window_seconds INT4 DEFAULT 60
+)
+RETURNS TABLE (puede_enviar BOOLEAN, mensajes_enviados INT4, limite INT4)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  -- implementación transaccional
+END;
+$$;
 ```
 
 ### Justificación
 
-- El `ChatDAO` actual **no usa la base de datos** para el historial: mantiene rate limiting en memoria (`self.mensajes_por_usuario = {}`).
+- El `ChatDAO` ahora usa una función RPC transaccional en BD para registrar y validar el límite en una sola operación.
 - No hay ningún endpoint que lea ni escriba en `chat_historial`.
 - El chat de Gemini en `academia.js` no persiste conversaciones entre sesiones.
-- **Si en el futuro necesitáis historial persistente**, se puede recrear una tabla optimizada. Por ahora, es dead code en la BBDD.
+- **Si en el futuro necesitáis historial persistente**, se puede añadir una tabla separada sin tocar este mecanismo de rate limit.
 
 ---
 

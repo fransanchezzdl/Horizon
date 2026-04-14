@@ -1682,6 +1682,7 @@ body > section {
     flex: 1; 
     padding: var(--spacing-lg);
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
@@ -1694,6 +1695,9 @@ body > section {
     line-height: 1.5;
     max-width: 85%;
     font-weight: 500;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .chat-bubble.ai {

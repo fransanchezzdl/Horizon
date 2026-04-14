@@ -275,6 +275,36 @@
     "data_type": "timestamp with time zone"
   },
   {
+    "table_name": "chat_rate_limits",
+    "column_name": "id_usuario",
+    "data_type": "uuid"
+  },
+  {
+    "table_name": "chat_rate_limits",
+    "column_name": "window_start",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "chat_rate_limits",
+    "column_name": "message_count",
+    "data_type": "integer"
+  },
+  {
+    "table_name": "chat_rate_limits",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone"
+  },
+  {
+    "table_name": "chat_rate_limits_rls",
+    "column_name": "enabled",
+    "data_type": "true"
+  },
+  {
+    "table_name": "chat_rate_limits_rls",
+    "column_name": "policy",
+    "data_type": "service_role only; acceso directo desde cliente denegado"
+  },
+  {
     "table_name": "usuarios",
     "column_name": "id_usuario",
     "data_type": "uuid"
