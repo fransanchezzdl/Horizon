@@ -16,9 +16,8 @@ from .services import (
     CursoService,
     UserService,
     storage_service,
+    PriceHistoryService,
 )
-
-from .services.price_history_service import PriceHistoryService
 
 # Exception handlers
 from .exceptions import register_exception_handlers
