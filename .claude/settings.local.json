@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python -c \"from backend.models.config import LABELING_FIXED_THRESHOLDS; from backend.models.xgboost_model import train_xgboost, predict_xgboost; print\\('Thresholds:', LABELING_FIXED_THRESHOLDS\\); print\\('OK: imports válidos'\\)\")",
-      "Bash(python -c ':*)",
-      "Bash(PYTHONIOENCODING=utf-8 python -m backend.models.calibrate_thresholds)"
-    ]
-  }
-}
