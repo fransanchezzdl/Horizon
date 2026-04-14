@@ -497,6 +497,7 @@ function initSearch() {
         selectedTicker = (activo.ticker || '').toUpperCase();
         setAnalysisMode('active');
 
+<<<<<<< HEAD
         const precioValue = document.getElementById('precioValue');
         const precioSub   = document.getElementById('precioSub');
         if (precioValue) {
@@ -508,11 +509,14 @@ function initSearch() {
             precioSub.textContent = activo.precio != null ? 'Precio de cierre' : 'Sin datos';
         }
 
+=======
+>>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
         const senalValue = document.getElementById('senalValue');
         if (senalValue) senalValue.textContent = formatSignal(activo.senal_ia);
 
         loadTickerNews(selectedTicker);
         loadReliabilityStats(selectedTicker);
+        loadPrecioStats(selectedTicker, activo.precio);
         if (typeof window.initPriceSignalChart === 'function') {
             window.initPriceSignalChart(selectedTicker);
         }
@@ -541,11 +545,18 @@ function initSearch() {
             const wf   = data.walk_forward;
             const live = data.live;
 
-            // Valor principal: BA del walk-forward si disponible
+            // Valor principal: walk-forward > live > base azar
+            valueEl.style.color = '';
             if (wf && wf.ba_mean != null) {
                 valueEl.textContent = `${wf.ba_mean.toFixed(1)}%`;
+            } else if (live && live.resueltas > 0) {
+                valueEl.textContent = `${live.accuracy}%`;
+                valueEl.style.color = live.accuracy > data.baseline
+                    //? 'var(--color-success)'
+                    //: 'var(--color-danger)';
             } else {
-                valueEl.textContent = '--';
+                valueEl.textContent = `${data.baseline}%`;
+                valueEl.style.color = 'var(--color-tertiary)';
             }
 
             // Subtexto: señal + conteo live
@@ -560,7 +571,7 @@ function initSearch() {
             let subParts = [`${señalLabel} · Base azar: ${data.baseline}%`];
 
             if (live.resueltas > 0) {
-                subParts.push(`Live: ${live.correctas}/${live.resueltas} correctas (${live.accuracy}%)`);
+                subParts.push(`Live: ${live.correctas}/${live.resueltas} correctas`);
             } else if (live.total > 0) {
                 subParts.push(`${live.total} pred. en seguimiento`);
             }
@@ -570,6 +581,52 @@ function initSearch() {
         } catch (err) {
             console.error('Error cargando fiabilidad:', err);
             subEl.textContent = 'No disponible';
+        }
+    }
+
+    // Carga y muestra el precio actual y la variación diaria del ticker.
+    async function loadPrecioStats(ticker, precioActual) {
+        const valueEl = document.getElementById('precioValue');
+        const subEl   = document.getElementById('precioSub');
+        if (!valueEl || !subEl) return;
+
+        // Mostrar precio actual mientras se calcula la variación
+        if (precioActual != null) {
+            valueEl.textContent = precioActual >= 1000
+                ? `$${precioActual.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : `$${precioActual.toFixed(2)}`;
+        } else {
+            valueEl.textContent = '--';
+        }
+        subEl.textContent = 'Cargando...';
+        subEl.style.color = '';
+
+        try {
+            const response = await fetch(`${API_BASE}/activos/${encodeURIComponent(ticker)}/price-history?days=7`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+            const data = await response.json();
+            const candles = data.candles;
+
+            if (!candles || candles.length < 2) {
+                subEl.textContent = 'Sin datos de variación';
+                return;
+            }
+
+            const prevClose = candles[candles.length - 2].close;
+            const lastClose = candles[candles.length - 1].close;
+            const variacion = ((lastClose - prevClose) / prevClose) * 100;
+            const signo = variacion >= 0 ? '+' : '';
+
+            subEl.textContent = `${signo}${variacion.toFixed(2)}% hoy`;
+            subEl.style.color = variacion >= 0
+                ? 'var(--color-success)'
+                : 'var(--color-danger)';
+
+        } catch (err) {
+            console.error('Error cargando precio:', err);
+            subEl.textContent = 'Variación no disponible';
+            subEl.style.color = '';
         }
     }
 
