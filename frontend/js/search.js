@@ -508,6 +508,9 @@ function initSearch() {
 
         loadTickerNews(selectedTicker);
         loadReliabilityStats(selectedTicker);
+        if (typeof window.initPriceSignalChart === 'function') {
+            window.initPriceSignalChart(selectedTicker);
+        }
     }
 
     // Carga y muestra las métricas de fiabilidad del modelo para el ticker.
@@ -630,6 +633,19 @@ function initSearch() {
         input.value = normalizedQueryTicker;
         seleccionarActivo(normalizedQueryTicker);
     }
+
+    // Selector de rango para la gráfica de precio
+    document.addEventListener('click', (e) => {
+        const btn = e.target.closest('.range-btn');
+        if (!btn) return;
+        const days = parseInt(btn.dataset.days, 10);
+        if (!days) return;
+        document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        if (typeof window.updatePriceSignalChart === 'function') {
+            window.updatePriceSignalChart(days);
+        }
+    });
 }
 
 // Inicializa inmediatamente o al cargar DOM, segun estado del documento.
