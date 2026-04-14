@@ -497,11 +497,16 @@ function initSearch() {
         selectedTicker = (activo.ticker || '').toUpperCase();
         setAnalysisMode('active');
 
-        const confianzaValue = document.getElementById('confianzaValue');
-        const confianzaSub = document.getElementById('confianzaSub');
-        const confidence = formatConfidence(activo.confianza_bygru);
-        if (confianzaValue) confianzaValue.textContent = confidence.value;
-        if (confianzaSub) confianzaSub.textContent = confidence.label;
+        const precioValue = document.getElementById('precioValue');
+        const precioSub   = document.getElementById('precioSub');
+        if (precioValue) {
+            precioValue.textContent = activo.precio != null
+                ? `$${Number(activo.precio).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : '--';
+        }
+        if (precioSub) {
+            precioSub.textContent = activo.precio != null ? 'Precio de cierre' : 'Sin datos';
+        }
 
         const senalValue = document.getElementById('senalValue');
         if (senalValue) senalValue.textContent = formatSignal(activo.senal_ia);
@@ -510,6 +515,9 @@ function initSearch() {
         loadReliabilityStats(selectedTicker);
         if (typeof window.initPriceSignalChart === 'function') {
             window.initPriceSignalChart(selectedTicker);
+        }
+        if (typeof window.initShapWaterfall === 'function') {
+            window.initShapWaterfall(selectedTicker);
         }
     }
 
