@@ -15,18 +15,38 @@
   let _currentDays = 30;
   let _resizeHandler = null;
 
-  // ── Colores ─────────────────────────────────────────────────────────────────
-  const COLORS = {
+  // ── Colores por tema ─────────────────────────────────────────────────────────
+  const COLORS_DARK = {
     ALCISTA_OK:  '#22c55e',
     BAJISTA_OK:  '#ef4444',
     LATERAL_OK:  '#f59e0b',
     PENDING:     '#6b7280',
     BG:          '#111827',
-    GRID:        '#1e2130',
-    TEXT:        '#9ca3af',
+    GRID:        '#1e293b',
+    TEXT:        '#94a3b8',
     UP_CANDLE:   '#22c55e',
     DOWN_CANDLE: '#ef4444',
+    BORDER:      '#1e293b',
   };
+
+  const COLORS_LIGHT = {
+    ALCISTA_OK:  '#16a34a',
+    BAJISTA_OK:  '#dc2626',
+    LATERAL_OK:  '#d97706',
+    PENDING:     '#9ca3af',
+    BG:          '#ffffff',
+    GRID:        '#f1f5f9',
+    TEXT:        '#64748b',
+    UP_CANDLE:   '#16a34a',
+    DOWN_CANDLE: '#dc2626',
+    BORDER:      '#e2e8f0',
+  };
+
+  function _getColors() {
+    return document.documentElement.getAttribute('data-theme') === 'dark'
+      ? COLORS_DARK
+      : COLORS_LIGHT;
+  }
 
   // Opacidad hex para señales incorrectas (~40%)
   const INCORRECT_ALPHA = '66';
@@ -34,10 +54,11 @@
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function _markerColor(signal, correct) {
-    if (correct === null || correct === undefined) return COLORS.PENDING;
-    const base = signal === 'ALCISTA' ? COLORS.ALCISTA_OK
-               : signal === 'BAJISTA' ? COLORS.BAJISTA_OK
-               : COLORS.LATERAL_OK;
+    const C = _getColors();
+    if (correct === null || correct === undefined) return C.PENDING;
+    const base = signal === 'ALCISTA' ? C.ALCISTA_OK
+               : signal === 'BAJISTA' ? C.BAJISTA_OK
+               : C.LATERAL_OK;
     return correct ? base : base + INCORRECT_ALPHA;
   }
 
@@ -90,33 +111,52 @@
   }
 
   function _createChart(container) {
+    const C = _getColors();
+
     _chart = LightweightCharts.createChart(container, {
       width:  container.clientWidth,
       height: 300,
       layout: {
-        background: { color: COLORS.BG },
-        textColor:  COLORS.TEXT,
+        background: { color: C.BG },
+        textColor:  C.TEXT,
       },
       grid: {
-        vertLines: { color: COLORS.GRID },
-        horzLines: { color: COLORS.GRID },
+        vertLines: { visible: false },
+        horzLines: { color: C.GRID },
       },
       crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-      rightPriceScale: { borderColor: COLORS.GRID },
+      rightPriceScale: {
+        borderVisible: false,
+        scaleMargins: { top: 0.1, bottom: 0.1 },
+      },
       timeScale: {
-        borderColor:     COLORS.GRID,
+        borderVisible:   false,
         timeVisible:     true,
         secondsVisible:  false,
+        fixLeftEdge:     true,
+        fixRightEdge:    true,
+        lockVisibleTimeRangeOnResize: true,
+      },
+      handleScroll: {
+        mouseWheel:    true,
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+      },
+      handleScale: {
+        mouseWheel: true,
+        pinch:      true,
+        axisPressedMouseMove: { time: true, price: false },
       },
     });
 
     _candleSeries = _chart.addCandlestickSeries({
-      upColor:        COLORS.UP_CANDLE,
-      downColor:      COLORS.DOWN_CANDLE,
-      borderUpColor:  COLORS.UP_CANDLE,
-      borderDownColor: COLORS.DOWN_CANDLE,
-      wickUpColor:    COLORS.UP_CANDLE,
-      wickDownColor:  COLORS.DOWN_CANDLE,
+      upColor:         C.UP_CANDLE,
+      downColor:       C.DOWN_CANDLE,
+      borderUpColor:   C.UP_CANDLE,
+      borderDownColor: C.DOWN_CANDLE,
+      wickUpColor:     C.UP_CANDLE,
+      wickDownColor:   C.DOWN_CANDLE,
     });
 
     // Responsivo: reajusta ancho al redimensionar ventana (handler guardado para poder eliminarlo)
@@ -126,6 +166,25 @@
       }
     };
     window.addEventListener('resize', _resizeHandler);
+  }
+
+  function _applyTheme() {
+    if (!_chart || !_candleSeries) return;
+    const C = _getColors();
+    _chart.applyOptions({
+      layout: { background: { color: C.BG }, textColor: C.TEXT },
+      grid: { vertLines: { visible: false }, horzLines: { color: C.GRID } },
+      rightPriceScale: { borderVisible: false },
+      timeScale: { borderVisible: false },
+    });
+    _candleSeries.applyOptions({
+      upColor:         C.UP_CANDLE,
+      downColor:       C.DOWN_CANDLE,
+      borderUpColor:   C.UP_CANDLE,
+      borderDownColor: C.DOWN_CANDLE,
+      wickUpColor:     C.UP_CANDLE,
+      wickDownColor:   C.DOWN_CANDLE,
+    });
   }
 
   async function _loadData(ticker, days) {
@@ -164,7 +223,12 @@
     }
 
     _chart.timeScale().fitContent();
+    // Bloquear scroll fuera del rango de datos
+    _chart.timeScale().scrollToPosition(0, false);
   }
+
+  // Escuchar cambios de tema para actualizar colores sin recargar datos
+  window.addEventListener('horizon:theme-changed', _applyTheme);
 
   // ── API pública ─────────────────────────────────────────────────────────────
 
