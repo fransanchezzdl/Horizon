@@ -17,3 +17,8 @@ backend/models/saved_models/
 # Claude / Agentes
 .claude/
 .agents/skills/
+windsurf/
+superpowers/
+sixth_claude/
+agents/
+skills-lock.json
