@@ -4070,13 +4070,20 @@ body > section {
 
 /* ── Price Signal Chart ─────────────────────────────────────────────────── */
 
+/* La card del chart no debe empujar elementos con space-between ni gap genérico */
+.card:has(#predictionChartContainer) {
+    gap: 0;
+    justify-content: flex-start;
+    min-height: unset;
+}
+
 .chart-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 8px;
+    padding-bottom: 10px;
 }
 
 .chart-header > div {
@@ -4088,7 +4095,9 @@ body > section {
 
 .range-selector {
     display: flex;
+    flex-wrap: nowrap;
     gap: 4px;
+    flex-shrink: 0;
 }
 
 .range-btn {
@@ -4141,7 +4150,7 @@ body > section {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    margin-top: 10px;
+    padding-top: 10px;
 }
 
 .legend-item {
