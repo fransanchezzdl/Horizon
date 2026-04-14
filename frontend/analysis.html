@@ -7,6 +7,8 @@
     <!-- Estilos -->
     <link rel="stylesheet" href="css/styles.css">
     <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+    <!-- D3.js v7 — usado por shapWaterfall.js -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
 </head>
 <body>
     <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
@@ -66,8 +68,11 @@
         <!-- Métricas resumen -->
         <section class="metrics-grid" style="margin-top:18px;">
             <div class="card metric-card">
-                <div class="metric-header"><span class="metric-title">Confianza LSTM</span></div>
-                <div class="metric-body"><span id="confianzaValue" class="metric-value">--</span><span id="confianzaSub" class="metric-sub text-muted">Sin datos</span></div>
+                <div class="metric-header"><span class="metric-title">Fiabilidad del Modelo</span></div>
+                <div class="metric-body">
+                    <span id="reliabilityValue" class="metric-value">--</span>
+                    <span id="reliabilitySub" class="metric-sub text-muted">Cargando...</span>
+                </div>
             </div>
 
             <div class="card metric-card">
@@ -76,15 +81,26 @@
             </div>
 
             <div class="card metric-card">
-                <div class="metric-header"><span class="metric-title">Volatilidad (7d)</span></div>
-                <div class="metric-body"><span class="metric-value">0.85%</span><span class="metric-sub text-muted">Baja</span></div>
-            </div>
-
-            <div class="card metric-card">
-                <div class="metric-header"><span class="metric-title">Fiabilidad del Modelo</span></div>
+                <div class="metric-header"><span class="metric-title">Precio Actual</span></div>
                 <div class="metric-body">
-                    <span id="reliabilityValue" class="metric-value">--</span>
-                    <span id="reliabilitySub" class="metric-sub text-muted">Cargando...</span>
+                    <span id="precioValue" class="metric-value">--</span>
+                    <span id="precioSub" class="metric-sub text-muted">Sin datos</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Explicabilidad IA — SHAP Waterfall -->
+        <section id="shapSection" style="margin-top:18px; display:none;">
+            <div class="card">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="opt-title" style="margin:0;">Explicabilidad IA — SHAP</h3>
+                        <p class="opt-info" style="margin:2px 0 0;">Contribución de cada factor a la predicción</p>
+                    </div>
+                    <div id="shapSignalBadge"></div>
+                </div>
+                <div id="shapChartContainer">
+                    <div id="shapChart"></div>
                 </div>
             </div>
         </section>
@@ -107,10 +123,19 @@
                     <div id="priceSignalChart"></div>
                 </div>
                 <div class="chart-legend">
-                    <span class="legend-item"><span class="legend-dot" style="color:#22c55e;">▲</span> Alcista</span>
-                    <span class="legend-item"><span class="legend-dot" style="color:#ef4444;">▼</span> Bajista</span>
-                    <span class="legend-item"><span class="legend-dot" style="color:#f59e0b;">●</span> Lateral</span>
-                    <span class="legend-item legend-incorrect"><span class="legend-dot">▲▼●</span> Incorrecta</span>
+                    <label class="legend-item legend-toggle">
+                        <input type="checkbox" checked onchange="setPriceSignalFilter('ALCISTA', this.checked)">
+                        <span class="legend-dot" style="color:#22c55e;">▲</span> Alcista
+                    </label>
+                    <label class="legend-item legend-toggle">
+                        <input type="checkbox" checked onchange="setPriceSignalFilter('BAJISTA', this.checked)">
+                        <span class="legend-dot" style="color:#ef4444;">▼</span> Bajista
+                    </label>
+                    <label class="legend-item legend-toggle">
+                        <input type="checkbox" onchange="setPriceSignalFilter('LATERAL', this.checked)">
+                        <span class="legend-dot" style="color:#f59e0b;">●</span> Lateral
+                    </label>
+                    <span class="legend-item legend-incorrect"><span class="legend-dot">✗</span> Incorrecta (opacidad)</span>
                 </div>
             </div>
 
@@ -189,5 +214,6 @@
         </div>
 
     </div>
+    <script src="js/shapWaterfall.js"></script>
 </body>
 </html>
