@@ -528,11 +528,18 @@ function initSearch() {
             const wf   = data.walk_forward;
             const live = data.live;
 
-            // Valor principal: BA del walk-forward si disponible
+            // Valor principal: walk-forward > live > base azar
+            valueEl.style.color = '';
             if (wf && wf.ba_mean != null) {
                 valueEl.textContent = `${wf.ba_mean.toFixed(1)}%`;
+            } else if (live && live.resueltas > 0) {
+                valueEl.textContent = `${live.accuracy}%`;
+                valueEl.style.color = live.accuracy > data.baseline
+                    //? 'var(--color-success)'
+                    //: 'var(--color-danger)';
             } else {
-                valueEl.textContent = '--';
+                valueEl.textContent = `${data.baseline}%`;
+                valueEl.style.color = 'var(--color-tertiary)';
             }
 
             // Subtexto: señal + conteo live
@@ -547,7 +554,7 @@ function initSearch() {
             let subParts = [`${señalLabel} · Base azar: ${data.baseline}%`];
 
             if (live.resueltas > 0) {
-                subParts.push(`Live: ${live.correctas}/${live.resueltas} correctas (${live.accuracy}%)`);
+                subParts.push(`Live: ${live.correctas}/${live.resueltas} correctas`);
             } else if (live.total > 0) {
                 subParts.push(`${live.total} pred. en seguimiento`);
             }
