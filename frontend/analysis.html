@@ -9,12 +9,14 @@
     <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
 </head>
 <body>
+    <script src="https://unpkg.com/lightweight-charts@4.2.0/dist/lightweight-charts.standalone.production.js"></script>
     <script src="js/config.js"></script>
     <script src="js/layout.js"></script>
     <script src="js/logout.js"></script>
     <script src="js/portfolio_modal.js"></script>
     <script src="js/search.js"></script>
     <script src="js/analysis.js"></script>
+    <script src="js/priceSignalChart.js"></script>
     <div id="dashboard-contenido" class="analysis-home">
         <!-- Buscador de Tickers (reescrito: responsive y contenido limitado) -->
         <section class="search-section card analysis-search-shell">
@@ -90,10 +92,26 @@
         <!-- Predicción y noticias -->
         <section style="display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-top:18px;">
             <div class="card">
-                <h3 class="opt-title">Predicción de Precios LSTM</h3>
-                <p class="opt-info">Histórico + Pronóstico 30 días</p>
-                <div id="predictionChartContainer" style="height:260px; border-radius:10px; background:#f8fafc; margin-top:12px; display:flex; align-items:center; justify-content:center; color:#9ca3af;">
-                    Sin datos de predicción
+                <div class="chart-header">
+                    <div>
+                        <h3 class="opt-title" style="margin:0;">Precio e Historial de Señales IA</h3>
+                        <p class="opt-info" style="margin:2px 0 0;">Velas OHLC + predicciones del modelo</p>
+                    </div>
+                    <div class="range-selector" id="rangeSelector">
+                        <button class="range-btn" data-days="7">7d</button>
+                        <button class="range-btn active" data-days="30">30d</button>
+                        <button class="range-btn" data-days="90">90d</button>
+                    </div>
+                </div>
+                <div id="predictionChartContainer">
+                    <div id="priceSignalChart"></div>
+                </div>
+                <div class="chart-legend">
+                    <span class="legend-item"><span style="color:#22c55e;">▲</span> ALCISTA correcta</span>
+                    <span class="legend-item"><span style="color:#ef4444;">▼</span> BAJISTA correcta</span>
+                    <span class="legend-item"><span style="color:#f59e0b;">●</span> LATERAL correcta</span>
+                    <span class="legend-item legend-incorrect"><span style="opacity:0.4;">▲▼●</span> Incorrecta</span>
+                    <span class="legend-item"><span style="color:#6b7280;">●</span> Pendiente</span>
                 </div>
             </div>
 
