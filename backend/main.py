@@ -41,7 +41,14 @@ register_exception_handlers(app)
 auth_service = AuthService(supabase, usuario_dao, storage_service)
 gemini_service = GeminiService()
 chat_dao = ChatDAO()
-chat_service = ChatService(usuario_dao, chat_dao, gemini_service)
+chat_service = ChatService(
+    usuario_dao_instance=usuario_dao,
+    chat_dao_instance=chat_dao,
+    gemini_service_instance=gemini_service,
+    portfolio_dao_cls=PortfolioDAO,
+    curso_dao_cls=CursoDAO,
+    activo_dao_cls=ActivoDAO,
+)
 activo_service = ActivoService(ActivoDAO)
 ticker_news_service = TickerNewsService()
 reflexion_service = ReflexionService(ReflexionDAO)
