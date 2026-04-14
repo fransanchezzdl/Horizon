@@ -4068,5 +4068,85 @@ body > section {
 
 /* #endregion MODALES Y FORMULARIOS */
 
+/* ── Price Signal Chart ─────────────────────────────────────────────────── */
+
+.chart-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.range-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.range-btn {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--color-border, #334155);
+    background: transparent;
+    color: var(--color-text-muted, #9ca3af);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.range-btn:hover {
+    background: var(--color-bg-lighter, #1e293b);
+    color: var(--color-text, #f1f5f9);
+}
+
+.range-btn.active {
+    background: var(--color-primary, #3b82f6);
+    color: #fff;
+    border-color: var(--color-primary, #3b82f6);
+}
+
+#predictionChartContainer {
+    min-height: 300px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#priceSignalChart {
+    width: 100%;
+}
+
+.chart-loading,
+.chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 300px;
+    color: var(--color-text-muted, #9ca3af);
+    font-size: 14px;
+}
+
+.chart-error {
+    color: #f87171;
+}
+
+.chart-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--color-text-muted, #9ca3af);
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.legend-incorrect {
+    opacity: 0.7;
+}
 
 
