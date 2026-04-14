@@ -18,6 +18,8 @@ from .services import (
     storage_service,
 )
 
+from .services.price_history_service import PriceHistoryService
+
 # Exception handlers
 from .exceptions import register_exception_handlers
 
@@ -384,6 +386,19 @@ def obtener_fiabilidad_activo(ticker: str):
     if not activo:
         raise HTTPException(status_code=404, detail="Activo no encontrado")
     return get_reliability_stats(ticker.upper())
+
+
+@app.get("/activos/{ticker}/price-history")
+def obtener_price_history(ticker: str, days: int = 30):
+    """
+    Devuelve OHLC histórico + señales IA para el ticker en los últimos N días.
+    days: 7 | 30 | 90 (default 30)
+    """
+    activo = activo_service.obtener_activo(ticker)
+    if not activo:
+        raise HTTPException(status_code=404, detail="Activo no encontrado")
+
+    return PriceHistoryService.get_price_and_signals(ticker=ticker, days=days)
 
 
 @app.get("/cursos/{id_curso}/progreso", response_model=ProgresoResponse)
