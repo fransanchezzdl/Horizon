@@ -15,20 +15,29 @@
   let _currentDays = 30;
   let _resizeHandler = null;
 
+<<<<<<< HEAD
   // ── Colores por tema ─────────────────────────────────────────────────────────
   const COLORS_DARK = {
+=======
+  // ── Colores ─────────────────────────────────────────────────────────────────
+  const SIGNAL_COLORS = {
+>>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
     ALCISTA_OK:  '#22c55e',
     BAJISTA_OK:  '#ef4444',
     LATERAL_OK:  '#f59e0b',
     PENDING:     '#6b7280',
+<<<<<<< HEAD
     BG:          '#111827',
     GRID:        '#1e293b',
     TEXT:        '#94a3b8',
+=======
+>>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
     UP_CANDLE:   '#22c55e',
     DOWN_CANDLE: '#ef4444',
     BORDER:      '#1e293b',
   };
 
+<<<<<<< HEAD
   const COLORS_LIGHT = {
     ALCISTA_OK:  '#16a34a',
     BAJISTA_OK:  '#dc2626',
@@ -46,6 +55,24 @@
     return document.documentElement.getAttribute('data-theme') === 'dark'
       ? COLORS_DARK
       : COLORS_LIGHT;
+=======
+  const THEME_COLORS = {
+    dark: {
+      BG:   '#111827',
+      GRID: '#1e2130',
+      TEXT: '#9ca3af',
+    },
+    light: {
+      BG:   '#ffffff',
+      GRID: '#e5e7eb',
+      TEXT: '#374151',
+    },
+  };
+
+  function _getThemeColors() {
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    return { ...SIGNAL_COLORS, ...THEME_COLORS[theme] || THEME_COLORS.light };
+>>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
   }
 
   // Opacidad hex para señales incorrectas (~40%)
@@ -54,11 +81,18 @@
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function _markerColor(signal, correct) {
+<<<<<<< HEAD
     const C = _getColors();
     if (correct === null || correct === undefined) return C.PENDING;
     const base = signal === 'ALCISTA' ? C.ALCISTA_OK
                : signal === 'BAJISTA' ? C.BAJISTA_OK
                : C.LATERAL_OK;
+=======
+    if (correct === null || correct === undefined) return SIGNAL_COLORS.PENDING;
+    const base = signal === 'ALCISTA' ? SIGNAL_COLORS.ALCISTA_OK
+               : signal === 'BAJISTA' ? SIGNAL_COLORS.BAJISTA_OK
+               : SIGNAL_COLORS.LATERAL_OK;
+>>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
     return correct ? base : base + INCORRECT_ALPHA;
   }
 
@@ -72,25 +106,80 @@
          : 'circle';
   }
 
+  // Filtros activos (sincronizados con los checkboxes del HTML)
+  const _activeFilters = { ALCISTA: true, BAJISTA: true, LATERAL: false };
+
   function _markerText(signal, confidence, correct) {
     const pct = confidence != null ? ` ${Math.round(confidence * 100)}%` : '';
     const mark = correct === false ? ' ✗' : correct === true ? '' : ' ?';
     return `${signal}${pct}${mark}`;
   }
 
+  /**
+   * Agrupa señales consecutivas del mismo tipo en una ventana de 3 días,
+   * conservando solo la de mayor confianza de cada grupo.
+   */
+  function _groupSignals(signals) {
+    if (!signals.length) return [];
+
+    const sorted = [...signals].sort((a, b) => (a.time < b.time ? -1 : 1));
+    const grouped = [];
+    let group = [sorted[0]];
+
+    for (let i = 1; i < sorted.length; i++) {
+      const prev = group[0];
+      const curr = sorted[i];
+      const daysDiff = Math.abs(
+        (new Date(curr.time).getTime() - new Date(prev.time).getTime()) / 86400000
+      );
+      if (curr.signal === prev.signal && daysDiff <= 3) {
+        group.push(curr);
+      } else {
+        // Conservar la de mayor confianza del grupo
+        grouped.push(group.reduce((best, s) =>
+          (s.confidence || 0) > (best.confidence || 0) ? s : best
+        ));
+        group = [curr];
+      }
+    }
+    grouped.push(group.reduce((best, s) =>
+      (s.confidence || 0) > (best.confidence || 0) ? s : best
+    ));
+
+    return grouped;
+  }
+
   function _buildMarkers(signals) {
-    return signals
+    const filtered = signals
       .filter(s => s.time && s.signal)
+      .filter(s => _activeFilters[s.signal] !== false);
+
+    return _groupSignals(filtered)
       .map(s => ({
         time:     s.time,
         position: _markerPosition(s.signal),
         color:    _markerColor(s.signal, s.correct),
         shape:    _markerShape(s.signal),
         text:     _markerText(s.signal, s.confidence, s.correct),
-        size:     1,
+        // Señales incorrectas más pequeñas para reducir ruido visual
+        size:     s.correct === false ? 0.7 : 1,
       }))
       .sort((a, b) => (a.time < b.time ? -1 : 1));
   }
+
+  /**
+   * Actualiza el estado de un filtro y recarga los markers.
+   * Llamado desde los checkboxes del HTML.
+   */
+  window.setPriceSignalFilter = function (type, enabled) {
+    if (type in _activeFilters) {
+      _activeFilters[type] = enabled;
+    }
+    // Recargar datos para reflejar el cambio
+    if (_currentTicker) {
+      _loadData(_currentTicker, _currentDays);
+    }
+  };
 
   // ── Core ────────────────────────────────────────────────────────────────────
 
@@ -111,8 +200,12 @@
   }
 
   function _createChart(container) {
+<<<<<<< HEAD
     const C = _getColors();
 
+=======
+    const C = _getThemeColors();
+>>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
     _chart = LightweightCharts.createChart(container, {
       width:  container.clientWidth,
       height: 300,
@@ -121,6 +214,7 @@
         textColor:  C.TEXT,
       },
       grid: {
+<<<<<<< HEAD
         vertLines: { visible: false },
         horzLines: { color: C.GRID },
       },
@@ -131,6 +225,15 @@
       },
       timeScale: {
         borderVisible:   false,
+=======
+        vertLines: { color: C.GRID },
+        horzLines: { color: C.GRID },
+      },
+      crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+      rightPriceScale: { borderColor: C.GRID },
+      timeScale: {
+        borderColor:     C.GRID,
+>>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
         timeVisible:     true,
         secondsVisible:  false,
         fixLeftEdge:     true,
@@ -249,4 +352,11 @@
     _destroyChart();
     _currentTicker = '';
   };
+
+  // Recrear el chart con la paleta correcta cuando el usuario cambia de tema
+  window.addEventListener('horizon:theme-changed', function () {
+    if (_currentTicker) {
+      _loadData(_currentTicker, _currentDays);
+    }
+  });
 }());
