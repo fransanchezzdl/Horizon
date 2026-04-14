@@ -22,6 +22,7 @@ from .services import (
 # Exception handlers
 from .exceptions import register_exception_handlers
 
+
 app = FastAPI()
 
 # Configurar CORS
@@ -405,6 +406,25 @@ def obtener_price_history(ticker: str, days: int = 30):
         raise HTTPException(status_code=404, detail="Activo no encontrado")
 
     return PriceHistoryService.get_price_and_signals(ticker=ticker, days=days)
+
+
+@app.get("/activos/{ticker}/xai/latest-shap")
+def obtener_latest_shap(ticker: str):
+    """
+    Devuelve los SHAP values más recientes para el ticker.
+
+    Busca la fila más reciente en xai_explicaciones y retorna:
+    - ticker, fecha, senal, confianza, correcta
+    - shap_values: lista de {feature, shap, value, abs} ordenada por abs desc, máx 12
+
+    No requiere autenticación: información pública del modelo.
+    """
+    from .daos.xai_shap_dao import XaiShapDAO
+
+    result = XaiShapDAO.obtener_latest_shap(ticker.upper())
+    if not result:
+        raise HTTPException(status_code=404, detail="Sin datos SHAP para este ticker")
+    return result
 
 
 @app.get("/cursos/{id_curso}/progreso", response_model=ProgresoResponse)
