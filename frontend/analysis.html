@@ -66,8 +66,11 @@
         <!-- Métricas resumen -->
         <section class="metrics-grid" style="margin-top:18px;">
             <div class="card metric-card">
-                <div class="metric-header"><span class="metric-title">Confianza LSTM</span></div>
-                <div class="metric-body"><span id="confianzaValue" class="metric-value">--</span><span id="confianzaSub" class="metric-sub text-muted">Sin datos</span></div>
+                <div class="metric-header"><span class="metric-title">Fiabilidad del Modelo</span></div>
+                <div class="metric-body">
+                    <span id="reliabilityValue" class="metric-value">--</span>
+                    <span id="reliabilitySub" class="metric-sub text-muted">Cargando...</span>
+                </div>
             </div>
 
             <div class="card metric-card">
@@ -76,15 +79,10 @@
             </div>
 
             <div class="card metric-card">
-                <div class="metric-header"><span class="metric-title">Volatilidad (7d)</span></div>
-                <div class="metric-body"><span class="metric-value">0.85%</span><span class="metric-sub text-muted">Baja</span></div>
-            </div>
-
-            <div class="card metric-card">
-                <div class="metric-header"><span class="metric-title">Fiabilidad del Modelo</span></div>
+                <div class="metric-header"><span class="metric-title">Precio Actual</span></div>
                 <div class="metric-body">
-                    <span id="reliabilityValue" class="metric-value">--</span>
-                    <span id="reliabilitySub" class="metric-sub text-muted">Cargando...</span>
+                    <span id="precioValue" class="metric-value">--</span>
+                    <span id="precioSub" class="metric-sub text-muted">Cargando...</span>
                 </div>
             </div>
         </section>
