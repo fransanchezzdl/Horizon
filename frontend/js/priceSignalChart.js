@@ -16,17 +16,32 @@
   let _resizeHandler = null;
 
   // ── Colores ─────────────────────────────────────────────────────────────────
-  const COLORS = {
+  const SIGNAL_COLORS = {
     ALCISTA_OK:  '#22c55e',
     BAJISTA_OK:  '#ef4444',
     LATERAL_OK:  '#f59e0b',
     PENDING:     '#6b7280',
-    BG:          '#111827',
-    GRID:        '#1e2130',
-    TEXT:        '#9ca3af',
     UP_CANDLE:   '#22c55e',
     DOWN_CANDLE: '#ef4444',
   };
+
+  const THEME_COLORS = {
+    dark: {
+      BG:   '#111827',
+      GRID: '#1e2130',
+      TEXT: '#9ca3af',
+    },
+    light: {
+      BG:   '#ffffff',
+      GRID: '#e5e7eb',
+      TEXT: '#374151',
+    },
+  };
+
+  function _getThemeColors() {
+    const theme = document.documentElement.getAttribute('data-theme') || 'light';
+    return { ...SIGNAL_COLORS, ...THEME_COLORS[theme] || THEME_COLORS.light };
+  }
 
   // Opacidad hex para señales incorrectas (~40%)
   const INCORRECT_ALPHA = '66';
@@ -34,10 +49,10 @@
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function _markerColor(signal, correct) {
-    if (correct === null || correct === undefined) return COLORS.PENDING;
-    const base = signal === 'ALCISTA' ? COLORS.ALCISTA_OK
-               : signal === 'BAJISTA' ? COLORS.BAJISTA_OK
-               : COLORS.LATERAL_OK;
+    if (correct === null || correct === undefined) return SIGNAL_COLORS.PENDING;
+    const base = signal === 'ALCISTA' ? SIGNAL_COLORS.ALCISTA_OK
+               : signal === 'BAJISTA' ? SIGNAL_COLORS.BAJISTA_OK
+               : SIGNAL_COLORS.LATERAL_OK;
     return correct ? base : base + INCORRECT_ALPHA;
   }
 
@@ -90,33 +105,34 @@
   }
 
   function _createChart(container) {
+    const C = _getThemeColors();
     _chart = LightweightCharts.createChart(container, {
       width:  container.clientWidth,
       height: 300,
       layout: {
-        background: { color: COLORS.BG },
-        textColor:  COLORS.TEXT,
+        background: { color: C.BG },
+        textColor:  C.TEXT,
       },
       grid: {
-        vertLines: { color: COLORS.GRID },
-        horzLines: { color: COLORS.GRID },
+        vertLines: { color: C.GRID },
+        horzLines: { color: C.GRID },
       },
       crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-      rightPriceScale: { borderColor: COLORS.GRID },
+      rightPriceScale: { borderColor: C.GRID },
       timeScale: {
-        borderColor:     COLORS.GRID,
+        borderColor:     C.GRID,
         timeVisible:     true,
         secondsVisible:  false,
       },
     });
 
     _candleSeries = _chart.addCandlestickSeries({
-      upColor:        COLORS.UP_CANDLE,
-      downColor:      COLORS.DOWN_CANDLE,
-      borderUpColor:  COLORS.UP_CANDLE,
-      borderDownColor: COLORS.DOWN_CANDLE,
-      wickUpColor:    COLORS.UP_CANDLE,
-      wickDownColor:  COLORS.DOWN_CANDLE,
+      upColor:         C.UP_CANDLE,
+      downColor:       C.DOWN_CANDLE,
+      borderUpColor:   C.UP_CANDLE,
+      borderDownColor: C.DOWN_CANDLE,
+      wickUpColor:     C.UP_CANDLE,
+      wickDownColor:   C.DOWN_CANDLE,
     });
 
     // Responsivo: reajusta ancho al redimensionar ventana (handler guardado para poder eliminarlo)
@@ -185,4 +201,11 @@
     _destroyChart();
     _currentTicker = '';
   };
+
+  // Recrear el chart con la paleta correcta cuando el usuario cambia de tema
+  window.addEventListener('horizon:theme-changed', function () {
+    if (_currentTicker) {
+      _loadData(_currentTicker, _currentDays);
+    }
+  });
 }());
