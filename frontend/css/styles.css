@@ -2650,6 +2650,31 @@ body > section {
 }
 /* #endregion AJUSTES */
 
+/* ==================== MODALES (PERFIL) ==================== */
+.modal.hidden {
+    display: none !important;
+}
+
+.modal .modal-content > :not(.modal-header) {
+    padding: var(--spacing-xl);
+}
+
+.modal .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.modal .btn {
+    flex: 1;
+}
+
+.modal .modal-message {
+    font-size: 0.9em;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
 /* #endregion PAGINA DE PERFIL - CONTENIDO */
 
 /* #endregion PAGINA DE PERFIL */
