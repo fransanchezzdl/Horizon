@@ -117,7 +117,11 @@ def _get_xgboost_prediction(ticker: str) -> Dict:
     # Agregar ventana → vector tabular que el modelo XGBoost espera
     xgb_features = _build_xgb_features(scaled).reshape(1, -1)     # [1, 4*n_feat]
 
-    xgb = predict_xgboost(ticker, xgb_features)
+    # confidence_tau=0.36: si ninguna clase supera el 36% de confianza,
+    # el modelo se abstiene en lugar de forzar una predicción sin convicción.
+    # (Para 3 clases calibradas con Platt, el rango efectivo es ~0.33-0.49,
+    #  por lo que 0.36 filtra predicciones casi aleatorias sin ser demasiado estricto)
+    xgb = predict_xgboost(ticker, xgb_features, confidence_tau=0.36)
 
     direction_map = {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}
     trend = direction_map.get(xgb["direction"], "LATERAL")
@@ -126,6 +130,7 @@ def _get_xgboost_prediction(ticker: str) -> Dict:
         "trend":         trend,
         "confidence":    xgb["confidence"],
         "current_price": current_price,
+        "abstained":     xgb.get("abstained", False),
     }
 
 
@@ -152,6 +157,12 @@ def log_daily_predictions(tickers: List[str] = None) -> Dict:
                 result = _get_xgboost_prediction(ticker)
             finally:
                 sys.stdout = _stdout
+
+            # Si el modelo se abstuvo (baja confianza), no loguear la predicción
+            if result.get("abstained"):
+                skipped.append(ticker)
+                logger.info(f"[{ticker}] Abstención por baja confianza ({result['confidence']:.0%}), omitido.")
+                continue
 
             record = {
                 "ticker":             ticker,
