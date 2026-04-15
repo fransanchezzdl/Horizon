@@ -118,16 +118,24 @@ def train_xgboost(ticker: str, data: dict, feature_cols: list, asset_type: str =
     XGBClassifier = _get_xgb_classifier()
     from sklearn.metrics import balanced_accuracy_score, f1_score, confusion_matrix
 
-    # ── Construir features temporales agregadas ────────────────────────────────
-    # Estadísticas de la ventana completa: last, mean, std, trend por feature.
-    # Esto da al XGBoost señal temporal sin necesitar secuencias recurrentes.
+    # ── Construir features temporales multi-escala ────────────────────────────
+    # Agregación [last, mean, std, trend] sobre 3 sub-ventanas (corta/media/completa).
+    # Ejemplo stable (W=30): sub-ventanas [5, 15, 30] → 12×n_features
+    # Ejemplo volatile (W=60): sub-ventanas [10, 30, 60] → 12×n_features
     def build_xgb_features(X_tensor):
-        X = X_tensor.numpy()  # [n, window, features]
-        last  = X[:, -1, :]
-        mean  = X.mean(axis=1)
-        std   = X.std(axis=1)
-        trend = X[:, -1, :] - X[:, 0, :]  # cambio total en la ventana
-        return np.concatenate([last, mean, std, trend], axis=1)
+        X = X_tensor.numpy() if hasattr(X_tensor, "numpy") else np.array(X_tensor)
+        W = X.shape[1]
+        sub_windows = [max(2, W // 6), W // 2, W]
+        parts = []
+        for sw in sub_windows:
+            sl = X[:, -sw:, :]                   # [n, sw, features]
+            parts.extend([
+                sl[:, -1, :],                    # last
+                sl.mean(axis=1),                 # mean
+                sl.std(axis=1),                  # std
+                sl[:, -1, :] - sl[:, 0, :],      # trend
+            ])
+        return np.concatenate(parts, axis=1)     # [n, 12*features]
 
     X_train = build_xgb_features(data["X_train"])
     X_val   = build_xgb_features(data["X_val"])
