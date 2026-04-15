@@ -74,13 +74,13 @@ function abrirModalAvatar() {
         }
     }
 
-    modalAvatar.style.display = 'flex';
+    modalAvatar.classList.remove('hidden');
 }
 
 function cerrarModalAvatar() {
     const modalAvatar = document.getElementById('modalEditAvatar');
     if (modalAvatar) {
-        modalAvatar.style.display = 'none';
+        modalAvatar.classList.add('hidden');
     }
 }
 
@@ -208,9 +208,19 @@ function formatDate(dateString) {
 
 // Event Listeners
 function initProfileEvents() {
+    // Asegurar que los modales estén ocultos al inicializar
+    const modalEditProfile = document.getElementById('modalEditProfile');
+    const modalEditAvatar = document.getElementById('modalEditAvatar');
+    const modalChangePassword = document.getElementById('modalChangePassword');
+    const deleteAccountModal = document.getElementById('deleteAccountModal');
+
+    if (modalEditProfile) modalEditProfile.classList.add('hidden');
+    if (modalEditAvatar) modalEditAvatar.classList.add('hidden');
+    if (modalChangePassword) modalChangePassword.classList.add('hidden');
+    if (deleteAccountModal) deleteAccountModal.classList.add('is-hidden');
+
     // --- 1. NUEVA LÓGICA: EDITAR PERFIL ---
     const btnEditProfile = document.getElementById('btnEditProfile');
-    const modalEditProfile = document.getElementById('modalEditProfile');
     const btnCancelEdit = document.getElementById('btnCancelEdit');
     const formEditProfile = document.getElementById('formEditProfile');
 
@@ -224,7 +234,7 @@ function initProfileEvents() {
             document.getElementById('editApellidos').value = user.apellidos || '';
             document.getElementById('editMessage').innerHTML = ''; 
             
-            modalEditProfile.style.display = 'flex';
+            modalEditProfile.classList.remove('hidden');
         });
     }
 
@@ -279,7 +289,7 @@ function initProfileEvents() {
 
     if (btnCancelEdit) {
         btnCancelEdit.addEventListener('click', () => {
-            modalEditProfile.style.display = 'none';
+            modalEditProfile.classList.add('hidden');
         });
     }
 
@@ -397,7 +407,7 @@ function initProfileEvents() {
                     loadProfileData(); 
                     
                     setTimeout(() => {
-                        modalEditProfile.style.display = 'none';
+                        modalEditProfile.classList.add('hidden');
                         btnSave.disabled = false;
                         btnSave.textContent = 'Guardar Cambios';
                     }, 1500);
@@ -419,7 +429,6 @@ function initProfileEvents() {
     // --- 2. LÓGICA PENDIENTE (Contraseña, 2FA, Planes) ---
     // Cambiar Contraseña
     const btnChangePassword = document.getElementById('btnChangePassword');
-    const modalChangePassword = document.getElementById('modalChangePassword');
     const formChangePassword = document.getElementById('formChangePassword');
     const btnCancelPassword = document.getElementById('btnCancelPassword');
     const btnSavePassword = document.getElementById('btnSavePassword');
@@ -433,12 +442,12 @@ function initProfileEvents() {
         if (formChangePassword) formChangePassword.reset();
         if (passwordMessage) passwordMessage.innerHTML = '';
         if (btnSavePassword) btnSavePassword.disabled = false;
-        modalChangePassword.style.display = 'flex';
+        modalChangePassword.classList.remove('hidden');
     };
 
     const closeChangePasswordModal = () => {
         if (!modalChangePassword) return;
-        modalChangePassword.style.display = 'none';
+        modalChangePassword.classList.add('hidden');
         if (formChangePassword) formChangePassword.reset();
         if (passwordMessage) passwordMessage.innerHTML = '';
     };
@@ -517,7 +526,6 @@ function initProfileEvents() {
 
     // Eliminar cuenta
     const btnDeleteAccount = document.getElementById('btnDeleteAccount');
-    const deleteAccountModal = document.getElementById('deleteAccountModal');
     const deleteAccountInput = document.getElementById('deleteAccountConfirmInput');
     const deleteAccountExpectedName = document.getElementById('deleteAccountExpectedName');
     const deleteAccountConfirmBtn = document.getElementById('deleteAccountConfirmBtn');
