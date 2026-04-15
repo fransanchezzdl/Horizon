@@ -384,6 +384,22 @@ def predict_ensemble(ticker: str) -> dict:
     xgb_result = predict_xgboost(ticker, last_features_raw, confidence_tau=0.40)
     xgb_prob = xgb_result["probability"]
 
+    # Salvaguarda: si el BiGRU de este ticker tiene F1 < 0.20 (modelo roto,
+    # p.ej. NVDA/TSLA donde early stopping capturó pesos inútiles), ignorar
+    # su contribución y usar solo XGBoost para no contaminar la predicción.
+    _bigru_weights = None  # None = usar META_ENSEMBLE_WEIGHTS por defecto
+    try:
+        import json as _json
+        _report_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_report.json")
+        with open(_report_path) as _f:
+            _report = _json.load(_f)
+        _bigru_f1 = _report.get("metrics", {}).get("avg_f1_weighted", 1.0)
+        if _bigru_f1 < 0.20:
+            _bigru_weights = {"bigru": 0.0, "xgboost": 1.0}
+            print(f"   ⚠️  BiGRU {ticker} ignorado (F1={_bigru_f1:.3f} < 0.20) → usando solo XGBoost")
+    except Exception:
+        pass  # sin report → comportamiento normal
+
     # Intentar usar ensemble stacking si está disponible
     stacking_available = False
     try:
@@ -431,11 +447,11 @@ def predict_ensemble(ticker: str) -> dict:
             print(f"   🔗 Usando Ensemble Stacking: {stacking_trend} (confidence: {stacking_proba.max():.2%})")
     except (ImportError, FileNotFoundError, Exception) as e:
         # Si stacking no disponible, usar meta-ensemble original
-        meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob)
+        meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob, weights=_bigru_weights)
 
     # Si stacking no disponible, usar meta-ensemble
     if not stacking_available:
-        meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob)
+        meta_result = get_meta_ensemble_prediction(mean_return, xgb_prob, weights=_bigru_weights)
 
     return {
         "trend": winning_trend,
