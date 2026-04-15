@@ -17,25 +17,75 @@
         <header class="page-header">
             <div class="header-titles">
                 <h1>Centro de Ayuda</h1>
-                <p class="subtitle">Resolvemos tus dudas frecuentes y te guiamos en los siguientes pasos.</p>
+                <p class="subtitle">Todo lo necesario para entender la plataforma, usar el Asesor IA con criterio y navegar cada sección con confianza.</p>
             </div>
         </header>
 
-        <section class="opts-section" style="grid-template-columns: repeat(2, 1fr); margin-top: 0;">
+        <section class="opts-section">
             <article class="card">
-                <h3 class="opt-title">Preguntas Frecuentes</h3>
-                <p class="opt-info"><strong>Cuenta:</strong> Edita tus datos desde Perfil.</p>
-                <p class="opt-info"><strong>Portfolios:</strong> Crea y gestiona carteras desde Portfolio.</p>
-                <p class="opt-info"><strong>Análisis:</strong> Busca un ticker en la pantalla de Análisis.</p>
+                <h3 class="opt-title">¿Qué es el Asesor IA?</h3>
+                <p class="opt-info">Es una herramienta educativa que resume datos del mercado, contexto financiero y señales del sistema para ayudarte a analizar mejor.</p>
+                <p class="opt-info">No sustituye asesoramiento financiero profesional ni da recomendaciones personalizadas de inversión.</p>
+            </article>
+
+            <article class="card">
+                <h3 class="opt-title">¿Qué contexto usa?</h3>
+                <p class="opt-info">El asesor se apoya en información disponible en la plataforma: historial de análisis, indicadores, datos de tickers y estado general de mercado.</p>
+                <p class="opt-info">Puede equivocarse o quedarse desactualizado; valida siempre con fuentes oficiales antes de decidir.</p>
+            </article>
+
+            <article class="card">
+                <h3 class="opt-title">¿Qué le puedo preguntar?</h3>
+                <p class="opt-info"><strong>Sí:</strong> interpretación de métricas, diferencias entre activos, riesgos potenciales, escenarios y dudas de uso de la app.</p>
+                <p class="opt-info"><strong>No:</strong> "compra/vende ahora", promesas de rentabilidad o decisiones sin revisar tu perfil de riesgo.</p>
+            </article>
+        </section>
+
+        <section class="opts-section">
+            <article class="card">
+                <h3 class="opt-title">FAQ: uso responsable</h3>
+                <p class="opt-info"><strong>¿Debo invertir lo que diga la app?</strong> No. Horizon no da consejos de inversión; ofrece soporte analítico para que tomes tus propias decisiones.</p>
+                <p class="opt-info"><strong>¿Puede haber errores?</strong> Sí. Los modelos pueden fallar; revisa siempre datos, noticias y horizonte temporal.</p>
+                <p class="opt-info"><strong>¿Garantiza resultados?</strong> No. Toda inversión conlleva riesgo, incluida la pérdida de capital.</p>
+            </article>
+
+            <article class="card">
+                <h3 class="opt-title">FAQ: funcionamiento</h3>
+                <p class="opt-info"><strong>¿Por qué cambia una predicción?</strong> Porque entran nuevos datos y el mercado cambia de forma continua.</p>
+                <p class="opt-info"><strong>¿Qué ticker debo usar?</strong> El símbolo oficial de mercado, por ejemplo AAPL, TSLA o MSFT.</p>
+                <p class="opt-info"><strong>¿No encuentro un activo?</strong> Puede no estar disponible temporalmente o no estar soportado en la fuente de datos.</p>
+            </article>
+
+            <article class="card">
+                <h3 class="opt-title">¿Para qué sirve cada sección?</h3>
+                <p class="opt-info"><strong>Dashboard:</strong> vista general de actividad y accesos rápidos.</p>
+                <p class="opt-info"><strong>Análisis:</strong> estudio detallado por ticker, señales y explicación del resultado.</p>
+                <p class="opt-info"><strong>Portfolio:</strong> gestión de carteras y seguimiento de activos.</p>
+                <p class="opt-info"><strong>AcademIA:</strong> contenido educativo y guía para aprender conceptos clave.</p>
+                <p class="opt-info"><strong>Perfil/Ajustes:</strong> datos personales, preferencias y configuración visual.</p>
+            </article>
+        </section>
+
+        <section class="opts-section">
+            <article class="card">
+                <h3 class="opt-title">Buenas prácticas antes de invertir</h3>
+                <p class="opt-info">Define objetivo, plazo y nivel de riesgo antes de ejecutar operaciones.</p>
+                <p class="opt-info">No concentres todo en un solo activo y evita operar por impulso.</p>
+                <p class="opt-info">Usa la app para analizar, no para delegar por completo tu decisión.</p>
+            </article>
+
+            <article class="card">
+                <h3 class="opt-title">Privacidad y seguridad</h3>
+                <p class="opt-info">Nunca compartas tu contraseña ni códigos de acceso.</p>
+                <p class="opt-info">Cierra sesión en equipos compartidos y revisa tu correo de cuenta periódicamente.</p>
+                <p class="opt-info">Si detectas actividad inusual, contacta soporte desde esta página.</p>
             </article>
 
             <article class="card">
                 <h3 class="opt-title">Contacto</h3>
                 <p class="opt-info">Si no encuentras tu respuesta, escríbenos y te ayudamos.</p>
                 <p class="opt-info" id="supportUserEmail">Email de cuenta: Cargando...</p>
-                <div style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md); flex-wrap: wrap;">
-                    <button class="btn-primary" id="btnContactSupport">Contactar Soporte</button>
-                </div>
+                <button class="btn-primary" id="btnContactSupport">Contactar Soporte</button>
             </article>
         </section>
     </div>
