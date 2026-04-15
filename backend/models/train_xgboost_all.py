@@ -165,15 +165,21 @@ def train_xgboost_all() -> None:
             xgb_rec = xgb_metrics.get("xgb_recall_up", 0)
             
             if use_db:
-                # Guardar confianza basada en probabilidades máximas
                 print(f"   [SAVE] Guardando en BD...")
                 try:
                     from backend.daos.activo_dao import ActivoDAO
+                    from backend.services.prediction_log_service import _get_xgboost_prediction
+
+                    live = _get_xgboost_prediction(ticker)
                     update_data = {
-                        "confianza_bygru": xgb_confidence,  # ⭐ Confianza de probabilidades máximas (más realista)
+                        "senal_ia":        live["trend"],
+                        "confianza_bygru":  round(float(live["confidence"]), 4),
+                        "precio":           round(float(live["current_price"]), 4),
                     }
                     success = ActivoDAO.actualizar(ticker, update_data)
                     result_status = "[OK] BD OK" if success else "[ERROR] BD FAIL"
+                    if success:
+                        print(f"      Señal: {live['trend']} ({live['confidence']:.0%}) | Precio: {live['current_price']:.2f}")
                 except Exception as bd_err:
                     print(f"      [ERROR] Error guardando: {bd_err}")
                     result_status = "❌ BD ERROR"

@@ -64,19 +64,23 @@ def _get_actual_price(ticker: str, target_date: date) -> Tuple[float, bool]:
 
 def _build_xgb_features(window: np.ndarray) -> np.ndarray:
     """
-    Transforma ventana [window_size, n_features] en vector tabular [4*n_features].
+    Transforma ventana [window_size, n_features] en vector tabular [12*n_features].
 
-    Replica exactamente _build_xgb_features de walk_forward_xgb.py:
-      last  = último timestep
-      mean  = media sobre la ventana
-      std   = desviación estándar sobre la ventana
-      trend = último - primero (dirección)
+    Agrega [last, mean, std, trend] sobre 3 sub-ventanas temporales:
+      - corta  : últimos W//6 pasos  (ej. 5d  para stable, 10d para volatile)
+      - media  : últimos W//2 pasos  (ej. 15d para stable, 30d para volatile)
+      - completa: ventana entera W   (ej. 30d para stable, 60d para volatile)
+
+    Debe ser idéntico a build_xgb_features en xgboost_model.py
+    y a _build_xgb_features en walk_forward_xgb.py.
     """
-    last  = window[-1, :]
-    mean  = window.mean(axis=0)
-    std   = window.std(axis=0)
-    trend = window[-1, :] - window[0, :]
-    return np.concatenate([last, mean, std, trend])
+    W = window.shape[0]
+    sub_windows = [max(2, W // 6), W // 2, W]
+    parts = []
+    for sw in sub_windows:
+        sl = window[-sw:, :]
+        parts.extend([sl[-1, :], sl.mean(axis=0), sl.std(axis=0), sl[-1, :] - sl[0, :]])
+    return np.concatenate(parts)
 
 
 def _get_xgboost_prediction(ticker: str) -> Dict:
@@ -145,7 +149,7 @@ def log_daily_predictions(tickers: List[str] = None) -> Dict:
         tickers = TICKERS["stable"] + TICKERS["volatile"]
 
     today    = date.today()
-    forecast = today + timedelta(days=5)
+    forecast = today + timedelta(days=3)
 
     logged, skipped, errors = [], [], []
 
@@ -171,13 +175,23 @@ def log_daily_predictions(tickers: List[str] = None) -> Dict:
                 "tendencia_predicha": result["trend"],
                 "confianza_ensemble": round(float(result["confidence"]), 4),
                 "precio_entrada":     round(float(result["current_price"]), 4),
-                "dias_horizonte":     5,
+                "dias_horizonte":     3,
             }
 
             inserted = PredictionLogDAO.crear(record)
             if inserted:
                 logged.append(ticker)
                 logger.info(f"[{ticker}] Prediccion registrada: {result['trend']} ({result['confidence']:.0%})")
+                # Mantener activos sincronizado con la señal fresca del día
+                try:
+                    from ..daos.activo_dao import ActivoDAO
+                    ActivoDAO.actualizar(ticker, {
+                        "senal_ia":        result["trend"],
+                        "confianza_bygru":  round(float(result["confidence"]), 4),
+                        "precio":           round(float(result["current_price"]), 4),
+                    })
+                except Exception as _upd_err:
+                    logger.warning(f"[{ticker}] No se pudo actualizar activos: {_upd_err}")
             else:
                 skipped.append(ticker)
                 logger.info(f"[{ticker}] Ya registrado hoy, omitido.")
