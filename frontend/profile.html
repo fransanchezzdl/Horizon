@@ -120,12 +120,12 @@
     </div>
 
     <!-- Modal de Edición de Perfil -->
-    <div id="modalEditProfile" class="modal" style="display: none;">
+    <div id="modalEditProfile" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 style="margin: 0;">Editar Perfil</h2>
             </div>
-            <form id="formEditProfile" style="padding: var(--spacing-xl);">
+            <form id="formEditProfile">
                 
                 <div class="form-group">
                     <label for="editNombre">Nombre</label>
@@ -139,22 +139,22 @@
                     <label for="editEmail">Email</label>
                     <input type="email" id="editEmail" placeholder="tu@email.com" readonly>
                 </div>
-                <div id="editMessage" style="font-size: 0.9em; margin-top: 10px;"></div>
+                <div id="editMessage" class="modal-message"></div>
 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="button" class="btn-secondary" id="btnCancelEdit" style="background: var(--color-bg-light); color: var(--color-text-primary); border: 1px solid var(--color-border); flex: 1;">Cancelar</button>
-                    <button type="submit" class="btn-primary" id="btnSaveEdit" style="flex: 1;">Guardar</button>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="btnCancelEdit">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSaveEdit">Guardar</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <div id="modalEditAvatar" class="modal" style="display: none;">
+    <div id="modalEditAvatar" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 style="margin: 0;">Cambiar foto de perfil</h2>
             </div>
-            <div style="padding: var(--spacing-xl);">
+            <div>
                 <div class="form-group">
                     <label for="profilePhotoUpload">Foto de perfil</label>
                     <div class="profile-photo-selector">
@@ -182,11 +182,11 @@
                     <input type="hidden" id="fotoPerfilUrl" name="foto_perfil" value="">
                 </div>
 
-                <div id="avatarMessage" style="font-size: 0.9em; margin-top: 10px;"></div>
+                <div id="avatarMessage" class="modal-message"></div>
 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="button" class="btn-secondary" id="btnCancelAvatar" style="background: var(--color-bg-light); color: var(--color-text-primary); border: 1px solid var(--color-border); flex: 1;">Cancelar</button>
-                    <button type="button" class="btn-primary" id="btnSaveAvatar" style="flex: 1;">Guardar foto</button>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="btnCancelAvatar">Cancelar</button>
+                    <button type="button" class="btn-primary" id="btnSaveAvatar">Guardar foto</button>
                 </div>
             </div>
         </div>
@@ -229,29 +229,29 @@
     </div>
 
     <!-- Modal de Cambio de Contraseña -->
-     <div id="modalChangePassword" class="modal" style="display: none;">
+     <div id="modalChangePassword" class="modal hidden">
         <div class="modal-content">
             <div class="modal-header">
                 <h2 style="margin: 0;">Cambiar Contraseña</h2>
             </div>
-            <form id="formChangePassword" style="padding: var(--spacing-xl);">
+            <form id="formChangePassword">
                 <div class="form-group">
                     <label for="currentPassword">Contraseña Actual</label>
                     <input type="password" id="currentPassword" placeholder="Tu contraseña actual" required>
                 </div>
                 <div class="form-group">
                     <label for="newPassword">Nueva Contraseña</label>
-                    <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres" required>
+                    <input type="password" id="newPassword" placeholder="Nueva contraseña" required>
                 </div>
                 <div class="form-group">
                     <label for="confirmNewPassword">Repetir Nueva Contraseña</label>
                     <input type="password" id="confirmNewPassword" placeholder="Repite tu nueva contraseña" required>
                 </div>
-                <div id="passwordMessage" style="font-size: 0.9em; margin-top: 10px; font-weight: 500;"></div>
+                <div id="passwordMessage" class="modal-message"></div>
 
-                <div style="display: flex; gap: 10px; margin-top: 15px;">
-                    <button type="button" class="btn-secondary" id="btnCancelPassword" style="background: var(--color-bg-light); color: var(--color-text-primary); border: 1px solid var(--color-border); flex: 1;">Cancelar</button>
-                    <button type="submit" class="btn-primary" id="btnSavePassword" style="flex: 1;">Actualizar</button>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" id="btnCancelPassword">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSavePassword">Actualizar</button>
                 </div>
             </form>
         </div>
