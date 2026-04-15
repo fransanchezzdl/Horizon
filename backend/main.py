@@ -249,7 +249,7 @@ def get_current_user_info(user_id: str = Depends(auth_service.get_current_user))
     return user
 
 # ─── Endpoint de Editar Perfil ─────────────────────────────────────────
-@app.patch("/usuarios/me")
+@app.patch("/usuarios/me", response_model=UsuarioResponse)
 def editar_mi_perfil(datos: PerfilUpdateDTO, user_id: str = Depends(auth_service.get_current_user)):
     """
     Actualiza los datos del perfil del usuario autenticado (Actualización parcial).

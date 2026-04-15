@@ -1,6 +1,7 @@
 from fastapi import HTTPException, UploadFile
 from ..dtos.usuario_dto import PerfilUpdateDTO
 from ..database import get_supabase_admin
+from ..daos.usuario_dao import UsuarioDAO
 from .storage_service import StorageService
 
 class UserService:
@@ -66,14 +67,24 @@ class UserService:
 
         # 3. Extraer los datos y pasárselos a tu DAO existente
         try:
-            # Intentamos guardar en la base de datos
-            self.usuario_dao.actualizar_perfil(
-                user_id=user_id,
-                nombre=datos_dict.get("nombre"),
-                apellidos=datos_dict.get("apellidos"),
-                foto_perfil=datos_dict.get("foto_perfil"),
-                email=datos_dict.get("email")
-            )
+            # Usar cliente admin para todas las actualizaciones de perfil
+            # Esto asegura que campos sensibles como membresia puedan actualizarse
+            admin_client = get_supabase_admin()
+            if admin_client:
+                admin_dao = UsuarioDAO(admin_client)
+                admin_dao.actualizar_perfil(
+                    user_id=user_id,
+                    nombre=datos_dict.get("nombre"),
+                    apellidos=datos_dict.get("apellidos"),
+                    foto_perfil=datos_dict.get("foto_perfil"),
+                    email=datos_dict.get("email"),
+                    membresia=datos_dict.get("membresia")
+                )
+            else:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Cliente admin no disponible para actualizar perfil."
+                )
         except Exception as e:
             # Si el DAO o Supabase fallan, lanzamos la excepción que el main.py atrapará
             print(f"[USER SERVICE] Error al actualizar perfil: {str(e)}")
@@ -90,11 +101,7 @@ class UserService:
                 detail="Ocurrió un error al intentar guardar los cambios en la base de datos."
             )
         
-        return {
-            "status": "exito", 
-            "mensaje": "Perfil actualizado correctamente.",
-            "datos_actualizados": datos_dict
-        }
+        return self._obtener_usuario_hidratado_or_500(user_id)
 
     def eliminar_perfil(self, user_id: str) -> dict:
         """
