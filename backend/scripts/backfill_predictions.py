@@ -192,13 +192,16 @@ def _predict_for_date(ticker: str, pred_date: date) -> Optional[Dict]:
         xgb_features = _build_xgb_features(scaled_window).reshape(1, -1)
 
         # 5. Predecir con el modelo guardado
-        xgb = predict_xgboost(ticker, xgb_features)
+        # confidence_tau=0.36: filtra predicciones sin convicción real
+        # sin ser demasiado estricto dado el rango calibrado ~0.33-0.49
+        xgb = predict_xgboost(ticker, xgb_features, confidence_tau=0.36)
 
         direction_map = {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}
         return {
             "trend":         direction_map.get(xgb["direction"], "LATERAL"),
             "confidence":    xgb["confidence"],
             "current_price": current_price,
+            "abstained":     xgb.get("abstained", False),
         }
 
     except Exception as e:
@@ -256,6 +259,13 @@ def run_backfill(
             if result is None:
                 ticker_errors += 1
                 total_errors  += 1
+                continue
+
+            # Si el modelo se abstuvo (baja confianza), no insertar
+            if result.get("abstained"):
+                logger.debug(f"  {pred_date}: abstención ({result['confidence']:.0%}), omitido.")
+                ticker_skipped += 1
+                total_skipped  += 1
                 continue
 
             # ── Precio real en fecha_objetivo ──

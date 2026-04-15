@@ -381,7 +381,7 @@ def predict_ensemble(ticker: str) -> dict:
     # ── Meta-ensemble: combinar BiGRU + XGBoost ────────────────────────────────
     # Obtener predicción XGBoost con el último timestep (features raw)
     last_features_raw = feat_df[feature_cols].values[-1]
-    xgb_result = predict_xgboost(ticker, last_features_raw)
+    xgb_result = predict_xgboost(ticker, last_features_raw, confidence_tau=0.40)
     xgb_prob = xgb_result["probability"]
 
     # Intentar usar ensemble stacking si está disponible
