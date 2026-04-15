@@ -51,15 +51,24 @@ RANDOM_STATE = 42
 
 def _build_xgb_features(X_tensor) -> np.ndarray:
     """
-    Convierte tensor [n, window, features] en matriz tabular [n, 4*features].
-    Igual que en train_xgboost: last, mean, std, trend por feature.
+    Convierte tensor [n, window, features] en matriz tabular [n, 12*features].
+
+    Agrega [last, mean, std, trend] sobre 3 sub-ventanas temporales:
+      - corta  : últimos W//6 pasos  (ej. 5d  para stable, 10d para volatile)
+      - media  : últimos W//2 pasos  (ej. 15d para stable, 30d para volatile)
+      - completa: ventana entera W   (ej. 30d para stable, 60d para volatile)
+
+    Debe ser idéntico a build_xgb_features en xgboost_model.py
+    y a _build_xgb_features en prediction_log_service.py.
     """
     X = X_tensor.numpy() if hasattr(X_tensor, "numpy") else np.array(X_tensor)
-    last  = X[:, -1, :]
-    mean  = X.mean(axis=1)
-    std   = X.std(axis=1)
-    trend = X[:, -1, :] - X[:, 0, :]
-    return np.concatenate([last, mean, std, trend], axis=1)
+    W = X.shape[1]
+    sub_windows = [max(2, W // 6), W // 2, W]
+    parts = []
+    for sw in sub_windows:
+        sl = X[:, -sw:, :]
+        parts.extend([sl[:, -1, :], sl.mean(axis=1), sl.std(axis=1), sl[:, -1, :] - sl[:, 0, :]])
+    return np.concatenate(parts, axis=1)
 
 
 def _returns_to_classes(returns: np.ndarray, dn: float, up: float) -> np.ndarray:
