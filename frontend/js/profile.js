@@ -213,11 +213,13 @@ function initProfileEvents() {
     const modalEditAvatar = document.getElementById('modalEditAvatar');
     const modalChangePassword = document.getElementById('modalChangePassword');
     const deleteAccountModal = document.getElementById('deleteAccountModal');
+    const modalUpgradePlan = document.getElementById('modalUpgradePlan');
 
     if (modalEditProfile) modalEditProfile.classList.add('hidden');
     if (modalEditAvatar) modalEditAvatar.classList.add('hidden');
     if (modalChangePassword) modalChangePassword.classList.add('hidden');
     if (deleteAccountModal) deleteAccountModal.classList.add('is-hidden');
+    if (modalUpgradePlan) modalUpgradePlan.classList.add('hidden');
 
     // --- 1. NUEVA LÓGICA: EDITAR PERFIL ---
     const btnEditProfile = document.getElementById('btnEditProfile');
@@ -359,6 +361,86 @@ function initProfileEvents() {
             } finally {
                 btnSaveAvatar.disabled = false;
                 btnSaveAvatar.textContent = 'Guardar foto';
+            }
+        });
+    }
+
+    // --- LÓGICA PARA ACTUALIZAR PLAN ---
+    const openUpgradeModal = () => {
+        const modalUpgradePlan = document.getElementById('modalUpgradePlan');
+        const upgradeMessage = document.getElementById('upgradeMessage');
+        if (modalUpgradePlan && upgradeMessage) {
+            upgradeMessage.innerHTML = '';
+            modalUpgradePlan.classList.remove('hidden');
+        }
+    };
+
+    const btnUpgrade = document.getElementById('btnUpgrade');
+    if (btnUpgrade) {
+        btnUpgrade.addEventListener('click', openUpgradeModal);
+    }
+
+    const profilePlanBadge = document.getElementById('profilePlan');
+    if (profilePlanBadge) {
+        profilePlanBadge.addEventListener('click', openUpgradeModal);
+        profilePlanBadge.style.cursor = 'pointer'; // Indicar que es clickeable
+    }
+
+    const btnCancelUpgrade = document.getElementById('btnCancelUpgrade');
+    if (btnCancelUpgrade) {
+        btnCancelUpgrade.addEventListener('click', () => {
+            const modalUpgradePlan = document.getElementById('modalUpgradePlan');
+            modalUpgradePlan.classList.add('hidden');
+        });
+    }
+
+    const btnConfirmUpgrade = document.getElementById('btnConfirmUpgrade');
+    if (btnConfirmUpgrade) {
+        btnConfirmUpgrade.addEventListener('click', async () => {
+            const upgradeMessage = document.getElementById('upgradeMessage');
+            const token = window.getAccessToken();
+
+            if (!token) {
+                upgradeMessage.innerHTML = '<span style="color: red;">Error: No estás autenticado</span>';
+                return;
+            }
+
+            btnConfirmUpgrade.disabled = true;
+            btnConfirmUpgrade.textContent = 'Procesando...';
+            upgradeMessage.innerHTML = '';
+
+            try {
+                const response = await window.fetchWithAuth(`${API_BASE}/usuarios/me`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        membresia: 'Pro'
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    console.error('Error en la respuesta:', errorData);
+                    throw new Error(errorData.detail || 'Error al actualizar el plan');
+                }
+
+                const updatedUser = await response.json();
+                window.setCurrentUserData(updatedUser);
+                loadProfileData(); // Recargar datos del perfil
+
+                upgradeMessage.innerHTML = '<span style="color: green;">¡Plan actualizado a Pro exitosamente!</span>';
+                setTimeout(() => {
+                    const modalUpgradePlan = document.getElementById('modalUpgradePlan');
+                    modalUpgradePlan.classList.add('hidden');
+                }, 2000);
+
+            } catch (error) {
+                upgradeMessage.innerHTML = `<span style="color: red;">${error.message || 'Error de conexión.'}</span>`;
+            } finally {
+                btnConfirmUpgrade.disabled = false;
+                btnConfirmUpgrade.textContent = 'Confirmar Pago';
             }
         });
     }
@@ -621,14 +703,6 @@ function initProfileEvents() {
             if (event.target === deleteAccountModal) {
                 closeDeleteAccountModal();
             }
-        });
-    }
-
-    // Actualizar plan
-    const btnUpgrade = document.getElementById('btnUpgrade');
-    if (btnUpgrade) {
-        btnUpgrade.addEventListener('click', () => {
-            alert('Próximamente podrás mejorar tu plan');
         });
     }
 

@@ -18,6 +18,7 @@ class PerfilUpdateDTO(BaseModel):
     nombre: Optional[str] = None
     apellidos: Optional[str] = None
     foto_perfil: Optional[str] = None
+    membresia: Optional[str] = None
 
 # DTO para cambio de contraseña
 class ChangePasswordRequest(BaseModel):
