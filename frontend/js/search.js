@@ -497,20 +497,6 @@ function initSearch() {
         selectedTicker = (activo.ticker || '').toUpperCase();
         setAnalysisMode('active');
 
-<<<<<<< HEAD
-        const precioValue = document.getElementById('precioValue');
-        const precioSub   = document.getElementById('precioSub');
-        if (precioValue) {
-            precioValue.textContent = activo.precio != null
-                ? `$${Number(activo.precio).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-                : '--';
-        }
-        if (precioSub) {
-            precioSub.textContent = activo.precio != null ? 'Precio de cierre' : 'Sin datos';
-        }
-
-=======
->>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
         const senalValue = document.getElementById('senalValue');
         if (senalValue) senalValue.textContent = formatSignal(activo.senal_ia);
 
