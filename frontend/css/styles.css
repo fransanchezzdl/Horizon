@@ -2326,6 +2326,13 @@ body > section {
     border-radius: var(--radius-md);
     font-weight: 600;
     font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.profile-plan-badge:hover {
+    background: linear-gradient(135deg, var(--color-primary-a20) 0%, var(--color-secondary-a20) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px var(--color-primary-a20);
 }
 
 /* Contenido del Perfil */
