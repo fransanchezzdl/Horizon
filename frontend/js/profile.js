@@ -140,6 +140,9 @@ function loadProfileData() {
         document.getElementById('membershipPlan').textContent = plan;
         document.getElementById('membershipDate').textContent = formatDate(user.created_at || new Date().toISOString());
 
+        // Actualizar el botón según la membresía
+        updateUpgradeButton(user.membresia || 'Gratis');
+
         // Cargar estadísticas (llamar a la API si es necesario)
         const userId = user.id_usuario || user.id;
         if (userId) {
@@ -206,6 +209,22 @@ function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('es-ES', options);
 }
 
+// Actualizar el botón de upgrade/cancel según la membresía
+function updateUpgradeButton(membresia) {
+    const btnUpgrade = document.getElementById('btnUpgrade');
+    if (!btnUpgrade) return;
+
+    if (membresia === 'Pro') {
+        // Cambiar a botón de cancelar suscripción
+        btnUpgrade.textContent = 'Cancelar Suscripción';
+        btnUpgrade.className = 'btn-logout';
+    } else {
+        // Cambiar a botón de actualizar plan
+        btnUpgrade.textContent = 'Actualizar Plan';
+        btnUpgrade.className = 'btn-primary';
+    }
+}
+
 // Event Listeners
 function initProfileEvents() {
     // Asegurar que los modales estén ocultos al inicializar
@@ -220,8 +239,6 @@ function initProfileEvents() {
     if (modalChangePassword) modalChangePassword.classList.add('hidden');
     if (deleteAccountModal) deleteAccountModal.classList.add('is-hidden');
     if (modalUpgradePlan) modalUpgradePlan.classList.add('hidden');
-
-    // --- 1. NUEVA LÓGICA: EDITAR PERFIL ---
     const btnEditProfile = document.getElementById('btnEditProfile');
     const btnCancelEdit = document.getElementById('btnCancelEdit');
     const formEditProfile = document.getElementById('formEditProfile');
@@ -365,25 +382,38 @@ function initProfileEvents() {
         });
     }
 
-    // --- LÓGICA PARA ACTUALIZAR PLAN ---
-    const openUpgradeModal = () => {
-        const modalUpgradePlan = document.getElementById('modalUpgradePlan');
-        const upgradeMessage = document.getElementById('upgradeMessage');
-        if (modalUpgradePlan && upgradeMessage) {
-            upgradeMessage.innerHTML = '';
-            modalUpgradePlan.classList.remove('hidden');
-        }
-    };
-
     const btnUpgrade = document.getElementById('btnUpgrade');
     if (btnUpgrade) {
-        btnUpgrade.addEventListener('click', openUpgradeModal);
-    }
+        btnUpgrade.addEventListener('click', async () => {
+            const user = window.getCurrentUserData();
+            const currentPlan = user.membresia || 'Gratis';
+            const newPlan = currentPlan === 'Pro' ? 'Gratis' : 'Pro';
+            const actionText = newPlan === 'Pro' ? 'actualizar' : 'cancelar';
 
-    const profilePlanBadge = document.getElementById('profilePlan');
-    if (profilePlanBadge) {
-        profilePlanBadge.addEventListener('click', openUpgradeModal);
-        profilePlanBadge.style.cursor = 'pointer'; // Indicar que es clickeable
+            const modalUpgradePlan = document.getElementById('modalUpgradePlan');
+            const upgradeMessage = document.getElementById('upgradeMessage');
+            const modalTitle = document.querySelector('#modalUpgradePlan .modal-header h2');
+            const modalBody = document.querySelector('#modalUpgradePlan .modal-content > div > div.form-group > p');
+            const btnConfirmUpgrade = document.getElementById('btnConfirmUpgrade');
+
+            if (modalUpgradePlan && upgradeMessage && modalTitle && modalBody && btnConfirmUpgrade) {
+                // Actualizar el contenido del modal según la acción
+                if (newPlan === 'Pro') {
+                    modalTitle.textContent = 'Actualizar a Plan Pro';
+                    modalBody.innerHTML = 'Estás a punto de actualizar tu plan a <strong>Pro</strong>.<br>Precio: <strong>0.0€</strong> (simulación de pago)';
+                    btnConfirmUpgrade.textContent = 'Confirmar Pago';
+                    btnConfirmUpgrade.className = 'btn-primary';
+                } else {
+                    modalTitle.textContent = 'Cancelar Suscripción';
+                    modalBody.innerHTML = 'Estás a punto de cancelar tu suscripción y volver al plan <strong>Gratis</strong>.<br>¿Estás seguro?';
+                    btnConfirmUpgrade.textContent = 'Confirmar Cancelación';
+                    btnConfirmUpgrade.className = 'btn-logout';
+                }
+
+                upgradeMessage.innerHTML = '';
+                modalUpgradePlan.classList.remove('hidden');
+            }
+        });
     }
 
     const btnCancelUpgrade = document.getElementById('btnCancelUpgrade');
@@ -393,8 +423,6 @@ function initProfileEvents() {
             modalUpgradePlan.classList.add('hidden');
         });
     }
-
-    const btnConfirmUpgrade = document.getElementById('btnConfirmUpgrade');
     if (btnConfirmUpgrade) {
         btnConfirmUpgrade.addEventListener('click', async () => {
             const upgradeMessage = document.getElementById('upgradeMessage');
@@ -404,6 +432,11 @@ function initProfileEvents() {
                 upgradeMessage.innerHTML = '<span style="color: red;">Error: No estás autenticado</span>';
                 return;
             }
+
+            const user = window.getCurrentUserData();
+            const currentPlan = user.membresia || 'Gratis';
+            const newPlan = currentPlan === 'Pro' ? 'Gratis' : 'Pro';
+            const actionText = newPlan === 'Pro' ? 'actualización' : 'cancelación';
 
             btnConfirmUpgrade.disabled = true;
             btnConfirmUpgrade.textContent = 'Procesando...';
@@ -416,21 +449,21 @@ function initProfileEvents() {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        membresia: 'Pro'
+                        membresia: newPlan
                     })
                 });
 
                 if (!response.ok) {
                     const errorData = await response.json();
                     console.error('Error en la respuesta:', errorData);
-                    throw new Error(errorData.detail || 'Error al actualizar el plan');
+                    throw new Error(errorData.detail || `Error al procesar la ${actionText}`);
                 }
 
                 const updatedUser = await response.json();
                 window.setCurrentUserData(updatedUser);
                 loadProfileData(); // Recargar datos del perfil
 
-                upgradeMessage.innerHTML = '<span style="color: green;">¡Plan actualizado a Pro exitosamente!</span>';
+                upgradeMessage.innerHTML = `<span style="color: green;">${actionText === 'actualización' ? '¡Plan actualizado a Pro exitosamente!' : 'Suscripción cancelada. Has vuelto al plan Gratis.'}</span>`;
                 setTimeout(() => {
                     const modalUpgradePlan = document.getElementById('modalUpgradePlan');
                     modalUpgradePlan.classList.add('hidden');
@@ -440,9 +473,22 @@ function initProfileEvents() {
                 upgradeMessage.innerHTML = `<span style="color: red;">${error.message || 'Error de conexión.'}</span>`;
             } finally {
                 btnConfirmUpgrade.disabled = false;
-                btnConfirmUpgrade.textContent = 'Confirmar Pago';
+                // El texto se reseteará cuando se vuelva a abrir el modal
             }
         });
+    }
+
+    // Event listener para el badge del plan en la cabecera
+    const profilePlanBadge = document.getElementById('profilePlan');
+    if (profilePlanBadge) {
+        profilePlanBadge.addEventListener('click', () => {
+            // Simular clic en el botón de upgrade para mantener consistencia
+            const btnUpgrade = document.getElementById('btnUpgrade');
+            if (btnUpgrade) {
+                btnUpgrade.click();
+            }
+        });
+        profilePlanBadge.style.cursor = 'pointer'; // Indicar que es clickeable
     }
 
     // --- ENVIAR LOS DATOS ---
