@@ -4086,7 +4086,7 @@ body > section {
     padding-bottom: 10px;
 }
 
-.chart-header > div {
+.chart-header > div:not(.range-selector) {
     display: flex;
     flex-direction: column;
     align-items: flex-start;

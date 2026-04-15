@@ -15,47 +15,17 @@
   let _currentDays = 30;
   let _resizeHandler = null;
 
-<<<<<<< HEAD
-  // ── Colores por tema ─────────────────────────────────────────────────────────
-  const COLORS_DARK = {
-=======
   // ── Colores ─────────────────────────────────────────────────────────────────
   const SIGNAL_COLORS = {
->>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
     ALCISTA_OK:  '#22c55e',
     BAJISTA_OK:  '#ef4444',
     LATERAL_OK:  '#f59e0b',
     PENDING:     '#6b7280',
-<<<<<<< HEAD
-    BG:          '#111827',
-    GRID:        '#1e293b',
-    TEXT:        '#94a3b8',
-=======
->>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
     UP_CANDLE:   '#22c55e',
     DOWN_CANDLE: '#ef4444',
     BORDER:      '#1e293b',
   };
 
-<<<<<<< HEAD
-  const COLORS_LIGHT = {
-    ALCISTA_OK:  '#16a34a',
-    BAJISTA_OK:  '#dc2626',
-    LATERAL_OK:  '#d97706',
-    PENDING:     '#9ca3af',
-    BG:          '#ffffff',
-    GRID:        '#f1f5f9',
-    TEXT:        '#64748b',
-    UP_CANDLE:   '#16a34a',
-    DOWN_CANDLE: '#dc2626',
-    BORDER:      '#e2e8f0',
-  };
-
-  function _getColors() {
-    return document.documentElement.getAttribute('data-theme') === 'dark'
-      ? COLORS_DARK
-      : COLORS_LIGHT;
-=======
   const THEME_COLORS = {
     dark: {
       BG:   '#111827',
@@ -72,7 +42,6 @@
   function _getThemeColors() {
     const theme = document.documentElement.getAttribute('data-theme') || 'light';
     return { ...SIGNAL_COLORS, ...THEME_COLORS[theme] || THEME_COLORS.light };
->>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
   }
 
   // Opacidad hex para señales incorrectas (~40%)
@@ -81,18 +50,10 @@
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function _markerColor(signal, correct) {
-<<<<<<< HEAD
-    const C = _getColors();
-    if (correct === null || correct === undefined) return C.PENDING;
-    const base = signal === 'ALCISTA' ? C.ALCISTA_OK
-               : signal === 'BAJISTA' ? C.BAJISTA_OK
-               : C.LATERAL_OK;
-=======
     if (correct === null || correct === undefined) return SIGNAL_COLORS.PENDING;
     const base = signal === 'ALCISTA' ? SIGNAL_COLORS.ALCISTA_OK
                : signal === 'BAJISTA' ? SIGNAL_COLORS.BAJISTA_OK
                : SIGNAL_COLORS.LATERAL_OK;
->>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
     return correct ? base : base + INCORRECT_ALPHA;
   }
 
@@ -200,12 +161,8 @@
   }
 
   function _createChart(container) {
-<<<<<<< HEAD
-    const C = _getColors();
-
-=======
     const C = _getThemeColors();
->>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
+
     _chart = LightweightCharts.createChart(container, {
       width:  container.clientWidth,
       height: 300,
@@ -214,18 +171,6 @@
         textColor:  C.TEXT,
       },
       grid: {
-<<<<<<< HEAD
-        vertLines: { visible: false },
-        horzLines: { color: C.GRID },
-      },
-      crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-      rightPriceScale: {
-        borderVisible: false,
-        scaleMargins: { top: 0.1, bottom: 0.1 },
-      },
-      timeScale: {
-        borderVisible:   false,
-=======
         vertLines: { color: C.GRID },
         horzLines: { color: C.GRID },
       },
@@ -233,7 +178,6 @@
       rightPriceScale: { borderColor: C.GRID },
       timeScale: {
         borderColor:     C.GRID,
->>>>>>> f8102c68ba6735a55a034daab7e3e9ee5ef7e847
         timeVisible:     true,
         secondsVisible:  false,
         fixLeftEdge:     true,
@@ -273,12 +217,12 @@
 
   function _applyTheme() {
     if (!_chart || !_candleSeries) return;
-    const C = _getColors();
+    const C = _getThemeColors();
     _chart.applyOptions({
       layout: { background: { color: C.BG }, textColor: C.TEXT },
-      grid: { vertLines: { visible: false }, horzLines: { color: C.GRID } },
-      rightPriceScale: { borderVisible: false },
-      timeScale: { borderVisible: false },
+      grid: { vertLines: { color: C.GRID }, horzLines: { color: C.GRID } },
+      rightPriceScale: { borderColor: C.GRID },
+      timeScale: { borderColor: C.GRID },
     });
     _candleSeries.applyOptions({
       upColor:         C.UP_CANDLE,
