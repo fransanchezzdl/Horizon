@@ -391,17 +391,23 @@ class ActivoDAO:
     def actualizar_noticias(ticker: str, noticias: dict) -> bool:
         """
         Actualiza las noticias de un activo.
-        
+
         Args:
             ticker: Símbolo del ticker
             noticias: Dict con datos de noticias
-        
+
         Returns:
             bool: True si exitoso
         """
         try:
-            return ActivoDAO.actualizar(ticker, {"noticias": noticias})
-        
+            response = (
+                supabase.table(ActivoDAO.TABLE)
+                .update({"noticias": noticias, "updated_at": datetime.now().isoformat()})
+                .eq("ticker", ticker)
+                .execute()
+            )
+            return bool(response.data)
+
         except Exception as e:
             print(f"Error actualizando noticias de {ticker}: {e}")
             return False

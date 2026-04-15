@@ -240,19 +240,23 @@ def train_single_model(
             pct_new = 100 * new / sum(new_dist.values())
             print(f"     {class_names[cls]:8s}: {orig:5d} ({pct_orig:5.1f}%) → {new:5d} ({pct_new:5.1f}%)")
         
-        # Convertir a tensores
-        data["X_train"] = torch.from_numpy(X_balanced).float().to(device)
-        data["y_train"] = torch.from_numpy(y_balanced).long().to(device)
-        data["class_weights"] = torch.tensor(
+        # Convertir a tensores locales (no modificar data en el dict compartido
+        # para que XGBoost reciba después los datos originales sin aumentar)
+        X_train_tensor = torch.from_numpy(X_balanced).float().to(device)
+        y_train_tensor = torch.from_numpy(y_balanced).long().to(device)
+        class_weights = torch.tensor(
             [class_weights_new.get(i, 1.0) for i in range(3)],
             dtype=torch.float32,
             device=device
         )
-    
+    else:
+        X_train_tensor = data["X_train"].to(device)
+        y_train_tensor = data["y_train"].to(device)
+
     # DataLoaders — y_train son clases (long)
     # CRITICAL FIX: shuffle=False para preservar orden temporal en series de tiempo
     # Mezclar datos temporales rompe las dependencias y causa leakage
-    train_dataset = TensorDataset(data["X_train"], data["y_train"])
+    train_dataset = TensorDataset(X_train_tensor, y_train_tensor)
     train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False)
 
     val_X = data["X_val"].to(device)

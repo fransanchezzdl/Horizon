@@ -97,7 +97,7 @@ class TickerNewsService:
             days_back=days_back,
             fetch_limit=max(20, safe_limit * 6),
         )
-        noticias = self._build_news_payload(feed, limit=safe_limit)
+        noticias = self._build_news_payload(feed, ticker=ticker_normalized, limit=safe_limit)
 
         if noticias:
             cached_record = self._build_db_cache_payload(noticias)
@@ -164,8 +164,14 @@ class TickerNewsService:
             logger.warning("Error consultando Alpha Vantage para %s: %s", ticker, exc)
             return [], "request_error"
 
-    def _build_news_payload(self, feed: list[dict[str, Any]], limit: int) -> list[dict[str, Any]]:
+    # Umbral mínimo de relevancia del ticker en el artículo (0-1).
+    # Alpha Vantage asigna ~0.1 a menciones tangenciales y >0.3 a cobertura directa.
+    TICKER_RELEVANCE_MIN = 0.25
+
+    def _build_news_payload(self, feed: list[dict[str, Any]], ticker: str, limit: int) -> list[dict[str, Any]]:
         normalized: list[dict[str, Any]] = []
+        ticker_upper = (ticker or "").upper()
+
         for item in feed:
             title = (item.get("title") or "").strip()
             summary = (item.get("summary") or "").strip()
@@ -176,6 +182,14 @@ class TickerNewsService:
             if not title or not url:
                 continue
 
+            # Extraer relevancia del ticker en este artículo según Alpha Vantage.
+            # ticker_sentiment es una lista de dicts {ticker, relevance_score, ...}.
+            relevance = self._extract_ticker_relevance(item.get("ticker_sentiment", []), ticker_upper)
+
+            # Descartar artículos donde el ticker tiene poca relevancia.
+            if relevance < self.TICKER_RELEVANCE_MIN:
+                continue
+
             normalized.append(
                 {
                     "titulo": title,
@@ -184,10 +198,15 @@ class TickerNewsService:
                     "fuente": source,
                     "fecha": fecha_iso,
                     "_ranking": self._news_relevance_score(title, summary, source),
+                    "_relevance": relevance,
                 }
             )
 
-        normalized.sort(key=lambda n: (n.get("_ranking", 0), n.get("fecha", "")), reverse=True)
+        # Ordenar: primero por score de relevancia del ticker, luego por ranking editorial.
+        normalized.sort(
+            key=lambda n: (n.get("_relevance", 0), n.get("_ranking", 0), n.get("fecha", "")),
+            reverse=True,
+        )
 
         simple_candidates = [n for n in normalized if n.get("_ranking", 0) > 0]
         selected = (simple_candidates or normalized)[:limit]
@@ -196,7 +215,22 @@ class TickerNewsService:
             item["titulo"] = self._translate_to_spanish(item.get("titulo", ""))
             item["resumen"] = self._short_summary(self._translate_to_spanish(item.get("resumen", "")))
             item.pop("_ranking", None)
+            item.pop("_relevance", None)
         return selected
+
+    def _extract_ticker_relevance(self, ticker_sentiment: Any, ticker: str) -> float:
+        """Devuelve la relevance_score del ticker en el artículo (0.0 si no aparece)."""
+        if not isinstance(ticker_sentiment, list):
+            return 0.0
+        for entry in ticker_sentiment:
+            if not isinstance(entry, dict):
+                continue
+            if (entry.get("ticker") or "").upper() == ticker:
+                try:
+                    return float(entry.get("relevance_score", 0))
+                except (TypeError, ValueError):
+                    return 0.0
+        return 0.0
 
     def _news_relevance_score(self, title: str, summary: str, source: str) -> int:
         combined = f"{title} {summary}".lower()
