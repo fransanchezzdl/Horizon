@@ -406,8 +406,8 @@ function initProfileEvents() {
                 } else {
                     modalTitle.textContent = 'Cancelar Suscripción';
                     modalBody.innerHTML = 'Estás a punto de cancelar tu suscripción y volver al plan <strong>Gratis</strong>.<br>¿Estás seguro?';
-                    btnConfirmUpgrade.textContent = 'Confirmar Cancelación';
-                    btnConfirmUpgrade.className = 'btn-logout';
+                    btnConfirmUpgrade.textContent = 'Dar de baja';
+                    btnConfirmUpgrade.className = 'btn-logout btn-logout-compact';
                 }
 
                 upgradeMessage.innerHTML = '';
