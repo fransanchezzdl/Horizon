@@ -554,7 +554,7 @@ function initProfileEvents() {
         });
     }
 
-    // --- 2. LÓGICA PENDIENTE (Contraseña, 2FA, Planes) ---
+    // --- 2. LÓGICA PENDIENTE (Contraseña) ---
     // Cambiar Contraseña
     const btnChangePassword = document.getElementById('btnChangePassword');
     const formChangePassword = document.getElementById('formChangePassword');

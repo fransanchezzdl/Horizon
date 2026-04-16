@@ -20,7 +20,7 @@ class CursoDAO:
         try:
             response = (
                 supabase.table(CursoDAO.CURSOS_TABLE)
-                .select("id, titulo, descripcion")
+                .select("id, titulo, descripcion, plan_pro")
                 .order("id") # Ordenamos por id por defecto
                 .execute()
             )
@@ -49,7 +49,7 @@ class CursoDAO:
         try:
             response = (
                 supabase.table(CursoDAO.CURSOS_TABLE)
-                .select("id, titulo, descripcion")
+                .select("id, titulo, descripcion, plan_pro")
                 .eq("id", id_curso)
                 .execute()
             )
