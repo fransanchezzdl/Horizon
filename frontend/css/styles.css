@@ -177,20 +177,24 @@
     --color-success-bg-strong: #064e3b;
     --color-success-border: #0f766e;
     --color-success-border-strong: #10b981;
+    --color-success-800: #6ee7b7;
 
     --color-danger-bg: #3b1116;
     --color-danger-bg-strong: #4c1d23;
     --color-danger-border: #7f1d1d;
     --color-danger-border-strong: #b91c1c;
+    --color-danger-800: #fca5a5;
 
     --color-warning-bg: #422006;
     --color-warning-bg-soft: #4a2307;
     --color-warning-border: #92400e;
     --color-warning-border-soft: #b45309;
+    --color-warning-800: #fde68a;
 
     --color-info-bg: #10243f;
     --color-info-border: #1d4f91;
     --color-info-border-soft: #2563eb;
+    --color-info-700: #93c5fd;
 
     --color-accent-purple-bg: #3b1a5a;
     --color-accent-teal-bg: #133633;
@@ -4470,6 +4474,7 @@ body > section {
     animation: slideInAlert 0.3s ease-out;
     font-size: 14px;
     font-weight: 500;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
 .alert-success {

@@ -65,6 +65,11 @@
     "data_type": "character varying"
   },
   {
+    "table_name": "cursos",
+    "column_name": "plan_pro",
+    "data_type": "boolean"
+  },
+  {
     "table_name": "diapositivas",
     "column_name": "id",
     "data_type": "bigint"
