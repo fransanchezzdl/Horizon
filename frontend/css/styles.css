@@ -2659,24 +2659,9 @@ body > section {
 
 /* ==================== MODALES (PERFIL) ==================== */
 .modal.hidden {
-    display: none !important;
+    display: none;
 }
-
-.modal .modal-content > :not(.modal-header) {
-    padding: var(--spacing-xl);
-}
-
-.modal .modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.modal .btn {
-    flex: 1;
-}
-
-.modal .modal-message {
+.modal-message {
     font-size: 0.9em;
     margin-top: 10px;
     font-weight: 500;
@@ -3796,7 +3781,7 @@ body > section {
 .modal-footer {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     gap: var(--spacing-md);
     padding: var(--spacing-lg) var(--spacing-xl);
     border-top: 1px solid var(--color-border);

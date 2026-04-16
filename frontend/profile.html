@@ -126,22 +126,23 @@
                 <h2 style="margin: 0;">Editar Perfil</h2>
             </div>
             <form id="formEditProfile">
-                
-                <div class="form-group">
-                    <label for="editNombre">Nombre</label>
-                    <input type="text" id="editNombre" placeholder="Tu nombre">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editNombre">Nombre</label>
+                        <input type="text" id="editNombre" placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label for="editApellidos">Apellidos</label>
+                        <input type="text" id="editApellidos" placeholder="Tus apellidos">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmail">Email</label>
+                        <input type="email" id="editEmail" placeholder="tu@email.com" readonly>
+                    </div>
+                    <div id="editMessage" class="modal-message"></div>
                 </div>
-                <div class="form-group">
-                    <label for="editApellidos">Apellidos</label>
-                    <input type="text" id="editApellidos" placeholder="Tus apellidos">
-                </div>
-                <div class="form-group">
-                    <label for="editEmail">Email</label>
-                    <input type="email" id="editEmail" placeholder="tu@email.com" readonly>
-                </div>
-                <div id="editMessage" class="modal-message"></div>
 
-                <div class="modal-actions">
+                <div class="modal-footer">
                     <button type="button" class="btn-secondary" id="btnCancelEdit">Cancelar</button>
                     <button type="submit" class="btn-primary" id="btnSaveEdit">Guardar</button>
                 </div>
@@ -154,7 +155,7 @@
             <div class="modal-header">
                 <h2 style="margin: 0;">Cambiar foto de perfil</h2>
             </div>
-            <div>
+            <div class="modal-body">
                 <div class="form-group">
                     <label for="profilePhotoUpload">Foto de perfil</label>
                     <div class="profile-photo-selector">
@@ -183,11 +184,11 @@
                 </div>
 
                 <div id="avatarMessage" class="modal-message"></div>
+            </div>
 
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" id="btnCancelAvatar">Cancelar</button>
-                    <button type="button" class="btn-primary" id="btnSaveAvatar">Guardar foto</button>
-                </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="btnCancelAvatar">Cancelar</button>
+                <button type="button" class="btn-primary" id="btnSaveAvatar">Guardar foto</button>
             </div>
         </div>
     </div>
@@ -235,21 +236,23 @@
                 <h2 style="margin: 0;">Cambiar Contraseña</h2>
             </div>
             <form id="formChangePassword">
-                <div class="form-group">
-                    <label for="currentPassword">Contraseña Actual</label>
-                    <input type="password" id="currentPassword" placeholder="Tu contraseña actual" required>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="currentPassword">Contraseña Actual</label>
+                        <input type="password" id="currentPassword" placeholder="Tu contraseña actual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Nueva Contraseña</label>
+                        <input type="password" id="newPassword" placeholder="Nueva contraseña" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Repetir Nueva Contraseña</label>
+                        <input type="password" id="confirmNewPassword" placeholder="Repite tu nueva contraseña" required>
+                    </div>
+                    <div id="passwordMessage" class="modal-message"></div>
                 </div>
-                <div class="form-group">
-                    <label for="newPassword">Nueva Contraseña</label>
-                    <input type="password" id="newPassword" placeholder="Nueva contraseña" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmNewPassword">Repetir Nueva Contraseña</label>
-                    <input type="password" id="confirmNewPassword" placeholder="Repite tu nueva contraseña" required>
-                </div>
-                <div id="passwordMessage" class="modal-message"></div>
 
-                <div class="modal-actions">
+                <div class="modal-footer">
                     <button type="button" class="btn-secondary" id="btnCancelPassword">Cancelar</button>
                     <button type="submit" class="btn-primary" id="btnSavePassword">Actualizar</button>
                 </div>
@@ -264,15 +267,15 @@
             <div class="modal-header">
                 <h2 style="margin: 0;">Actualizar a Plan Pro</h2>
             </div>
-            <div>
+            <div class="modal-body">
                 <div class="form-group">
                     <p>Estás a punto de actualizar tu plan a <strong>Pro</strong>.</p>
                 </div>
                 <div id="upgradeMessage" class="modal-message"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn-secondary" id="btnCancelUpgrade">Cancelar</button>
-                    <button type="button" class="btn-primary" id="btnConfirmUpgrade">Confirmar Pago</button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="btnCancelUpgrade">Cancelar</button>
+                <button type="button" class="btn-primary" id="btnConfirmUpgrade">Confirmar Pago</button>
             </div>
         </div>
     </div>
