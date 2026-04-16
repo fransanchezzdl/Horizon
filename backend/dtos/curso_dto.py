@@ -13,6 +13,7 @@ class CursoListResponse(BaseModel):
     id_curso: int = Field(alias="id") # Mapeamos 'id' de la BD a 'id_curso'
     titulo: str
     descripcion: Optional[str] = None
+    plan_pro: bool = False
     
     class Config:
         populate_by_name = True
@@ -31,6 +32,7 @@ class CursoDetailResponse(BaseModel):
     id_curso: int = Field(alias="id")
     titulo: str
     descripcion: Optional[str] = None
+    plan_pro: bool = False
     diapositivas: List[DiapositivaResponse] = []
     
     class Config:

@@ -135,21 +135,40 @@ function renderizarGridCursos(cursos) {
             abrirCurso(curso.id_curso || curso.id);
         };
 
-        card.innerHTML = `
-            <div class="card-icon">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l-5.5 9h11z M17.5 13c1.93 0 3.5 1.57 3.5 3.5S19.43 20 17.5 20 14 18.43 14 16.5s1.57-3.5 3.5-3.5z M3 13.5h8v8H3z"/>
-                </svg>
-            </div>
-            <div class="card-icon-hero" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 2l-5.5 9h11z M17.5 13c1.93 0 3.5 1.57 3.5 3.5S19.43 20 17.5 20 14 18.43 14 16.5s1.57-3.5 3.5-3.5z M3 13.5h8v8H3z"/>
-                </svg>
-            </div>
-            <h3 class="opt-title">${curso.titulo}</h3>
-            <p class="opt-info">${curso.descripcion || 'Sin descripción'}</p>
-            <span class="card-link">Acceder al curso →</span>
-        `;
+        if (curso.plan_pro) {
+            card.innerHTML = `
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    </svg>
+                </div>
+                <div class="card-icon-hero" aria-hidden="true">
+                    <svg viewBox="0 0 100 40" fill="currentColor">
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="32" letter-spacing="2">PRO</text>
+                    </svg>
+                </div>
+                <h3 class="opt-title">${curso.titulo}</h3>
+                <p class="opt-info">${curso.descripcion || 'Sin descripción'}</p>
+                <span class="card-link">Acceder al curso PRO →</span>
+            `;
+        } else {
+            card.innerHTML = `
+                <div class="card-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/>
+                    </svg>
+                </div>
+                <div class="card-icon-hero" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-.1zM21 18.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/>
+                    </svg>
+                </div>
+                <h3 class="opt-title">${curso.titulo}</h3>
+                <p class="opt-info">${curso.descripcion || 'Sin descripción'}</p>
+                <span class="card-link">Acceder al curso →</span>
+            `;
+        }
+        
 
         grid.appendChild(card);
     });
@@ -175,6 +194,20 @@ async function abrirCurso(idCurso) {
         }
 
         const cursoData = await response.json();
+
+        // ========================================================
+        // VERIFICACIÓN DE ACCESO PRO
+        // ========================================================
+        const usuarioActual = window.getCurrentUserData ? window.getCurrentUserData() : null;
+        
+        // Comprobamos si el curso es de pago y si el usuario NO tiene la membresía Pro
+        if (cursoData.plan_pro && (!usuarioActual || usuarioActual.membresia !== 'Pro')) {
+            cerrarModal(); 
+            // Usamos tu función showAlert
+            showAlert(`El curso "${cursoData.titulo}" es exclusivo. ¡Mejora tu plan a PRO para acceder!`, 'warning');
+            return; 
+        }
+        // ========================================================
         
         // Obtener progreso
         const progResponse = await window.fetchWithAuth(`${API_BASE}/cursos/${idCurso}/progreso`, {
@@ -718,4 +751,19 @@ function formatearContenidoDiapositiva(contenido) {
     }
 
     return html;
+}
+
+// Muestra una notificación tipo toast para feedback de éxito/error/info.
+function showAlert(message, type = 'info') {
+    const alertBox = document.createElement('div');
+    alertBox.className = `alert alert-${type}`;
+    alertBox.textContent = message;
+    document.body.appendChild(alertBox);
+    setTimeout(() => {
+
+        alertBox.classList.add('is-closing-toast');
+
+        setTimeout(() => alertBox.remove(), 500);
+
+    }, 3000);
 }
