@@ -61,6 +61,15 @@ class GeminiQuotaExceededError(Exception):
         super().__init__("Cuota de la API de Gemini agotada. Intenta de nuevo más tarde.")
 
 
+class GeminiServiceUnavailableError(Exception):
+    """Excepción cuando Gemini está temporalmente no disponible o saturado."""
+
+    def __init__(self):
+        super().__init__(
+            "El servicio de Gemini no está disponible temporalmente (alta demanda o mantenimiento). Intenta de nuevo en unos minutos."
+        )
+
+
 class GeminiAPIConfigError(Exception):
     """Excepción para errores de configuración de la API de Gemini."""
     
