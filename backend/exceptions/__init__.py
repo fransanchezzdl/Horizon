@@ -7,6 +7,7 @@ from .exceptions import (
     UsuarioNoEncontradoError,
     GeminiAPIKeyMissingError,
     GeminiQuotaExceededError,
+    GeminiServiceUnavailableError,
     GeminiAPIConfigError,
     GeminiAPIError
 )
@@ -22,6 +23,7 @@ __all__ = [
     # Excepciones de Gemini
     "GeminiAPIKeyMissingError",
     "GeminiQuotaExceededError",
+    "GeminiServiceUnavailableError",
     "GeminiAPIConfigError",
     "GeminiAPIError",
     # Handler registration

@@ -2,12 +2,14 @@
 
 import os
 import json
+import time
 from typing import Any
 from dotenv import load_dotenv
 from google.genai import Client
 from ..exceptions import (
     GeminiAPIKeyMissingError,
     GeminiQuotaExceededError,
+    GeminiServiceUnavailableError,
     GeminiAPIConfigError,
     GeminiAPIError
 )
@@ -43,7 +45,11 @@ class GeminiService:
                 ] or [
                     "gemini-2.5-flash",
                     "gemini-2.0-flash",
+                    "gemini-1.5-flash",
                 ]
+                # Reintentos por modelo ante errores transitorios (unavailable/high demand).
+                self.max_retries_per_model = max(1, int(os.getenv("GEMINI_MAX_RETRIES_PER_MODEL", "2")))
+                self.retry_base_delay_seconds = max(0.2, float(os.getenv("GEMINI_RETRY_BASE_DELAY_SECONDS", "0.8")))
             except Exception as e:
                 self.client = None
                 self.api_key_missing = True
@@ -73,13 +79,25 @@ class GeminiService:
             response = self._generar_con_fallback(prompt)
             
             return response.text if response.text else "No se pudo generar una respuesta."
+
+        except (
+            GeminiAPIKeyMissingError,
+            GeminiQuotaExceededError,
+            GeminiServiceUnavailableError,
+            GeminiAPIConfigError,
+            GeminiAPIError,
+        ):
+            # Respetar clasificación previa de errores para que los handlers devuelvan el status correcto.
+            raise
             
         except Exception as e:
             error_str = str(e)
             
-            # Detección específica de error de cuota agotada
-            if "RESOURCE_EXHAUSTED" in error_str or "quota" in error_str.lower():
+            if self._es_error_quota(error_str):
                 raise GeminiQuotaExceededError()
+
+            if self._es_error_unavailable(error_str):
+                raise GeminiServiceUnavailableError()
             
             # Otros errores de API
             elif "API" in error_str or "key" in error_str.lower():
@@ -94,39 +112,66 @@ class GeminiService:
         ultimo_error = "Error desconocido"
 
         for model_name in self.model_candidates:
-            try:
-                print(f"[GEMINI] Intentando modelo: {model_name}")
-                return self.client.models.generate_content(
-                    model=model_name,
-                    contents=prompt,
-                )
-            except Exception as exc:
-                error_str = str(exc)
-                ultimo_error = error_str
+            for intento in range(1, self.max_retries_per_model + 1):
+                try:
+                    print(
+                        f"[GEMINI] Intentando modelo: {model_name} "
+                        f"(intento {intento}/{self.max_retries_per_model})"
+                    )
+                    return self.client.models.generate_content(
+                        model=model_name,
+                        contents=prompt,
+                    )
+                except Exception as exc:
+                    error_str = str(exc)
+                    ultimo_error = error_str
 
-                if self._es_error_reintentable(error_str):
-                    print(f"[GEMINI] Modelo saturado/unavailable ({model_name}), probando fallback...")
-                    continue
+                    if self._es_error_reintentable(error_str):
+                        if intento < self.max_retries_per_model:
+                            delay = self.retry_base_delay_seconds * (2 ** (intento - 1))
+                            print(
+                                f"[GEMINI] Error transitorio en {model_name}: {error_str[:160]}... "
+                                f"Reintentando en {delay:.1f}s"
+                            )
+                            time.sleep(delay)
+                            continue
 
-                # Errores no transitorios: cortar para preservar semantica actual de handlers
-                raise
+                        print(
+                            f"[GEMINI] Modelo no disponible tras {self.max_retries_per_model} intentos "
+                            f"({model_name}), probando fallback..."
+                        )
+                        break
 
-        # Si agotamos candidatos y todos estaban saturados, mantenemos status 503 del handler.
+                    # Errores no transitorios: cortar para preservar semantica actual de handlers.
+                    raise
+
+        # Si agotamos candidatos y todos estaban saturados, conservar 503 pero diferenciando causa.
         if self._es_error_not_found(ultimo_error):
             raise GeminiAPIConfigError(ultimo_error)
 
-        raise GeminiQuotaExceededError()
+        if self._es_error_quota(ultimo_error):
+            raise GeminiQuotaExceededError()
+
+        if self._es_error_unavailable(ultimo_error):
+            raise GeminiServiceUnavailableError()
+
+        raise GeminiAPIError(ultimo_error)
 
     def _es_error_reintentable(self, error_str: str) -> bool:
         texto = error_str.lower()
         return (
-            "unavailable" in texto
-            or "high demand" in texto
-            or "resource_exhausted" in texto
-            or "quota" in texto
-            or "503" in texto
+            self._es_error_unavailable(error_str)
+            or self._es_error_quota(error_str)
             or self._es_error_not_found(error_str)
         )
+
+    def _es_error_quota(self, error_str: str) -> bool:
+        texto = error_str.lower()
+        return "resource_exhausted" in texto or "quota" in texto
+
+    def _es_error_unavailable(self, error_str: str) -> bool:
+        texto = error_str.lower()
+        return "unavailable" in texto or "high demand" in texto or "503" in texto
 
     def _es_error_not_found(self, error_str: str) -> bool:
         texto = error_str.lower()

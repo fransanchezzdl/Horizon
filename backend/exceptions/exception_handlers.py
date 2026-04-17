@@ -10,6 +10,7 @@ from .exceptions import (
     UsuarioNoEncontradoError,
     GeminiAPIKeyMissingError,
     GeminiQuotaExceededError,
+    GeminiServiceUnavailableError,
     GeminiAPIConfigError,
     GeminiAPIError,
     ReflexionNoEncontradaError,
@@ -68,6 +69,16 @@ async def gemini_quota_exceeded_handler(request: Request, exc: GeminiQuotaExceed
     )
 
 
+async def gemini_service_unavailable_handler(request: Request, exc: GeminiServiceUnavailableError):
+    """Maneja errores de Gemini temporalmente no disponible (503 Service Unavailable)."""
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": str(exc)
+        }
+    )
+
+
 async def gemini_api_config_handler(request: Request, exc: GeminiAPIConfigError):
     """Maneja errores de configuración de la API de Gemini (500 Internal Server Error)."""
     return JSONResponse(
@@ -111,6 +122,7 @@ def register_exception_handlers(app):
     app.add_exception_handler(UsuarioNoEncontradoError, usuario_no_encontrado_handler)
     app.add_exception_handler(GeminiAPIKeyMissingError, gemini_api_key_missing_handler)
     app.add_exception_handler(GeminiQuotaExceededError, gemini_quota_exceeded_handler)
+    app.add_exception_handler(GeminiServiceUnavailableError, gemini_service_unavailable_handler)
     app.add_exception_handler(GeminiAPIConfigError, gemini_api_config_handler)
     app.add_exception_handler(GeminiAPIError, gemini_api_error_handler)
     app.add_exception_handler(ReflexionNoEncontradaError, reflexion_no_encontrada_handler)
