@@ -1,0 +1,34 @@
+# Pre-commit hooks configuration
+# Instala con: pre-commit install
+# Ejecuta manualmente con: pre-commit run --all-files
+
+repos:
+  # Pylint para análisis de código Python (solo archivos especificados)
+  - repo: local
+    hooks:
+      - id: pylint
+        name: Pylint
+        entry: pylint
+        language: system
+        types: [python]
+        files: ^backend/(daos|dtos|main\.py|services|exceptions)/
+        stages: [pre-commit]
+        args:
+          - --rcfile=.pylintrc
+          - --exit-zero
+        exclude: ^backend/migrations/|\.pyc$
+
+  # Verificaciones básicas rápidas
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: check-ast
+        name: Check Python syntax
+        types: [python]
+        files: ^backend/(daos|dtos|main\.py|services|exceptions)/
+        stages: [pre-commit]
+      - id: check-json
+        name: Check JSON
+
+exclude: ^(\.venv|venv|__pycache__|\.git|migrations|tests|backend/routes|backend/models|backend/scripts)
+fail_fast: false
