@@ -12,13 +12,13 @@ Tiempo estimado: 5-10 minutos
 
 import time
 import os
-from datetime import timedelta
+
+from datetime import datetime, timedelta
 from typing import Dict, Optional
 
 from backend.models.config import get_tickers_from_database, TICKERS, get_config, get_asset_type, ENSEMBLE_VARIATIONS, get_feature_cols, SAVED_MODELS_DIR
 from backend.models.data_pipeline import prepare_data_multi_window, download_data, compute_features
 from backend.models.xgboost_model import train_xgboost
-from backend.services.activo_update_service import ActivoUpdateService
 
 
 def get_xgboost_prediction(ticker: str):
@@ -125,8 +125,11 @@ def train_xgboost_all() -> None:
     results = []
     total_start = time.time()
     
-    # Importar servicio de BD
+    # Importar servicio de BD (lazy — evita colgar en fase de imports)
     try:
+        from backend.daos.activo_dao import ActivoDAO
+        from backend.daos.prediction_log_dao import PredictionLogDAO
+        from backend.services.prediction_log_service import _get_xgboost_prediction
         use_db = True
         print("[OK] Guardado en BD activado")
     except Exception as e:
@@ -167,19 +170,53 @@ def train_xgboost_all() -> None:
             if use_db:
                 print(f"   [SAVE] Guardando en BD...")
                 try:
-                    from backend.daos.activo_dao import ActivoDAO
-                    from backend.services.prediction_log_service import _get_xgboost_prediction
-
                     live = _get_xgboost_prediction(ticker)
+
                     update_data = {
-                        "senal_ia":        live["trend"],
-                        "confianza_bygru":  round(float(live["confidence"]), 4),
-                        "precio":           round(float(live["current_price"]), 4),
+                        "senal_ia":           live["trend"],
+                        "confianza_bygru":    round(float(live["confidence"]), 4),
+                        "precio":             round(float(live["current_price"]), 4),
+                        "senal_actualizada_en": datetime.now().isoformat(),
                     }
+
+                    if live.get("probabilidades_xgb"):
+                        update_data["probabilidades_xgb"] = live["probabilidades_xgb"]
+
+                    # retorno esperado ponderado por probabilidades XGBoost
+                    # XGBoost no predice magnitud, así que usamos E[r] = Σ prob_i * retorno_historico_i
+                    # con retornos de referencia: alcista=+2%, bajista=-2%, lateral=0%
+                    precio_actual = live["current_price"]
+                    probs = live.get("probabilidades_xgb", {})
+                    retorno_esperado_pct = round(
+                        probs.get("alcista", 0.33) * 2.0
+                        + probs.get("bajista", 0.33) * (-2.0)
+                        + probs.get("lateral", 0.34) * 0.0,
+                        4,
+                    )
+                    update_data["retorno_predicho_pct"] = retorno_esperado_pct
+                    update_data["precio_predicho"] = round(
+                        precio_actual * (1 + retorno_esperado_pct / 100), 4
+                    )
+
+                    # volatilidad_30d calculada en _get_xgboost_prediction sobre datos frescos
+                    if live.get("volatilidad_30d") is not None:
+                        update_data["volatilidad_30d"] = live["volatilidad_30d"]
+
+                    # live_accuracy_30d desde prediction_log
+                    try:
+                        stats = PredictionLogDAO.stats_ticker(ticker)
+                        live_acc = stats.get("live_accuracy")
+                        if live_acc is not None:
+                            update_data["live_accuracy_30d"] = float(live_acc)
+                    except Exception as acc_err:
+                        print(f"      [WARN] live_accuracy_30d no disponible: {acc_err}")
+
                     success = ActivoDAO.actualizar(ticker, update_data)
                     result_status = "[OK] BD OK" if success else "[ERROR] BD FAIL"
                     if success:
                         print(f"      Señal: {live['trend']} ({live['confidence']:.0%}) | Precio: {live['current_price']:.2f}")
+                        saved_keys = [k for k in update_data if k != "senal_ia"]
+                        print(f"      Campos extra guardados: {saved_keys}")
                 except Exception as bd_err:
                     print(f"      [ERROR] Error guardando: {bd_err}")
                     result_status = "❌ BD ERROR"
