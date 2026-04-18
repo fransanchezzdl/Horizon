@@ -2,7 +2,7 @@
 DTOs (Data Transfer Objects) para cursos y diapositivas.
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List
 
 # ==========================================
@@ -15,9 +15,7 @@ class CursoListResponse(BaseModel):
     descripcion: Optional[str] = None
     plan_pro: bool = False
     
-    class Config:
-        populate_by_name = True
-        from_attributes = True
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
 class DiapositivaResponse(BaseModel):
     id: int
@@ -25,8 +23,7 @@ class DiapositivaResponse(BaseModel):
     num_pag: int 
     contenido: str
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class CursoDetailResponse(BaseModel):
     id_curso: int = Field(alias="id")
@@ -35,9 +32,7 @@ class CursoDetailResponse(BaseModel):
     plan_pro: bool = False
     diapositivas: List[DiapositivaResponse] = []
     
-    class Config:
-        populate_by_name = True
-        from_attributes = True
+    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
 
 
 # ==========================================
@@ -51,11 +46,7 @@ class ProgresoResponse(BaseModel):
     completado: bool 
     progreso_pct: float = Field(..., description="Calculado al vuelo (0-100)")
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class ProgresoDiapositivaRequest(BaseModel):
     diapositiva_numero: int = Field(..., ge=1)
-    
-    class Config:
-        from_attributes = True
