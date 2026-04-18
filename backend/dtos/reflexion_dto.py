@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 
@@ -14,8 +14,7 @@ class ReflexionCardResponse(BaseModel):
     autor: str
     tema: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReflexionArticuloResponse(BaseModel):
@@ -30,5 +29,4 @@ class ReflexionArticuloResponse(BaseModel):
     tags: Optional[List[str]] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

@@ -64,7 +64,7 @@ class PortfolioListResponse(BaseModel):
 class PortfolioRecommendationRequest(BaseModel):
     """Request para obtener recomendación de portafolio"""
     portfolio_id: int = Field(..., description="ID del portfolio")
-    tickers: list[str] = Field(..., min_items=1, description="Tickers a considerar")
+    tickers: list[str] = Field(..., min_length=1, description="Tickers a considerar")
     horizonte_dias: int = Field(default=30, ge=1, le=365, 
                                 description="Horizonte de predicción en días")
 

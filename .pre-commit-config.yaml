@@ -8,15 +8,23 @@ repos:
     hooks:
       - id: pylint
         name: Pylint
-        entry: pylint
+        entry: python scripts/run_tool_with_fallback.py pylint
         language: system
         types: [python]
-        files: ^backend/(daos|dtos|main\.py|services|exceptions)/
+        files: ^backend/(daos/|dtos/|services/|exceptions/|main\.py$)
         stages: [pre-commit]
         args:
           - --rcfile=.pylintrc
           - --exit-zero
         exclude: ^backend/migrations/|\.pyc$
+      - id: pytest-unit
+        name: Pytest unit (tests/unit)
+        entry: python -u scripts/run_tool_with_fallback.py pytest tests/unit -q --disable-warnings -ra
+        language: system
+        pass_filenames: false
+        files: ^(backend/(daos/|dtos/|services/|exceptions/|main\.py$)|tests/unit/)
+        stages: [pre-commit]
+        verbose: true
 
   # Verificaciones básicas rápidas
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -25,7 +33,7 @@ repos:
       - id: check-ast
         name: Check Python syntax
         types: [python]
-        files: ^backend/(daos|dtos|main\.py|services|exceptions)/
+        files: ^backend/(daos/|dtos/|services/|exceptions/|main\.py$)
         stages: [pre-commit]
       - id: check-json
         name: Check JSON
