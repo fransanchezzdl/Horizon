@@ -37,24 +37,24 @@
         <section class="metrics-grid">
             <div class="card metric-card">
                 <div class="metric-header">
-                    <span class="metric-title">Total activos</span>
+                    <span class="metric-title">Rentabilidad diaria</span>
                 </div>
                 <div class="metric-body">
-                    <span id="totalAssetsValue" class="metric-value">0</span>
-                    <span id="totalAssetsSub" class="metric-sub text-muted">tickers en cartera</span>
+                    <span id="rentabilidadValue" class="metric-value">--</span>
+                    <span id="rentabilidadSub" class="metric-sub text-muted">Cargando...</span>
                 </div>
             </div>
 
             <div class="card metric-card">
                 <div class="metric-header">
-                    <span class="metric-title">Activos estables</span>
+                    <span class="metric-title">Activos alcistas</span>
                 </div>
                 <div class="metric-body">
-                    <span id="stableAssetsValue" class="metric-value">0 de 0</span>
+                    <span id="alcistasValue" class="metric-value">0 de 0</span>
                     <div class="metric-progress" aria-hidden="true">
-                        <span id="stableAssetsBar" class="metric-progress-fill" style="width:0%;"></span>
+                        <span id="alcistasBar" class="metric-progress-fill" style="width:0%;"></span>
                     </div>
-                    <span id="stableAssetsSub" class="metric-sub text-muted">Sin datos</span>
+                    <span id="alcistasSub" class="metric-sub text-muted">Sin datos</span>
                 </div>
             </div>
 
@@ -62,9 +62,16 @@
                 <div class="metric-header">
                     <span class="metric-title">Perfil de riesgo</span>
                 </div>
-                <div class="metric-body">
-                    <span id="riskProfileValue" class="metric-value">--</span>
-                    <span id="riskProfileSub" class="metric-sub text-muted">Sin datos</span>
+                <div class="metric-body metric-body-split">
+                    <div class="metric-body-main">
+                        <span id="riskProfileValue" class="metric-value">--</span>
+                        <span id="riskProfileSub" class="metric-sub text-muted">Sin datos</span>
+                    </div>
+                    <div id="riskAlertDivider" class="metric-split-divider" style="display:none;"></div>
+                    <div id="riskAlertContent" class="metric-body-alert" style="display:none;">
+                        <span id="riskAlertIcon" class="metric-alert-icon"></span>
+                        <span id="riskAlertText" class="metric-alert-text"></span>
+                    </div>
                 </div>
             </div>
         </section>

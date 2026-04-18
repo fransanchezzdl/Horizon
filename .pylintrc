@@ -1,0 +1,59 @@
+[MASTER]
+jobs=4
+load-plugins=
+ignore=__pycache__,.git,.venv,venv,tests,routes,models,scripts
+extension-pkg-allow-list=pydantic
+persistent=no
+
+[MESSAGES CONTROL]
+disable=
+    missing-docstring,
+    too-few-public-methods,
+    duplicate-code,
+    fixme,
+    trailing-whitespace,
+    missing-final-newline,
+    wildcard-import,
+    wrong-import-order,
+
+[FORMAT]
+# Máximo número de caracteres en una línea
+max-line-length=120
+
+# Número de espacios de indentación
+indent-string='    '
+
+[DESIGN]
+# Máximo número de atributos en una clase
+max-attributes=10
+
+# Máximo número de argumentos en una función
+max-args=6
+
+# Máximo número de variables locales
+max-locals=15
+
+[VARIABLES]
+# Nombres de variables a permitir que sean cortas
+additional-builtins=
+
+# Variables iniciales permitidas (por ejemplo, 'x' en loops)
+dummy-variables-rgx=_+|dummy
+
+[SIMILARITIES]
+# Número mínimo de líneas para considerar código duplicado
+min-similarity-lines=4
+
+[BASIC]
+good-names=i,j,k,ex,Run,_,x,y,db,id,app,api
+
+[LOGGING]
+logging-format-style=old
+
+[REPORTS]
+# Salida detallada
+output-format=parseable
+
+[IMPORTS]
+# Permitir importaciones relativas
+allow-wildcard-with-all=False
