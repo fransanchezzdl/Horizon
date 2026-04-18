@@ -93,6 +93,12 @@ class PortfolioRecommendationResponse(BaseModel):
 # ANÁLISIS DE PORTFOLIO
 # ==========================================
 
+class AlertaPortfolio(BaseModel):
+    """Alerta de salud del portfolio"""
+    mensaje: str
+    nivel: str  # "ok" | "warning" | "danger"
+
+
 class PortfolioAnalysisResponse(BaseModel):
     """Análisis detallado del portfolio actual"""
     portfolio_id: int
@@ -101,5 +107,5 @@ class PortfolioAnalysisResponse(BaseModel):
     variacion_porcentaje: float  # %
     acciones: list[StockInPortfolioResponse]
     distribucion: dict  # {ticker: porcentaje}
-    alertas: list[str]  # Advertencias automáticas
+    alerta: Optional[AlertaPortfolio] = None
     recomendacion_automatica: Optional[PortfolioRecommendationResponse] = None
