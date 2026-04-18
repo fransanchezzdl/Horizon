@@ -40,7 +40,7 @@ class PredictionResponse(BaseModel):
     indicadores_usados: list[str]  # [Close, RSI, MACD, EMA]
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "ticker": "KO",
                 "precio_actual": 64.32,

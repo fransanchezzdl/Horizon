@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -55,8 +55,7 @@ class ActivoResponse(BaseModel):
     probabilidades_xgb: Optional[dict] = None
     volatilidad_30d: Optional[float] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ActivoListResponse(BaseModel):
@@ -74,5 +73,4 @@ class ActivoListResponse(BaseModel):
     sector: Optional[str] = None
     volatilidad_30d: Optional[float] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
