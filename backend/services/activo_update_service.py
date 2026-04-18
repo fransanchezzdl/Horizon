@@ -338,15 +338,35 @@ class ActivoUpdateService:
             # Sanitizar para JSON safety (quitar NaN, Infinity, etc)
             grafico_prediccion = ActivoUpdateService._sanitizar_json_para_supabase(grafico_raw)
             
-            # 6️⃣ Preparar datos para actualizar
+            # 6️⃣ Extraer nuevos campos
+            precio_predicho = ensemble_prediction.get("predicted_price")
+            if precio_predicho is not None:
+                precio_predicho = float(precio_predicho)
+
+            retorno_predicho_pct = ensemble_prediction.get("predicted_return_pct")
+            if retorno_predicho_pct is not None:
+                retorno_predicho_pct = float(retorno_predicho_pct)
+
+            probabilidades_xgb = ensemble_prediction.get("xgboost_all_proba")
+            if probabilidades_xgb:
+                probabilidades_xgb = ActivoUpdateService._sanitizar_json_para_supabase(probabilidades_xgb)
+
+            # 7️⃣ Preparar datos para actualizar
             update_data = {
                 "precio": precio_actual,
                 "senal_ia": senal_ia,
                 "confianza_bygru": confianza,
-                "grafico_prediccion": grafico_prediccion
+                "grafico_prediccion": grafico_prediccion,
+                "senal_actualizada_en": datetime.now().isoformat(),
             }
+            if precio_predicho is not None:
+                update_data["precio_predicho"] = precio_predicho
+            if retorno_predicho_pct is not None:
+                update_data["retorno_predicho_pct"] = retorno_predicho_pct
+            if probabilidades_xgb:
+                update_data["probabilidades_xgb"] = probabilidades_xgb
             
-            # 7️⃣ Intentar actualizar
+            # 8️⃣ Intentar actualizar
             success = ActivoDAO.actualizar(ticker, update_data)
             
             if success:

@@ -470,6 +470,11 @@ def predict_ensemble(ticker: str) -> dict:
         # XGBoost results (v5: direction es ternario 0=BAJISTA, 1=LATERAL, 2=ALCISTA)
         "xgboost_direction": {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}.get(xgb_result["direction"], "LATERAL"),
         "xgboost_probability": round(xgb_prob, 6),
+        "xgboost_all_proba": {
+            "bajista": round(float(xgb_result.get("probability_bajista", xgb_result.get("all_proba", [0.33, 0.34, 0.33])[0])), 4),
+            "lateral": round(float(xgb_result.get("probability_lateral", xgb_result.get("all_proba", [0.33, 0.34, 0.33])[1])), 4),
+            "alcista": round(float(xgb_result.get("probability_alcista", xgb_result.get("all_proba", [0.33, 0.34, 0.33])[2])), 4),
+        },
 
         # Individual predictions
         "individual_predictions": [
