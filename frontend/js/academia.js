@@ -136,10 +136,12 @@ function renderizarGridCursos(cursos) {
         };
 
         if (curso.plan_pro) {
+            card.classList.add('card-pro');
+
             card.innerHTML = `
                 <div class="card-icon">
                     <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72l5 2.73 5-2.73v3.72z"/>
                     </svg>
                 </div>
                 <div class="card-icon-hero" aria-hidden="true">
