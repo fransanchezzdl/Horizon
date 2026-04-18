@@ -69,14 +69,6 @@ Cobertura actual:
   - id invalido con auth (422)
   - sin autenticacion (401)
 
-## Que NO se testea aun
-
-- Integracion real con Supabase
-- Persistencia real en base de datos
-- Upload de archivos en avatar
-- Escenarios end-to-end frontend-backend
-- Rendimiento y carga
-
 ## Como ejecutar
 
 ### Con entorno virtual activado
