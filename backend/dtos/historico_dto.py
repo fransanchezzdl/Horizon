@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import date
 
@@ -29,8 +29,7 @@ class HistoricoActivoResponse(BaseModel):
     precio_cierre: float
     prediccion_ia: Optional[float] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HistoricoActivoListResponse(BaseModel):
@@ -41,5 +40,4 @@ class HistoricoActivoListResponse(BaseModel):
     precio_cierre: float
     prediccion_ia: Optional[float] = None
     
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

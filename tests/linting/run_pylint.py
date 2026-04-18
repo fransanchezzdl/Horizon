@@ -11,11 +11,11 @@ Uso:
 """
 
 import sys
-import subprocess
 import json
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Dict, Any
 import argparse
+import subprocess
 
 
 class LintingRunner:
@@ -26,6 +26,7 @@ class LintingRunner:
         self.backend_path = backend_path or Path(__file__).parent.parent.parent / "backend"
         self.root_path = Path(__file__).parent.parent.parent
         self.pylintrc_path = self.root_path / ".pylintrc"
+        self.runner_script = self.root_path / "scripts" / "run_tool_with_fallback.py"
         
         # Directorios a verificar
         self.check_paths = [
@@ -56,21 +57,25 @@ class LintingRunner:
             return {"error": "No paths found", "code": 1}
         
         cmd = [
-            sys.executable, "-m", "pylint",
+            sys.executable,
+            str(self.runner_script),
+            "pylint",
             *existing_paths,
             f"--rcfile={self.pylintrc_path}",
             "--output-format=json",
         ]
         
         try:
+            print("Iniciando linting con animacion de carga...")
             result = subprocess.run(
                 cmd,
-                capture_output=True,
+                stdout=subprocess.PIPE,
+                stderr=None,
                 text=True,
                 cwd=self.root_path
             )
             
-            output = result.stdout or result.stderr
+            output = result.stdout or ""
             
             if output.strip():
                 try:
