@@ -26,19 +26,14 @@ def resolve_progress_stream(in_pre_commit: bool) -> TextIO | None:
     2) consola real del sistema (CONOUT$/tty) para evitar captura de pre-commit
     3) None si no hay canal apto
     """
+    # En pre-commit evitamos spinner para no romper el layout de "hook ... Passed".
+    if in_pre_commit:
+        return None
+
     if sys.stderr.isatty():
         return sys.stderr
 
-    if not in_pre_commit:
-        return None
-
-    # Intento de bypass de captura de pre-commit escribiendo en la consola real.
-    try:
-        if os.name == "nt":
-            return open("CONOUT$", "w", encoding="utf-8", buffering=1)
-        return open("/dev/tty", "w", encoding="utf-8", buffering=1)
-    except Exception:
-        return None
+    return None
 
 
 def resolve_python_executable() -> tuple[Path, bool]:
@@ -105,14 +100,16 @@ def main() -> int:
     module = sys.argv[1]
     args = sys.argv[2:]
     python_executable, from_local_venv = resolve_python_executable()
+    in_pre_commit = os.getenv("PRE_COMMIT") is not None
 
-    if from_local_venv:
-        print(f"[runner] Usando venv: {python_executable}", file=sys.stderr)
-    else:
-        print(
-            f"[runner] Sin venv local, usando Python del sistema: {python_executable}",
-            file=sys.stderr,
-        )
+    if not in_pre_commit:
+        if from_local_venv:
+            print(f"[runner] Usando venv: {python_executable}", file=sys.stderr)
+        else:
+            print(
+                f"[runner] Sin venv local, usando Python del sistema: {python_executable}",
+                file=sys.stderr,
+            )
 
     command = [str(python_executable), "-m", module, *args]
     return run_with_spinner(command, label=f"Ejecutando {module}")

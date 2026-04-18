@@ -24,7 +24,6 @@ repos:
         pass_filenames: false
         files: ^(backend/(daos/|dtos/|services/|exceptions/|main\.py$)|tests/unit/)
         stages: [pre-commit]
-        verbose: true
 
   # Verificaciones básicas rápidas
   - repo: https://github.com/pre-commit/pre-commit-hooks
