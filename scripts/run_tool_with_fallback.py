@@ -26,12 +26,22 @@ def resolve_progress_stream(in_pre_commit: bool) -> TextIO | None:
     2) consola real del sistema (CONOUT$/tty) para evitar captura de pre-commit
     3) None si no hay canal apto
     """
-    # En pre-commit evitamos spinner para no romper el layout de "hook ... Passed".
-    if in_pre_commit:
-        return None
-
     if sys.stderr.isatty():
         return sys.stderr
+
+    # En pre-commit, intentamos salida directa a consola para que el spinner
+    # sea visible incluso cuando la herramienta captura stdout/stderr.
+    if in_pre_commit:
+        if os.name == "nt":
+            try:
+                return open("CONOUT$", "w", encoding="utf-8", buffering=1)
+            except OSError:
+                return None
+
+        try:
+            return open("/dev/tty", "w", encoding="utf-8", buffering=1)
+        except OSError:
+            return None
 
     return None
 
@@ -70,6 +80,13 @@ def run_with_spinner(command: Sequence[str], label: str) -> int:
 
     frame_idx = 0
     start = time.time()
+    spinner_line_initialized = False
+
+    if in_pre_commit and progress_stream is not None:
+        # Reserva una línea propia para el spinner y evita pisar la del hook.
+        progress_stream.write("\n")
+        progress_stream.flush()
+        spinner_line_initialized = True
 
     while process.poll() is None:
         elapsed = int(time.time() - start)
@@ -80,7 +97,11 @@ def run_with_spinner(command: Sequence[str], label: str) -> int:
         time.sleep(0.1)
 
     stdout, stderr = process.communicate()
-    progress_stream.write("\r" + " " * 100 + "\r")
+    elapsed_total = int(time.time() - start)
+    if spinner_line_initialized:
+        progress_stream.write(f"\r{label} listo ({elapsed_total}s)\n")
+    else:
+        progress_stream.write("\r" + " " * 100 + "\r")
     progress_stream.flush()
     if progress_stream is not sys.stderr:
         progress_stream.close()
