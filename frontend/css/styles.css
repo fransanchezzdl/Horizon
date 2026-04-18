@@ -1208,6 +1208,64 @@ p {
 
 /* #endregion CARD ESPECIAL: REFLEXION */
 
+/* #region CARD ESPECIAL: CURSO PRO */
+/* #region CARD ESPECIAL: CURSO PRO - CONTENIDO */
+/* ==================== CARD ESPECIAL: CURSO PRO ==================== */
+/* 1. Fondo del icono pequeño (esquina superior izquierda) */
+.card.card-pro .card-icon {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.15) 100%);
+}
+
+/* 2. Color del icono al hacer hover en la tarjeta */
+.card.card-pro:hover .card-icon svg {
+    color: #f59e0b; /* Dorado/Naranja vibrante de tu marca PRO */
+}
+
+/* 3. Letras gigantes "PRO" de fondo (estado normal) */
+.card.card-pro .card-icon-hero {
+    color: rgba(245, 158, 11, 0.08); /* Muy sutil para no entorpecer la lectura */
+}
+
+/* 4. Letras gigantes "PRO" de fondo (al hacer hover) */
+.card.card-pro:hover .card-icon-hero {
+    color: rgba(245, 158, 11, 0.18); /* Se ilumina al pasar el ratón */
+}
+
+/* 5. Enlace inferior ("Acceder al curso PRO") */
+.card.card-pro .card-link {
+    color: #d97706; 
+}
+
+.card.card-pro:hover .card-link {
+    color: #b45309;
+}
+
+/* --- ADAPTACIÓN PARA MODO OSCURO --- */
+[data-theme="dark"] .card.card-pro .card-icon {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.1) 100%);
+}
+
+[data-theme="dark"] .card.card-pro .card-icon-hero {
+    color: rgba(245, 158, 11, 0.12);
+}
+
+[data-theme="dark"] .card.card-pro:hover .card-icon-hero {
+    color: rgba(245, 158, 11, 0.25); /* Más brillo en fondos oscuros */
+}
+
+/* En modo oscuro, el enlace necesita ser un poco más claro para leerse bien */
+[data-theme="dark"] .card.card-pro .card-link {
+    color: #fbbf24;
+}
+
+[data-theme="dark"] .card.card-pro:hover .card-link {
+    color: #f59e0b;
+}
+/* #endregion CARD ESPECIAL: CURSO PRO */
+
+/* #endregion CARD ESPECIAL: CURSO PRO */
+
+
 /* #region BOTONES (ESTANDARIZADOS) */
 /* #region BOTONES (ESTANDARIZADOS) - CONTENIDO */
 /* ==================== BOTONES (ESTANDARIZADOS) ==================== */
