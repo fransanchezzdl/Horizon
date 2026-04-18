@@ -155,8 +155,15 @@ async function loadPortfolioDetails(portfolioId) {
         const portfolio = await response.json();
         console.log(`✅ Portfolio cargado:`, portfolio);
         const accionesEnriquecidas = await enrichPortfolioStocks(portfolio.acciones || []);
+        const uniqueTickers = [...new Set(accionesEnriquecidas.map((a) => a.ticker).filter(Boolean))];
+        const [variacion, analysisResp] = await Promise.all([
+            loadPortfolioVariation(uniqueTickers),
+            window.fetchWithAuth(`${API_BASE}/portfolios/${portfolioId}/analysis`),
+        ]);
+        const analysis = analysisResp?.ok ? await analysisResp.json() : null;
         renderAssetsTable(accionesEnriquecidas);
-        await renderPortfolioMetrics(portfolio);
+        renderPortfolioMetrics(portfolio, accionesEnriquecidas, variacion);
+        renderRiskAlert(analysis?.alerta ?? null);
     } catch (error) {
         console.error('❌ Error:', error);
         showAlert('Error de conexión', 'error');
@@ -201,26 +208,68 @@ async function enrichPortfolioStocks(acciones) {
     });
 }
 
-async function renderPortfolioMetrics(portfolio) {
-    const acciones = Array.isArray(portfolio?.acciones) ? portfolio.acciones : [];
-    const totalAssets = acciones.length;
+// Para cada ticker, obtiene las dos últimas velas del historial de 7 días
+// y calcula la variación diaria. Devuelve la media entre todos los tickers,
+// o null si no hay datos suficientes. Misma lógica que loadPrecioStats() en search.js.
+async function loadPortfolioVariation(tickers) {
+    if (!tickers.length) return null;
 
-    const totalAssetsValue = document.getElementById('totalAssetsValue');
-    const totalAssetsSub = document.getElementById('totalAssetsSub');
-    if (totalAssetsValue) totalAssetsValue.textContent = String(totalAssets);
-    if (totalAssetsSub) totalAssetsSub.textContent = 'tickers en cartera';
+    const results = await Promise.all(
+        tickers.map(async (ticker) => {
+            try {
+                const resp = await window.fetchWithAuth(
+                    `${API_BASE}/activos/${encodeURIComponent(ticker)}/price-history?days=7`
+                );
+                if (!resp.ok) return null;
+                const data = await resp.json();
+                const candles = data.candles;
+                if (!candles || candles.length < 2) return null;
+                const prevClose = candles[candles.length - 2].close;
+                const lastClose = candles[candles.length - 1].close;
+                return ((lastClose - prevClose) / prevClose) * 100;
+            } catch {
+                return null;
+            }
+        })
+    );
 
-    const stableAssets = await countStableAssets(acciones);
-    const stablePercent = totalAssets > 0 ? Math.round((stableAssets / totalAssets) * 100) : 0;
+    const valid = results.filter((v) => v !== null);
+    if (!valid.length) return null;
+    return valid.reduce((sum, v) => sum + v, 0) / valid.length;
+}
 
-    const stableAssetsValue = document.getElementById('stableAssetsValue');
-    const stableAssetsSub = document.getElementById('stableAssetsSub');
-    const stableAssetsBar = document.getElementById('stableAssetsBar');
+function renderPortfolioMetrics(portfolio, accionesEnriquecidas, variacion) {
+    // Card 1: Rentabilidad diaria — media igual-ponderada de variación de cada ticker
+    const rentabilidadValue = document.getElementById('rentabilidadValue');
+    const rentabilidadSub = document.getElementById('rentabilidadSub');
+    if (rentabilidadValue && rentabilidadSub) {
+        if (variacion !== null && variacion !== undefined) {
+            const signo = variacion >= 0 ? '+' : '';
+            rentabilidadValue.textContent = `${signo}${variacion.toFixed(2)}%`;
+            rentabilidadValue.style.color = variacion >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+            rentabilidadSub.textContent = 'variación media hoy';
+            rentabilidadSub.style.color = '';
+        } else {
+            rentabilidadValue.textContent = '--';
+            rentabilidadSub.textContent = 'Sin datos de precio';
+        }
+    }
 
-    if (stableAssetsValue) stableAssetsValue.textContent = `${stableAssets} de ${totalAssets}`;
-    if (stableAssetsSub) stableAssetsSub.textContent = totalAssets > 0 ? `${stablePercent}% del portfolio` : 'Sin datos';
-    if (stableAssetsBar) stableAssetsBar.style.width = `${stablePercent}%`;
+    // Card 2: Activos alcistas — tickers con señal IA = ALCISTA
+    const totalActivos = accionesEnriquecidas.length;
+    const alcistas = accionesEnriquecidas.filter(
+        (a) => (a.senal_ia || '').toUpperCase() === 'ALCISTA'
+    ).length;
+    const alcistasPercent = totalActivos > 0 ? Math.round((alcistas / totalActivos) * 100) : 0;
 
+    const alcistasValue = document.getElementById('alcistasValue');
+    const alcistasSub = document.getElementById('alcistasSub');
+    const alcistasBar = document.getElementById('alcistasBar');
+    if (alcistasValue) alcistasValue.textContent = `${alcistas} de ${totalActivos}`;
+    if (alcistasSub) alcistasSub.textContent = totalActivos > 0 ? `${alcistasPercent}% del portfolio` : 'Sin datos';
+    if (alcistasBar) alcistasBar.style.width = `${alcistasPercent}%`;
+
+    // Card 3: Perfil de riesgo — sin cambios
     const risk = Number(portfolio?.riesgo);
     const riskProfileValue = document.getElementById('riskProfileValue');
     const riskProfileSub = document.getElementById('riskProfileSub');
@@ -233,7 +282,6 @@ async function renderPortfolioMetrics(portfolio) {
 
     let riskLabel = 'Moderado';
     let riskText = 'riesgo medio';
-
     if (risk < 0.35) {
         riskLabel = 'Bajo';
         riskText = 'riesgo bajo';
@@ -247,30 +295,35 @@ async function renderPortfolioMetrics(portfolio) {
     if (riskProfileSub) riskProfileSub.textContent = `${riskPercentage}% · ${riskText}`;
 }
 
-async function countStableAssets(acciones) {
-    if (!acciones.length) {
-        return 0;
+// Muestra u oculta la alerta en el lado derecho del card de perfil de riesgo.
+// alerta: { mensaje: string, nivel: "ok" | "warning" | "danger" } | null
+function renderRiskAlert(alerta) {
+    const divider = document.getElementById('riskAlertDivider');
+    const content = document.getElementById('riskAlertContent');
+    const icon    = document.getElementById('riskAlertIcon');
+    const text    = document.getElementById('riskAlertText');
+
+    if (!divider || !content || !icon || !text) return;
+
+    if (!alerta) {
+        divider.style.display = 'none';
+        content.style.display = 'none';
+        return;
     }
 
-    const uniqueTickers = Array.from(new Set(acciones.map((accion) => (accion.ticker || '').toUpperCase()).filter(Boolean)));
-    let stableCount = 0;
+    const colores = {
+        ok:      'var(--color-success)',
+        warning: 'var(--color-warning)',
+        danger:  'var(--color-danger)',
+    };
+    const color = colores[alerta.nivel] || colores.warning;
 
-    for (const ticker of uniqueTickers) {
-        try {
-            const response = await window.fetchWithAuth(`${API_BASE}/activos/${encodeURIComponent(ticker)}`);
-            if (!response.ok) {
-                continue;
-            }
-            const activo = await response.json();
-            if (activo?.estabilidad === true) {
-                stableCount += 1;
-            }
-        } catch (error) {
-            console.error(`Error consultando estabilidad para ${ticker}:`, error);
-        }
-    }
+    icon.textContent = '';
+    text.textContent = alerta.mensaje;
+    text.style.color = color;
 
-    return stableCount;
+    divider.style.display = '';
+    content.style.display = '';
 }
 
 // ============================================================

@@ -36,3 +36,9 @@ shap>=0.43.0
 
 # Testing
 hypothesis>=6.0.0
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Linting & Code Quality
+pylint>=3.0.0
+pre-commit>=3.0.0

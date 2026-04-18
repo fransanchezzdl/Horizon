@@ -335,6 +335,15 @@ def eliminar_activo_portfolio(id_portfolio: int, id_posicion: int, user_id: str 
     return portfolio_service.eliminar_activo_portfolio_usuario(user_id, id_portfolio, id_posicion)
 
 
+@app.get("/portfolios/{id_portfolio}/analysis", response_model=PortfolioAnalysisResponse)
+def get_portfolio_analysis(id_portfolio: int, user_id: str = Depends(auth_service.get_current_user)):
+    portfolio_service._obtener_portfolio_si_es_propietario(user_id, id_portfolio)
+    result = portfolio_service.get_portfolio_analysis(id_portfolio)
+    if not result:
+        raise HTTPException(status_code=404, detail="No se pudo analizar el portfolio")
+    return result
+
+
 # ─── Endpoints de Cursos ────────────────────────────────────────────
 
 @app.get("/cursos", response_model=list[CursoListResponse])
