@@ -9,6 +9,7 @@ from ..models import optimize_portfolio
 from ..services.finance_service import FinanceService
 from ..services.prediction_service import PredictionService
 from ..daos.portfolio_dao import PortfolioDAO
+from ..daos.activo_dao import ActivoDAO
 from ..dtos.portfolio_dto import (
     PortfolioCreateRequest,
     PortfolioUpdateRequest,
@@ -19,6 +20,7 @@ from ..dtos.portfolio_dto import (
     PortfolioRecommendationResponse,
     AllocationRecommendation,
     PortfolioAnalysisResponse,
+    AlertaPortfolio,
 )
 
 logger = logging.getLogger(__name__)
@@ -292,20 +294,9 @@ class PortfolioService:
                 ticker = stock.ticker
                 distribucion[ticker] = distribucion.get(ticker, 0) + 1
             
-            # Generar alertas
-            alertas = self._generar_alertas(portfolio)
-            
-            # Obtener recomendación automática
-            tickers = [s.ticker for s in portfolio.acciones]
-            recomendacion = None
-            
-            if tickers:
-                recomendacion = self.get_portfolio_recommendation(
-                    portfolio_id=portfolio_id,
-                    tickers=tickers,
-                    horizonte_dias=30
-                )
-            
+            # Generar alerta de salud
+            alerta = self._generar_alertas(portfolio)
+
             return PortfolioAnalysisResponse(
                 portfolio_id=portfolio_id,
                 valor_actual=0,
@@ -313,8 +304,7 @@ class PortfolioService:
                 variacion_porcentaje=0,
                 acciones=portfolio.acciones,
                 distribucion=distribucion,
-                alertas=alertas,
-                recomendacion_automatica=recomendacion
+                alerta=alerta,
             )
         
         except Exception as e:
@@ -406,32 +396,100 @@ class PortfolioService:
             logger.error(f"❌ Error en recomendación: {e}")
             return None
 
-    # Crea alertas básicas de estado del portfolio en función de número
-    # de posiciones y perfil de riesgo.
-    def _generar_alertas(self, portfolio: PortfolioResponse) -> List[str]:
+    # Evalúa la coherencia entre el perfil de riesgo del portfolio y el mix
+    # de activos estables/volátiles. Devuelve una única alerta con nivel
+    # "ok", "warning" o "danger" según las reglas de perfil × estabilidad.
+    def _generar_alertas(self, portfolio: PortfolioResponse) -> AlertaPortfolio:
         """
-        Genera alertas automáticas basadas en el portfolio.
-        
-        Args:
-            portfolio: Datos del portfolio
-        
-        Returns:
-            Lista de alertas
-        """
-        alertas = []
-        
-        if not portfolio.acciones:
-            alertas.append("⚠️ Portfolio sin activos en portfolio_activo")
-        elif len(portfolio.acciones) == 1:
-            alertas.append("⚠️ Portfolio con una sola posición")
+        Genera una alerta de salud basada en perfil de riesgo × estabilidad de activos.
 
-        if portfolio.riesgo > 0.8 and len(portfolio.acciones) < 3:
-            alertas.append("⚠️ Perfil conservador con baja diversificación")
-        
-        if not alertas:
-            alertas.append("✅ Portfolio en buen estado")
-        
-        return alertas
+        Reglas:
+          - 0 activos                      → danger
+          - 1 activo                       → warning
+          - Conservador (<0.35):
+              ≥70% estables                → ok
+              40-69% estables              → warning
+              <40% estables                → danger
+          - Moderado (0.35-0.65):
+              40-70% estables              → ok
+              <40% o >80% estables         → warning
+          - Agresivo (≥0.65):
+              ≥50% volátiles               → ok
+              >70% estables                → warning
+        """
+        acciones = portfolio.acciones
+        riesgo = portfolio.riesgo or 0.0
+
+        if not acciones:
+            return AlertaPortfolio(
+                mensaje="Portfolio vacío, añade activos para empezar",
+                nivel="danger"
+            )
+
+        if len(acciones) == 1:
+            return AlertaPortfolio(
+                mensaje="Solo 1 activo — considera diversificar",
+                nivel="warning"
+            )
+
+        # Consultar estabilidad de cada ticker único
+        tickers_unicos = list({a.ticker for a in acciones})
+        estables = 0
+        for ticker in tickers_unicos:
+            try:
+                activo = ActivoDAO.obtener_por_ticker(ticker)
+                if activo and activo.estabilidad is True:
+                    estables += 1
+            except Exception:
+                pass
+
+        total = len(tickers_unicos)
+        pct_estables = estables / total
+
+        if riesgo < 0.35:
+            # Conservador: quiere mayoría estable
+            if pct_estables >= 0.70:
+                return AlertaPortfolio(
+                    mensaje="Cartera alineada con tu perfil conservador",
+                    nivel="ok"
+                )
+            if pct_estables >= 0.40:
+                return AlertaPortfolio(
+                    mensaje="Bastantes activos volátiles para perfil conservador",
+                    nivel="warning"
+                )
+            return AlertaPortfolio(
+                mensaje="Cartera demasiado arriesgada para perfil conservador",
+                nivel="danger"
+            )
+
+        if riesgo < 0.65:
+            # Moderado: equilibrio 40-70% estables
+            if 0.40 <= pct_estables <= 0.70:
+                return AlertaPortfolio(
+                    mensaje="Buena diversificación para perfil moderado",
+                    nivel="ok"
+                )
+            if pct_estables < 0.40:
+                return AlertaPortfolio(
+                    mensaje="Alta concentración en volátiles para perfil moderado",
+                    nivel="warning"
+                )
+            return AlertaPortfolio(
+                mensaje="Cartera demasiado conservadora para perfil moderado",
+                nivel="warning"
+            )
+
+        # Agresivo: quiere mayoría volátil
+        if pct_estables <= 0.50:
+            return AlertaPortfolio(
+                mensaje="Cartera alineada con tu perfil agresivo",
+                nivel="ok"
+            )
+        return AlertaPortfolio(
+            mensaje="Cartera más conservadora que tu perfil agresivo",
+            nivel="warning"
+        )
 
 
 # Factory helper para crear instancias personalizadas del servicio
