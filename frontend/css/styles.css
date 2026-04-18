@@ -2865,6 +2865,29 @@ body > section {
     margin-bottom: var(--spacing-2xl);
 }
 
+/* --- Encabezado del Perfil HORIZON PRO --- */
+.profile-header.is-pro .profile-banner {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.profile-header.is-pro .profile-banner::after {
+    content: 'HORIZON PRO';
+    font-size: clamp(60px, 12vw, 140px);
+    font-weight: 900;
+    color: rgba(255, 255, 255, 0.15); /* Blanco con baja opacidad */
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.profile-header.is-pro .profile-avatar {
+    border-color: #f59e0b;
+}
+/* ------------------------ */
+
 .profile-banner {
     width: 100%;
     height: 200px;
