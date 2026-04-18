@@ -129,12 +129,34 @@ def _get_xgboost_prediction(ticker: str) -> Dict:
 
     direction_map = {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}
     trend = direction_map.get(xgb["direction"], "LATERAL")
+    abstained = xgb.get("abstained", False)
+
+    all_proba = xgb.get("all_proba", [0.33, 0.34, 0.33])
+
+    # Volatilidad histórica 30d calculada de los datos ya descargados
+    volatilidad_30d = None
+    try:
+        import math as _math
+        import numpy as _np
+        closes = feat_df["Close"].dropna().values.tolist()
+        if len(closes) >= 10:
+            log_ret = [_math.log(closes[i] / closes[i + 1]) for i in range(min(30, len(closes) - 1))]
+            volatilidad_30d = round(float(_np.std(log_ret, ddof=1) * 100), 4)
+    except Exception:
+        pass
 
     return {
-        "trend":         trend,
-        "confidence":    xgb["confidence"],
-        "current_price": current_price,
-        "abstained":     xgb.get("abstained", False),
+        "trend":          trend,
+        "confidence":     xgb["confidence"],
+        "current_price":  current_price,
+        "abstained":      abstained,
+        "volatilidad_30d": volatilidad_30d,
+        "probabilidades_xgb": {
+            "bajista":   round(float(xgb.get("probability_bajista", all_proba[0])), 4),
+            "lateral":   round(float(xgb.get("probability_lateral", all_proba[1])), 4),
+            "alcista":   round(float(xgb.get("probability_alcista", all_proba[2])), 4),
+            "abstained": abstained,  # true = señal forzada a LATERAL por baja confianza
+        },
     }
 
 

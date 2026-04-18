@@ -26,6 +26,13 @@ class ActivoUpdateRequest(BaseModel):
     senal_ia: Optional[str] = Field(None, description="Señal de IA: ALCISTA, BAJISTA o LATERAL")
     grafico_prediccion: Optional[dict] = Field(None, description="Datos del gráfico de predicción en JSON")
     noticias: Optional[dict] = Field(None, description="Noticias relacionadas en formato JSON")
+    senal_actualizada_en: Optional[datetime] = Field(None, description="Timestamp de la última actualización de señal IA")
+    precio_predicho: Optional[float] = Field(None, description="Precio objetivo predicho por el modelo")
+    retorno_predicho_pct: Optional[float] = Field(None, description="Retorno esperado en % para el horizonte de predicción")
+    live_accuracy_30d: Optional[float] = Field(None, ge=0.0, le=100.0, description="Accuracy real del modelo en los últimos 30 días (%)")
+    sector: Optional[str] = Field(None, description="Sector del activo (Tecnología, Consumo Básico, etc.)")
+    probabilidades_xgb: Optional[dict] = Field(None, description="Probabilidades XGBoost por clase: {alcista, lateral, bajista}")
+    volatilidad_30d: Optional[float] = Field(None, ge=0.0, description="Volatilidad histórica diaria 30 días (%)")
 
 
 class ActivoResponse(BaseModel):
@@ -40,7 +47,14 @@ class ActivoResponse(BaseModel):
     grafico_prediccion: Optional[dict] = None
     noticias: Optional[dict] = None
     updated_at: datetime
-    
+    senal_actualizada_en: Optional[datetime] = None
+    precio_predicho: Optional[float] = None
+    retorno_predicho_pct: Optional[float] = None
+    live_accuracy_30d: Optional[float] = None
+    sector: Optional[str] = None
+    probabilidades_xgb: Optional[dict] = None
+    volatilidad_30d: Optional[float] = None
+
     class Config:
         from_attributes = True
 
@@ -53,6 +67,12 @@ class ActivoListResponse(BaseModel):
     confianza_bygru: Optional[float] = None
     senal_ia: Optional[str] = None
     estabilidad: Optional[bool] = None
-    
+    senal_actualizada_en: Optional[datetime] = None
+    precio_predicho: Optional[float] = None
+    retorno_predicho_pct: Optional[float] = None
+    live_accuracy_30d: Optional[float] = None
+    sector: Optional[str] = None
+    volatilidad_30d: Optional[float] = None
+
     class Config:
         from_attributes = True
