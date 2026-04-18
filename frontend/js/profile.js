@@ -125,6 +125,13 @@ function loadProfileData() {
             : nombreMostrar;
         const plan = window.getUserPlan(user, 'Free');
 
+        const profileHeader = document.querySelector('.profile-header');
+        if (plan === 'Pro') {
+            profileHeader.classList.add('is-pro');
+        } else {
+            profileHeader.classList.remove('is-pro');
+        }
+
         document.getElementById('profileName').textContent = nombreCompleto;
         document.getElementById('profileEmail').textContent = user.email || 'Sin email';
         document.getElementById('profilePlan').textContent = `Plan ${plan}`;
