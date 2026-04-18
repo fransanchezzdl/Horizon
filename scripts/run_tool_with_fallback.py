@@ -52,6 +52,14 @@ def resolve_python_executable() -> tuple[Path, bool]:
 
 
 def run_with_spinner(command: Sequence[str], label: str) -> int:
+    in_pre_commit = os.getenv("PRE_COMMIT") is not None
+    progress_stream = resolve_progress_stream(in_pre_commit)
+
+    # Sin stream de progreso (pre-commit/no TTY), ejecutamos directo para evitar
+    # bloqueos por buffers de pipes en procesos verbosos.
+    if progress_stream is None:
+        return subprocess.call(command, cwd=ROOT)
+
     process = subprocess.Popen(
         command,
         stdout=subprocess.PIPE,
@@ -62,27 +70,20 @@ def run_with_spinner(command: Sequence[str], label: str) -> int:
 
     frame_idx = 0
     start = time.time()
-    in_pre_commit = os.getenv("PRE_COMMIT") is not None
-    progress_stream = resolve_progress_stream(in_pre_commit)
 
     while process.poll() is None:
         elapsed = int(time.time() - start)
-        if progress_stream is not None:
-            frame = SPINNER_FRAMES[frame_idx % len(SPINNER_FRAMES)]
-            progress_stream.write(f"\r{label} {frame} {elapsed}s")
-            progress_stream.flush()
-            frame_idx += 1
-            time.sleep(0.1)
-            continue
-
-        time.sleep(0.2)
+        frame = SPINNER_FRAMES[frame_idx % len(SPINNER_FRAMES)]
+        progress_stream.write(f"\r{label} {frame} {elapsed}s")
+        progress_stream.flush()
+        frame_idx += 1
+        time.sleep(0.1)
 
     stdout, stderr = process.communicate()
-    if progress_stream is not None:
-        progress_stream.write("\r" + " " * 100 + "\r")
-        progress_stream.flush()
-        if progress_stream is not sys.stderr:
-            progress_stream.close()
+    progress_stream.write("\r" + " " * 100 + "\r")
+    progress_stream.flush()
+    if progress_stream is not sys.stderr:
+        progress_stream.close()
 
     if stdout:
         print(stdout, end="")

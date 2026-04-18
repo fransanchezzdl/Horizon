@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from datetime import datetime
 
@@ -39,8 +39,8 @@ class PredictionResponse(BaseModel):
     modelo_version: str
     indicadores_usados: list[str]  # [Close, RSI, MACD, EMA]
     
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "ticker": "KO",
                 "precio_actual": 64.32,
@@ -56,6 +56,7 @@ class PredictionResponse(BaseModel):
                 "indicadores_usados": ["Close", "RSI", "MACD", "EMA"]
             }
         }
+    )
 
 
 class BlendedReturnRequest(BaseModel):

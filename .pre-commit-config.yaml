@@ -24,6 +24,13 @@ repos:
         pass_filenames: false
         files: ^(backend/(daos/|dtos/|services/|exceptions/|main\.py$)|tests/unit/)
         stages: [pre-commit]
+      - id: pytest-integration
+        name: Pytest integration (tests/integration)
+        entry: python -u tests/integration/run_integration.py
+        language: system
+        pass_filenames: false
+        files: ^(backend/(daos/|dtos/|services/|exceptions/|main\.py$)|tests/integration/)
+        stages: [pre-commit]
 
   # Verificaciones básicas rápidas
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -37,5 +44,5 @@ repos:
       - id: check-json
         name: Check JSON
 
-exclude: ^(\.venv|venv|__pycache__|\.git|migrations|tests|backend/routes|backend/models|backend/scripts)
+exclude: ^(\.venv|venv|__pycache__|\.git|migrations|backend/routes|backend/models|backend/scripts)
 fail_fast: false
