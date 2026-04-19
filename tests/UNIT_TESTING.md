@@ -81,6 +81,13 @@ Cobertura actual:
 
 El runner usa venv del proyecto si existe. Si no existe, usa Python del sistema.
 
+## Integracion con pre-commit
+
+- El hook `pytest-unit` ejecuta siempre la suite completa `tests/unit` en cada commit.
+- No depende de archivos modificados: se valida en todos los commits.
+- Comando manual equivalente:
+  - `pre-commit run pytest-unit --all-files`
+
 ## Nota sobre mocking
 
 La suite es unitaria: se mockean servicios/DAO para aislar la logica del endpoint y validar:

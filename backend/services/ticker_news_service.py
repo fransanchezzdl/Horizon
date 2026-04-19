@@ -99,10 +99,12 @@ class TickerNewsService:
         )
         noticias = self._build_news_payload(feed, ticker=ticker_normalized, limit=safe_limit)
 
-        if noticias:
-            cached_record = self._build_db_cache_payload(noticias)
+        if fetch_status == "ok":
+            cached_record = self._build_db_cache_payload(noticias, fetch_status=fetch_status)
             if not ActivoDAO.actualizar_noticias(ticker_normalized, cached_record):
                 logger.warning("No se pudo persistir noticias en BD para %s", ticker_normalized)
+
+        if noticias:
             return {
                 "ticker": ticker_normalized,
                 "noticias": noticias,
@@ -292,10 +294,11 @@ class TickerNewsService:
         age = datetime.now(timezone.utc) - cached_at
         return age <= timedelta(minutes=max_age_minutes)
 
-    def _build_db_cache_payload(self, noticias: list[dict[str, Any]]) -> dict[str, Any]:
+    def _build_db_cache_payload(self, noticias: list[dict[str, Any]], fetch_status: str = "ok") -> dict[str, Any]:
         return {
             "cached_at": datetime.now(timezone.utc).isoformat(),
             "source": "alphavantage",
+            "fetch_status": fetch_status,
             "items": noticias,
         }
 

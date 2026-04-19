@@ -400,13 +400,7 @@ class ActivoDAO:
             bool: True si exitoso
         """
         try:
-            response = (
-                supabase.table(ActivoDAO.TABLE)
-                .update({"noticias": noticias, "updated_at": datetime.now().isoformat()})
-                .eq("ticker", ticker)
-                .execute()
-            )
-            return bool(response.data)
+            return ActivoDAO.actualizar(ticker, {"noticias": noticias})
 
         except Exception as e:
             print(f"Error actualizando noticias de {ticker}: {e}")
