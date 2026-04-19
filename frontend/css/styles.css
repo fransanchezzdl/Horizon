@@ -131,6 +131,21 @@
     --sidebar-glass-blur: blur(20px) saturate(140%);
     --sidebar-glass-highlight: linear-gradient(180deg, rgba(255, 255, 255, 0.58) 0%, rgba(255, 255, 255, 0.12) 64%, rgba(255, 255, 255, 0.02) 100%);
     --sidebar-glass-specular: radial-gradient(88% 56% at 14% 0%, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 78%);
+
+    /* Selector de rango (análisis) */
+    --range-selector-bg: #e5e7eb;
+    --range-selector-border: #d1d5db;
+    --range-btn-text: #64748b;
+    --range-btn-hover-bg: #f3f4f6;
+    --range-btn-hover-text: #334155;
+    --range-btn-active-bg: var(--color-primary);
+    --range-btn-active-text: var(--color-white);
+    --range-btn-active-border: var(--color-primary);
+    --range-btn-active-shadow: 0 1px 2px var(--color-primary-a30);
+
+    --news-badge-bg: var(--color-bg-lighter);
+    --news-badge-border: var(--color-border-soft);
+    --news-badge-text: var(--color-text-soft);
     
     /* Sidebar */
     --sidebar-width: 250px;
@@ -248,6 +263,21 @@
     --sidebar-glass-blur: blur(20px) saturate(150%);
     --sidebar-glass-highlight: linear-gradient(180deg, rgba(148, 163, 184, 0.2) 0%, rgba(15, 23, 42, 0.07) 64%, rgba(15, 23, 42, 0.02) 100%);
     --sidebar-glass-specular: radial-gradient(88% 56% at 14% 0%, rgba(148, 163, 184, 0.16) 0%, rgba(148, 163, 184, 0) 80%);
+
+    /* Selector de rango (análisis) */
+    --range-selector-bg: #1f2937;
+    --range-selector-border: #334155;
+    --range-btn-text: #94a3b8;
+    --range-btn-hover-bg: #334155;
+    --range-btn-hover-text: #e2e8f0;
+    --range-btn-active-bg: #0f172a;
+    --range-btn-active-text: #f8fafc;
+    --range-btn-active-border: #475569;
+    --range-btn-active-shadow: 0 1px 2px rgba(2, 6, 23, 0.55);
+
+    --news-badge-bg: #1f2937;
+    --news-badge-border: #334155;
+    --news-badge-text: #cbd5e1;
 }
 
 [data-theme="dark"] .nav-item.active .nav-label {
@@ -3670,6 +3700,40 @@ body > section {
     justify-content: flex-start;
 }
 
+.news-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.news-card-header .opt-title {
+    margin: 0;
+}
+
+.news-update-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 24px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--news-badge-border);
+    background: var(--news-badge-bg);
+    color: var(--news-badge-text);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.1;
+    white-space: nowrap;
+}
+
+.news-update-badge.is-stale {
+    border-color: var(--color-warning-border);
+    background: var(--color-warning-bg-soft);
+    color: var(--color-warning-800);
+}
+
 .news-card .news-list {
     flex: 1;
 }
@@ -4866,31 +4930,38 @@ body > section {
 .range-selector {
     display: flex;
     flex-wrap: nowrap;
-    gap: 4px;
+    gap: 6px;
     flex-shrink: 0;
+    padding: 6px;
+    border-radius: 12px;
+    background: var(--range-selector-bg);
+    border: 1px solid var(--range-selector-border);
 }
 
 .range-btn {
-    padding: 3px 10px;
-    border-radius: 6px;
-    border: 1px solid var(--color-border, #334155);
+    min-width: 44px;
+    padding: 7px 12px;
+    border-radius: 9px;
+    border: 1px solid transparent;
     background: transparent;
-    color: var(--color-text-muted, #9ca3af);
-    font-size: 11px;
-    font-weight: 500;
+    color: var(--range-btn-text);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1;
     cursor: pointer;
-    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    transition: background 0.15s, color 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .range-btn:hover {
-    background: var(--color-bg-lighter, #1e293b);
-    color: var(--color-text-primary, #f1f5f9);
+    background: var(--range-btn-hover-bg);
+    color: var(--range-btn-hover-text);
 }
 
 .range-btn.active {
-    background: var(--color-primary, #2563eb);
-    color: #fff;
-    border-color: var(--color-primary, #2563eb);
+    background: var(--range-btn-active-bg);
+    color: var(--range-btn-active-text);
+    border-color: var(--range-btn-active-border);
+    box-shadow: var(--range-btn-active-shadow);
 }
 
 #predictionChartContainer {
