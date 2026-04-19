@@ -52,7 +52,12 @@ pytest tests/integration/test_performance_basic_integration.py::test_endpoint_ac
 
 ## Integracion con pre-commit
 
-El hook `pytest-integration` ejecuta la suite de `tests/integration` antes de permitir el commit cuando hay cambios relevantes en backend o en los propios tests de integracion.
+El hook `pytest-integration` ejecuta siempre la suite completa de `tests/integration` antes de permitir el commit.
+
+Resumen de disparo:
+
+- se ejecuta en todos los commits
+- no depende de archivos modificados
 
 Comando manual equivalente:
 

@@ -65,18 +65,12 @@ def run_with_spinner(command: Sequence[str], label: str) -> int:
     in_pre_commit = os.getenv("PRE_COMMIT") is not None
     progress_stream = resolve_progress_stream(in_pre_commit)
 
-    # Sin stream de progreso (pre-commit/no TTY), ejecutamos directo para evitar
-    # bloqueos por buffers de pipes en procesos verbosos.
+    # Sin stream de progreso (pre-commit/no TTY), ejecutamos directo.
     if progress_stream is None:
         return subprocess.call(command, cwd=ROOT)
 
-    process = subprocess.Popen(
-        command,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        text=True,
-        cwd=ROOT,
-    )
+    # Evita bloqueos por buffers: dejamos stdout/stderr directos al terminal.
+    process = subprocess.Popen(command, cwd=ROOT)
 
     frame_idx = 0
     start = time.time()
@@ -96,7 +90,6 @@ def run_with_spinner(command: Sequence[str], label: str) -> int:
         frame_idx += 1
         time.sleep(0.1)
 
-    stdout, stderr = process.communicate()
     elapsed_total = int(time.time() - start)
     if spinner_line_initialized:
         progress_stream.write(f"\r{label} listo ({elapsed_total}s)\n")
@@ -106,12 +99,7 @@ def run_with_spinner(command: Sequence[str], label: str) -> int:
     if progress_stream is not sys.stderr:
         progress_stream.close()
 
-    if stdout:
-        print(stdout, end="")
-    if stderr:
-        print(stderr, end="", file=sys.stderr)
-
-    return process.returncode
+    return process.wait()
 
 
 def main() -> int:

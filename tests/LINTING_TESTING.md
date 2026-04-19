@@ -43,7 +43,6 @@ Archivo: .pre-commit-config.yaml
 
 Hooks locales:
 - pylint
-- pytest-unit
 
 Hooks externos:
 - check-ast
@@ -51,7 +50,9 @@ Hooks externos:
 
 Cuando se disparan:
 - pylint y check-ast: cambios en backend/daos, dtos, services, exceptions o main.py
-- pytest-unit: cambios en alcance backend anterior o tests/unit
+
+Nota:
+- el disparo y alcance de `pytest-unit` y `pytest-integration` se documenta en tests/UNIT_TESTING.md y tests/INTEGRATION_TESTING.md
 
 ## Animacion de carga en consola
 
@@ -59,6 +60,7 @@ Para evitar sensacion de bloqueo en ejecuciones largas:
 - scripts/run_tool_with_fallback.py muestra spinner ASCII durante pylint/pytest
 - tests/linting/run_pylint.py usa ese runner
 - tests/unit/run_pytest.py usa ese runner
+- tests/integration/run_integration.py usa ese runner
 
 ## Compatibilidad con y sin venv
 

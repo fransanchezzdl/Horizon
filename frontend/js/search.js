@@ -297,9 +297,46 @@ function formatNewsDate(dateValue) {
     });
 }
 
-function renderNewsCards(ticker, noticias) {
+function formatNewsRelativeTime(dateValue) {
+    if (!dateValue) return 'Sin busqueda reciente';
+
+    const parsed = new Date(dateValue);
+    if (Number.isNaN(parsed.getTime())) return 'Sin fecha de actualizacion';
+
+    const diffMs = Date.now() - parsed.getTime();
+    const diffMinutes = Math.floor(diffMs / 60000);
+
+    if (diffMinutes < 1) return 'Actualizado hace unos segundos';
+    if (diffMinutes < 60) return `Actualizado hace ${diffMinutes} min`;
+
+    // No debería tardar más de 1 hora en actualizar nuevas noticias, pero se programa
+    // por si acaso surge un error de actualización.
+    const diffHours = Math.floor(diffMinutes / 60);
+    if (diffHours < 24) return `Actualizado hace ${diffHours} h`;
+
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `Actualizado hace ${diffDays} d`;
+
+    return `Actualizado ${formatNewsDate(parsed.toISOString())}`;
+}
+
+function updateNewsUpdateBadge(metadata = {}) {
+    const badge = document.getElementById('newsUpdateBadge');
+    if (!badge) return;
+
+    const relativeLabel = formatNewsRelativeTime(metadata.cachedAt);
+    const exactDate = metadata.cachedAt ? formatNewsDate(metadata.cachedAt) : '';
+
+    badge.textContent = relativeLabel;
+    badge.classList.toggle('is-stale', Boolean(metadata.stale));
+    badge.title = exactDate ? `Ultima actualizacion: ${exactDate}` : '';
+}
+
+function renderNewsCards(ticker, noticias, metadata = {}) {
     const newsList = document.getElementById('newsList');
     if (!newsList) return;
+
+    updateNewsUpdateBadge(metadata);
 
     if (!Array.isArray(noticias) || noticias.length === 0) {
         newsList.innerHTML = `
@@ -327,6 +364,7 @@ function renderNewsCards(ticker, noticias) {
 
 async function loadTickerNews(ticker) {
     const newsList = document.getElementById('newsList');
+    updateNewsUpdateBadge();
     if (newsList) {
         newsList.innerHTML = `
             <div class="news-item-card news-item-card-status">
@@ -345,7 +383,10 @@ async function loadTickerNews(ticker) {
         }
 
         const payload = await response.json();
-        renderNewsCards(ticker, payload?.noticias || []);
+        renderNewsCards(ticker, payload?.noticias || [], {
+            cachedAt: payload?.cached_at,
+            stale: payload?.stale === true,
+        });
     } catch (error) {
         console.error('Error cargando noticias del ticker:', error);
         renderNewsCards(ticker, []);
@@ -389,7 +430,7 @@ function initSearch() {
         newsTitle.textContent = 'Noticias';
     }
 
-    renderNewsCards('', []);
+    renderNewsCards('', [], { cachedAt: null, stale: false });
 
     addToPortfolioBtn && addToPortfolioBtn.addEventListener('click', openAddPortfolioModal);
     closeAddPortfolioModalBtn && closeAddPortfolioModalBtn.addEventListener('click', closeAddPortfolioModal);
