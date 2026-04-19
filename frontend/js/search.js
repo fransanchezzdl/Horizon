@@ -550,6 +550,9 @@ function initSearch() {
         if (typeof window.initShapWaterfall === 'function') {
             window.initShapWaterfall(selectedTicker);
         }
+        if (typeof window.initShapTemporal === 'function') {
+            window.initShapTemporal(selectedTicker);
+        }
     }
 
     // Carga y muestra las métricas de fiabilidad del modelo para el ticker.

@@ -417,6 +417,20 @@ def obtener_price_history(ticker: str, days: int = 30):
     return PriceHistoryService.get_price_and_signals(ticker=ticker, days=days)
 
 
+@app.get("/activos/{ticker}/xai/shap-temporal")
+def obtener_shap_temporal(ticker: str, limit: int = 30):
+    """
+    Devuelve la evolución temporal de las top-3 features SHAP para el ticker.
+    Usado por el gráfico de líneas temporal en el frontend.
+    """
+    from .daos.xai_shap_dao import XaiShapDAO
+
+    result = XaiShapDAO.obtener_shap_temporal(ticker.upper(), limit=limit)
+    if not result:
+        raise HTTPException(status_code=404, detail="Sin histórico SHAP para este ticker")
+    return result
+
+
 @app.get("/activos/{ticker}/xai/latest-shap")
 def obtener_latest_shap(ticker: str):
     """

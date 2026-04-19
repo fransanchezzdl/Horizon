@@ -192,7 +192,6 @@ def generar_explicacion_para_ticker(
             ticker=ticker,
             senal_prediccion=senal_prediccion,
             confianza=confianza_prediccion,
-            X_test=X_test,
             feature_names=feature_names
         )
         
