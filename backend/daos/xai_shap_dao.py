@@ -102,3 +102,88 @@ class XaiShapDAO:
         except Exception as e:
             logger.error(f"Error en XaiShapDAO.obtener_latest_shap({ticker}): {e}")
             return None
+
+    @staticmethod
+    def obtener_shap_temporal(ticker: str, limit: int = 30) -> Optional[Dict[str, Any]]:
+        """
+        Devuelve la evolución temporal de las top-3 features SHAP para el ticker.
+
+        Trae los últimos `limit` registros, identifica las 3 features con mayor
+        impacto absoluto promedio, y construye una serie temporal de sus valores SHAP.
+
+        Returns:
+            {
+                "ticker": str,
+                "top_features": [str, str, str],
+                "series": [{"fecha": str, feature1: float, feature2: float, feature3: float}, ...]
+            }
+            None si no hay datos.
+        """
+        try:
+            supabase = XaiShapDAO._get_supabase_client()
+
+            response = (
+                supabase.table("xai_explicaciones")
+                .select("fecha_prediccion, shap_valores")
+                .eq("ticker", ticker)
+                .order("fecha_prediccion", desc=False)
+                .limit(limit)
+                .execute()
+            )
+
+            if not response.data:
+                return None
+
+            rows = response.data
+
+            # Parsear shap_valores de cada fila
+            parsed = []
+            for row in rows:
+                raw = row.get("shap_valores", "[]")
+                shap_list = json.loads(raw) if isinstance(raw, str) else (raw or [])
+                fecha = (row.get("fecha_prediccion") or "")[:10]
+                parsed.append({"fecha": fecha, "shap_list": shap_list})
+
+            # Calcular impacto absoluto promedio por feature en todas las entradas
+            feature_abs_sum: Dict[str, float] = {}
+            feature_count: Dict[str, int] = {}
+            for entry in parsed:
+                for item in entry["shap_list"]:
+                    name = item.get("feature_name", item.get("feature", ""))
+                    abs_val = float(item.get("shap_abs", item.get("abs", abs(item.get("shap_value", item.get("shap", 0))))) or 0)
+                    feature_abs_sum[name] = feature_abs_sum.get(name, 0) + abs_val
+                    feature_count[name] = feature_count.get(name, 0) + 1
+
+            avg_abs = {
+                f: feature_abs_sum[f] / feature_count[f]
+                for f in feature_abs_sum
+                if feature_count[f] > 0
+            }
+            top_features = sorted(avg_abs, key=lambda f: avg_abs[f], reverse=True)[:3]
+
+            if not top_features:
+                return None
+
+            # Construir series temporales
+            series = []
+            for entry in parsed:
+                shap_by_feature = {
+                    item.get("feature_name", item.get("feature", "")): float(
+                        item.get("shap_value", item.get("shap", 0)) or 0
+                    )
+                    for item in entry["shap_list"]
+                }
+                point = {"fecha": entry["fecha"]}
+                for feat in top_features:
+                    point[feat] = round(shap_by_feature.get(feat, 0), 6)
+                series.append(point)
+
+            return {
+                "ticker": ticker,
+                "top_features": top_features,
+                "series": series,
+            }
+
+        except Exception as e:
+            logger.error(f"Error en XaiShapDAO.obtener_shap_temporal({ticker}): {e}")
+            return None

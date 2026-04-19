@@ -17,11 +17,9 @@ Features:
 import os
 import pickle
 import numpy as np
-import pandas as pd
-import json
 import base64
 import logging
-from typing import Dict, List, Tuple, Any, Optional
+from typing import Dict, List, Any, Optional
 from datetime import datetime
 
 try:
@@ -95,7 +93,6 @@ class XAIEngine:
         ticker: str,
         senal_prediccion: str,
         confianza: float,
-        X_test: Optional[np.ndarray] = None,
         feature_names: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
@@ -160,16 +157,6 @@ class XAIEngine:
         contribucion = self._calculate_feature_contribution(X_instance)
         explicacion["contribucion_features"] = contribucion
         logger.info(f"✓ Contribución de features calculada para {ticker}")
-        
-        # 5️⃣ Attention Weights (si BiGRU disponible)
-        if self.bigru_model:
-            try:
-                pesos_atencion = self._extract_attention_weights(X_instance)
-                explicacion["pesos_atencion"] = pesos_atencion
-                logger.info(f"✓ Pesos de atención extraídos para {ticker}")
-            except Exception as e:
-                logger.warning(f"⚠️ Error en attention weights: {e}")
-                explicacion["pesos_atencion"] = []
         
         return explicacion
     
@@ -457,34 +444,6 @@ class XAIEngine:
         
         return contribucion
     
-    def _extract_attention_weights(self, X_instance: np.ndarray) -> List[Dict[str, Any]]:
-        """
-        Extrae attention weights del BiGRU para ver qué días pasados importan.
-        
-        Returns:
-            [{dia_relativo, peso_atencion}, ...]
-        """
-        if not self.bigru_model:
-            return []
-        
-        try:
-            # TODO: Implementar según arquitectura específica del BiGRU
-            # Por ahora, devolvemos estructura vacía
-            attention_weights = []
-            
-            # Placeholder: simulamos attention weights
-            window_size = X_instance.shape[0] if X_instance.ndim == 2 else 30
-            for day_offset in range(window_size):
-                attention_weights.append({
-                    "dia_relativo": -window_size + day_offset + 1,
-                    "peso_atencion": float(np.random.rand()),  # TODO: sacar del modelo
-                }).sort(key=lambda x: x["peso_atencion"], reverse=True)
-            
-            return attention_weights[:10]  # Top 10 días
-        
-        except Exception as e:
-            logger.warning(f"⚠️ Error extrayendo attention weights: {e}")
-            return []
 
 
 def load_xai_engine(ticker: str, saved_models_dir: str = "backend/models/saved_models") -> XAIEngine:
