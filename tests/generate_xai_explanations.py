@@ -90,15 +90,21 @@ def generar_explicacion_para_ticker(
             with open(feature_names_path, "rb") as f:
                 feature_names = pickle.load(f)
         if not feature_names:
-            # Reconstruir en base a feature_cols y la agregación [last, mean, std, trend]
-            from backend.models.config import get_feature_cols as _gfc
+            # Reconstruir con la misma lógica que build_xgb_features:
+            # 3 sub-ventanas × 4 agregaciones = 12 bloques por feature
+            from backend.models.config import get_feature_cols as _gfc, get_config as _gcfg
             _fc = _gfc(ticker)
-            feature_names = (
-                [f"{c}_last"  for c in _fc] +
-                [f"{c}_mean"  for c in _fc] +
-                [f"{c}_std"   for c in _fc] +
-                [f"{c}_trend" for c in _fc]
-            )
+            _cfg = _gcfg(ticker)
+            _W = _cfg.get("window_size", 30)
+            _sub_windows = [max(2, _W // 6), _W // 2, _W]
+            feature_names = []
+            for sw in _sub_windows:
+                feature_names += (
+                    [f"{c}_sw{sw}_last"  for c in _fc] +
+                    [f"{c}_sw{sw}_mean"  for c in _fc] +
+                    [f"{c}_sw{sw}_std"   for c in _fc] +
+                    [f"{c}_sw{sw}_trend" for c in _fc]
+                )
         logger.info(f"✓ {len(feature_names)} feature names cargados")
         
         # 4️⃣ Obtener datos recientes (usar misma configuración que training)
@@ -133,18 +139,22 @@ def generar_explicacion_para_ticker(
         # Preparar ventana: últimos max_window_size rows
         last_window_raw = feat_df[feature_cols].values[-max_window_size:]  # Shape: (max_window_size, n_features)
         last_window_scaled = scaler.transform(last_window_raw)  # Shape: (max_window_size, n_features)
-        
-        # Aplicar la misma agregación que en training:
-        # [last, mean, std, trend] = 4 * n_features
-        n_features = last_window_scaled.shape[1]
-        last_vals = last_window_scaled[-1, :]  # últimos valores (shape: n_features)
-        mean_vals = np.mean(last_window_scaled, axis=0)  # promedio de la ventana
-        std_vals = np.std(last_window_scaled, axis=0)  # desv estándar
-        trend_vals = last_window_scaled[-1, :] - last_window_scaled[0, :]  # cambio total
-        
-        # Concatenar: shape (1, 4 * n_features)
-        X_test = np.concatenate([last_vals, mean_vals, std_vals, trend_vals]).reshape(1, -1).astype(np.float32)
-        logger.info(f"✓ Ventana preparada: shape {X_test.shape} (agregación: last+mean+std+trend)")
+
+        # Replicar build_xgb_features de xgboost_model.py:
+        # 3 sub-ventanas [W//6, W//2, W] × 4 agregaciones = 12 * n_features
+        W = last_window_scaled.shape[0]
+        sub_windows = [max(2, W // 6), W // 2, W]
+        parts = []
+        for sw in sub_windows:
+            sl = last_window_scaled[-sw:, :]         # (sw, n_features)
+            parts.extend([
+                sl[-1, :],                           # last
+                sl.mean(axis=0),                     # mean
+                sl.std(axis=0),                      # std
+                sl[-1, :] - sl[0, :],                # trend
+            ])
+        X_test = np.concatenate(parts).reshape(1, -1).astype(np.float32)
+        logger.info(f"✓ Ventana preparada: shape {X_test.shape} (3 sub-ventanas × 4 agregaciones = 12 × n_features)")
         
         # 6️⃣ Hacer predicción
         y_pred = xgb_model.predict(X_test)[0]  # 0=BAJISTA, 1=LATERAL, 2=ALCISTA
