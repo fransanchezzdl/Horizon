@@ -60,7 +60,7 @@ def download_data(ticker: str) -> pd.DataFrame:
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
 
-    print(f"✅ Datos descargados: {len(df)} filas para {ticker}.")
+    print(f"[OK] Datos descargados: {len(df)} filas para {ticker}.")
     return df
 
 
@@ -531,7 +531,7 @@ def prepare_data(ticker: str, config: dict) -> dict:
     X_test_t, y_test_t = to_tensors(X_test, y_test)
 
     print(
-        f"📊 Split: train={len(X_train_t)}, val={len(X_val_t)}, test={len(X_test_t)} secuencias."
+        f"[INFO] Split: train={len(X_train_t)}, val={len(X_val_t)}, test={len(X_test_t)} secuencias."
     )
 
     return {
@@ -706,7 +706,7 @@ def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> 
         _, y_val_ret   = create_sequences(val_scaled,   val_returns,   ws)
         _, y_test_ret  = create_sequences(test_scaled,  test_returns,  ws)
 
-        print(f"📊 Split (ws={ws}): train={len(X_train_t)}, val={len(X_val_t)}, test={len(X_test_t)}")
+        print(f"[INFO] Split (ws={ws}): train={len(X_train_t)}, val={len(X_val_t)}, test={len(X_test_t)}")
         print(
             f"   Train class distribution: {np.bincount(y_train_classes[y_train_classes.size - len(y_train_t):], minlength=3)}"
         )
