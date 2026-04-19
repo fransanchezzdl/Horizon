@@ -54,7 +54,7 @@ class ExplicacionXAIDAO:
     ) -> bool:
         """
         Crea nueva explicación XAI.
-        
+
         Args:
             ticker: Ticker del activo
             shap_valores: Lista de {feature_name, shap_value, feature_value, shap_abs}
@@ -65,21 +65,20 @@ class ExplicacionXAIDAO:
             confianza_prediccion: Float 0-1
             version_modelo: Versión del modelo
             seed_modelo: Seed usado en entrenamiento
-            pesos_atencion: Opcional, lista de attention weights
-        
+            pesos_atencion: Ignorado (columna eliminada de BD)
+
         Returns:
             True si exitoso
         """
         try:
             supabase = ExplicacionXAIDAO._get_supabase_client()
-            
+
             registro = {
                 "ticker": ticker,
                 "fecha_prediccion": datetime.now().isoformat(),
                 "shap_valores": json.dumps(shap_valores),
                 "shap_grafico": shap_grafico,
                 "features_top20": json.dumps(features_top20),
-                "pesos_atencion": json.dumps(pesos_atencion or []),
                 "contribucion_features": json.dumps(contribucion_features),
                 "senal_prediccion": senal_prediccion,
                 "confianza_prediccion": float(confianza_prediccion),
@@ -126,7 +125,6 @@ class ExplicacionXAIDAO:
                 # Deserealizar JSON
                 exp["shap_valores"] = json.loads(exp.get("shap_valores", "[]"))
                 exp["features_top20"] = json.loads(exp.get("features_top20", "[]"))
-                exp["pesos_atencion"] = json.loads(exp.get("pesos_atencion", "[]"))
                 exp["contribucion_features"] = json.loads(exp.get("contribucion_features", "{}"))
                 
                 return exp
@@ -180,7 +178,6 @@ class ExplicacionXAIDAO:
                 for exp in response.data:
                     exp["shap_valores"] = json.loads(exp.get("shap_valores", "[]"))
                     exp["features_top20"] = json.loads(exp.get("features_top20", "[]"))
-                    exp["pesos_atencion"] = json.loads(exp.get("pesos_atencion", "[]"))
                     exp["contribucion_features"] = json.loads(exp.get("contribucion_features", "{}"))
                 
                 logger.info(f"✓ Obtenidas {len(response.data)} explicaciones para {ticker}")
