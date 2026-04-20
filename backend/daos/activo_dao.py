@@ -273,20 +273,25 @@ class ActivoDAO:
                 else:
                     print(f"      {k}: {v}")
             
-            # 3️⃣ Ejecutar actualización usando UPSERT (mejor para RLS)
-            print(f"\n   📤 Enviando UPSERT (INSERT ... ON CONFLICT) a Supabase...")
+            # 3️⃣ Ejecutar actualización usando UPDATE (respeta RLS mejor que UPSERT)
+            print(f"\n   📤 Enviando UPDATE a Supabase...")
             response = (
                 supabase.table(ActivoDAO.TABLE)
-                .upsert(payload)  # UPSERT bypasea mejor las restricciones de RLS
+                .update(payload)  # UPDATE en lugar de UPSERT respeta RLS correctamente
+                .eq("ticker", ticker)
                 .execute()
             )
             
-            print(f"   ✅ UPSERT ejecutado. Response count: {response.count}")
+            print(f"   ✅ UPDATE ejecutado. Response count: {response.count}")
             print(f"   Response data type: {type(response.data)}")
             
             # 4️⃣ Verificar que se actualizó realmente
-            # IMPORTANTE: response.count a veces es None incluso cuando la operación fue exitosa
-            # Por eso verificamos response.data en lugar de solo count
+            # Con UPDATE, response.count debería ser > 0 si la fila se actualizó
+            if response.count is not None and response.count > 0:
+                print(f"✅ Activo {ticker} actualizado correctamente (UPDATE afectó {response.count} fila(s))")
+                return True
+            
+            # Si response.count es 0 o None, hacer verificación posterior para confirmar
             if response.data and len(response.data) > 0:
                 upserted_record = response.data[0]
                 print(f"   ✅ Datos en respuesta: {list(upserted_record.keys())}")
