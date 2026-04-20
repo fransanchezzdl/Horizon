@@ -84,36 +84,54 @@ class TickerNewsService:
         cached_payload = self._load_db_news_cache(ticker_normalized)
         cached_items = self._extract_cached_items(cached_payload)
 
+        # ✅ Si cache es fresco y tiene noticias, devolver cache
         if self._is_cache_fresh(cached_payload, self.CACHE_REFRESH_MINUTES) and cached_items:
+            print(f"   ✅ Cache fresco para {ticker_normalized}: {len(cached_items)} noticias")
             return {
                 "ticker": ticker_normalized,
                 "noticias": cached_items[:safe_limit],
                 "cached_at": cached_payload.get("cached_at"),
                 "source": cached_payload.get("source", "alphavantage"),
+                "from_cache": True,
             }
 
+        # 🔄 Cache no es fresco o vacío → obtener noticias nuevas
+        print(f"   🔄 Cache no fresco para {ticker_normalized}, consultando API...")
         feed, fetch_status = self._fetch_alpha_vantage_feed(
             ticker=ticker_normalized,
             days_back=days_back,
             fetch_limit=max(20, safe_limit * 6),
         )
+        
+        print(f"   API status: {fetch_status}, feed items: {len(feed) if feed else 0}")
         noticias = self._build_news_payload(feed, ticker=ticker_normalized, limit=safe_limit)
+        print(f"   Noticias procesadas: {len(noticias)}")
 
-        if fetch_status == "ok":
+        # ✅ Solo guardar si:
+        # 1. API respondió exitosamente (fetch_status == "ok")
+        # 2. Obtuvimos al menos 1 noticia
+        if fetch_status == "ok" and noticias:
             cached_record = self._build_db_cache_payload(noticias, fetch_status=fetch_status)
-            if not ActivoDAO.actualizar_noticias(ticker_normalized, cached_record):
+            print(f"   💾 Guardando {len(noticias)} noticias en BD para {ticker_normalized}...")
+            if ActivoDAO.actualizar_noticias(ticker_normalized, cached_record):
+                print(f"   ✅ Noticias guardadas exitosamente")
+            else:
+                print(f"   ❌ No se pudo persistir noticias en BD para {ticker_normalized}")
                 logger.warning("No se pudo persistir noticias en BD para %s", ticker_normalized)
 
+        # 🎯 Devolver noticias nuevas si las hay
         if noticias:
             return {
                 "ticker": ticker_normalized,
                 "noticias": noticias,
-                "cached_at": cached_record.get("cached_at"),
-                "source": cached_record.get("source", "alphavantage"),
+                "cached_at": datetime.now(timezone.utc).isoformat(),
+                "source": "alphavantage",
+                "from_cache": False,
             }
 
-        # Fallback: si API falla/rate-limit, devolver ultimas noticias guardadas en BD.
+        # ⚠️ Fallback: si API falla/rate-limit, devolver ultimas noticias guardadas en BD.
         if cached_items:
+            print(f"   ⚠️ API falló (status={fetch_status}), usando cache stale para {ticker_normalized}")
             logger.info("Usando cache persistente de noticias para %s (status=%s)", ticker_normalized, fetch_status)
             return {
                 "ticker": ticker_normalized,
@@ -123,6 +141,8 @@ class TickerNewsService:
                 "stale": True,
             }
 
+        # ❌ Ninguna noticia disponible
+        print(f"   ❌ No hay noticias para {ticker_normalized} (API status={fetch_status})")
         return {
             "ticker": ticker_normalized,
             "noticias": [],
