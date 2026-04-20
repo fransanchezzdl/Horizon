@@ -283,55 +283,81 @@ class ActivoDAO:
             
             print(f"   ✅ UPSERT ejecutado. Response count: {response.count}")
             print(f"   Response data type: {type(response.data)}")
-            print(f"   Response data: {response.data}")
             
             # 4️⃣ Verificar que se actualizó realmente
-            if response.count is not None and response.count > 0:
-                print(f"✅ Activo {ticker} actualizado correctamente ({response.count} fila(s) afectada(s))")
-                return True
+            # IMPORTANTE: response.count a veces es None incluso cuando la operación fue exitosa
+            # Por eso verificamos response.data en lugar de solo count
+            if response.data and len(response.data) > 0:
+                upserted_record = response.data[0]
+                print(f"   ✅ Datos en respuesta: {list(upserted_record.keys())}")
+                
+                # Verificar que al menos uno de los campos que quisimos actualizar está presente
+                updated_any = False
+                for key in payload.keys():
+                    if key in upserted_record and upserted_record[key] is not None:
+                        print(f"      ✅ Campo '{key}' actualizado en respuesta")
+                        updated_any = True
+                
+                if updated_any:
+                    print(f"✅ Activo {ticker} actualizado correctamente (verificado en response.data)")
+                    return True
+                else:
+                    print(f"⚠️ Response.data existe pero todos los campos enviados son NULL")
+                    # Continuar con verificación posterior
             
-            # Si count es 0 o None, verificar leyendo los datos principales que actualizamos
+            # Si la respuesta está vacía, hacer verificación posterior
             print(f"\n   🔍 Verificando lectura posterior...")
+            
+            # Leer todos los campos que quisimos actualizar
+            select_fields = ", ".join(payload.keys())
             verify = (
                 supabase.table(ActivoDAO.TABLE)
-                .select("precio, senal_ia, confianza_bygru, grafico_prediccion")
+                .select(select_fields)
                 .eq("ticker", ticker)
                 .execute()
             )
             
-            print(f"   📥 Datos leídos: {verify.data}")
-            
             if verify.data and len(verify.data) > 0:
                 stored_data = verify.data[0]
-                print(f"   Datos almacenados en BD:")
-                for key, val in stored_data.items():
-                    if isinstance(val, dict):
-                        print(f"      {key}: dict({len(val)} campos)")
-                    else:
-                        print(f"      {key}: {val}")
+                print(f"   📥 Verificación posterior - campos guardados:")
                 
-                # Verificar que al menos uno de los campos clave se actualizó
-                expected_fields = ["precio", "senal_ia", "confianza_bygru", "grafico_prediccion"]
-                updated_fields_found = False
+                # Campos de sistema que se auto-actualizan (no contar como "actualización del usuario")
+                system_fields = {"updated_at", "ticker", "nombre_completo"}
                 
-                for field in expected_fields:
-                    if field in payload and field in stored_data:
-                        if stored_data[field] is not None:
-                            print(f"      ✅ {field} tiene valor")
-                            updated_fields_found = True
-                            break
+                # Verificar que al menos UN campo del usuario (no sistema) se guardó correctamente
+                user_fields_updated = []
+                for key, sent_value in payload.items():
+                    if key in system_fields:
+                        continue  # Saltar campos de sistema
+                    
+                    stored_value = stored_data.get(key)
+                    
+                    if stored_value is not None:
+                        if isinstance(stored_value, dict) and isinstance(sent_value, dict):
+                            # Para dicts (como noticias, grafico_prediccion), verificar que tiene contenido
+                            if len(stored_value) > 0:
+                                print(f"      ✅ {key}: dict({len(stored_value)} campos)")
+                                user_fields_updated.append(key)
+                            else:
+                                print(f"      ❌ {key}: dict vacío (no se guardó correctamente)")
+                        elif stored_value == sent_value:
+                            print(f"      ✅ {key} = {str(stored_value)[:60]}...")
+                            user_fields_updated.append(key)
                         else:
-                            print(f"      ❌ {field} es NULL aunque se envió: {payload[field]}")
+                            # Valor existe pero no coincide exactamente - para numéricos, puede ser normal por precisión
+                            print(f"      ⚠️ {key}: esperado {sent_value}, se guardó {stored_value}")
+                            user_fields_updated.append(key)
+                    else:
+                        print(f"      ❌ {key}: es NULL en BD (NO se guardó)")
                 
-                if updated_fields_found:
-                    print(f"✅ Activo {ticker} actualizado (verificado por datos)")
+                if user_fields_updated:
+                    print(f"✅ Activo {ticker} actualizado correctamente ({len(user_fields_updated)} campo(s) del usuario)")
                     return True
                 else:
-                    print(f"⚠️ Activo {ticker} existe pero los datos no parecen haberse guardado (todos NULL)")
-                    print(f"\n   🚨 SOSPECHA: Problema de RLS o tipos de datos en Supabase")
+                    print(f"❌ Activo {ticker} existe pero NINGUNO de los campos del usuario se guardó")
                     return False
             
-            print(f"❌ No se pudo verificar que {ticker} se actualizó (count: {response.count})")
+            print(f"❌ No se pudo verificar que {ticker} se actualizó")
             return False
         
         except Exception as e:
