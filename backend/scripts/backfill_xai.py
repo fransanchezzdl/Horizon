@@ -266,6 +266,7 @@ def run_backfill(
                 confianza_prediccion=result["confianza_prediccion"],
                 version_modelo="backfill",
                 seed_modelo=42,
+                fecha_prediccion=pred_date.isoformat(),
             )
 
             if success:

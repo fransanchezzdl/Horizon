@@ -541,6 +541,10 @@ function initSearch() {
         const senalValue = document.getElementById('senalValue');
         if (senalValue) senalValue.textContent = formatSignal(activo.senal_ia);
 
+        if (typeof window.renderProbChart === 'function') {
+            window.renderProbChart(activo.probabilidades_xgb || null, activo.senal_ia || '');
+        }
+
         loadTickerNews(selectedTicker);
         loadReliabilityStats(selectedTicker);
         loadPrecioStats(selectedTicker, activo.precio);

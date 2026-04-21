@@ -50,7 +50,8 @@ class ExplicacionXAIDAO:
         confianza_prediccion: float,
         version_modelo: str = "Phase3",
         seed_modelo: int = 42,
-        pesos_atencion: Optional[List[Dict]] = None
+        pesos_atencion: Optional[List[Dict]] = None,
+        fecha_prediccion: Optional[str] = None,
     ) -> bool:
         """
         Crea nueva explicación XAI.
@@ -75,7 +76,7 @@ class ExplicacionXAIDAO:
 
             registro = {
                 "ticker": ticker,
-                "fecha_prediccion": datetime.now().isoformat(),
+                "fecha_prediccion": fecha_prediccion or datetime.now().isoformat(),
                 "shap_valores": json.dumps(shap_valores),
                 "shap_grafico": shap_grafico,
                 "features_top20": json.dumps(features_top20),

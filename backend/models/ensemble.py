@@ -32,6 +32,7 @@ from .data_pipeline import (
     prepare_data,
     prepare_data_multi_window,
     load_scaler,
+    load_feature_cols,
     download_data,
     compute_features,
 )
@@ -189,7 +190,7 @@ def _load_single_model(
             f"Ejecuta train_ensemble('{ticker}') primero."
         )
 
-    feature_cols = get_feature_cols(ticker)
+    feature_cols = load_feature_cols(ticker)
     ModelClass = HorizonBiGRUAttention if USE_ATTENTION_MODEL else HorizonBiGRU
     model = ModelClass(
         input_dim=len(feature_cols),
@@ -312,7 +313,7 @@ def predict_ensemble(ticker: str) -> dict:
         include_market_context=include_market_context,
         ticker=ticker,
     )
-    feature_cols = get_feature_cols(ticker)
+    feature_cols = load_feature_cols(ticker)
 
     if len(feat_df) < max_window_size:
         raise ValueError(

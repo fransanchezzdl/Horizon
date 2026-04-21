@@ -507,12 +507,13 @@ def prepare_data(ticker: str, config: dict) -> dict:
     val_scaled = scaler.transform(val_features)
     test_scaled = scaler.transform(test_features)
 
-    # 5. Guardar scaler en disco
+    # 5. Guardar scaler + feature_cols en disco (contrato acoplado)
     os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
     scaler_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_scaler.pkl")
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler, f)
-    print(f"💾 Scaler guardado en {scaler_path}")
+    save_feature_cols(ticker, feature_cols)
+    print(f"💾 Scaler guardado en {scaler_path} ({len(feature_cols)} features)")
 
     # 6. Crear secuencias con ventana deslizante
     X_train, y_train = create_sequences(train_scaled, train_targets, window_size)
@@ -669,12 +670,13 @@ def prepare_data_multi_window(ticker: str, config: dict, window_sizes: list) -> 
     val_scaled   = scaler.transform(val_features)
     test_scaled  = scaler.transform(test_features)
 
-    # 6. Guardar scaler y threshold
+    # 6. Guardar scaler + feature_cols (contrato acoplado) y threshold
     os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
     scaler_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_scaler.pkl")
     with open(scaler_path, "wb") as f:
         pickle.dump(scaler, f)
-    print(f"💾 Scaler guardado en {scaler_path}")
+    save_feature_cols(ticker, feature_cols)
+    print(f"💾 Scaler guardado en {scaler_path} ({len(feature_cols)} features)")
 
     result: dict = {
         "scaler": scaler,
@@ -749,6 +751,50 @@ def load_scaler(ticker: str) -> MinMaxScaler:
     with open(scaler_path, "rb") as f:
         scaler = pickle.load(f)
     return scaler
+
+
+def save_feature_cols(ticker: str, feature_cols: list) -> None:
+    """
+    Persiste la lista de features usadas al entrenar el scaler de un ticker.
+
+    Se guarda junto al scaler como `{ticker}_feature_cols.pkl` para que la
+    inferencia pueda reconstruir exactamente la misma matriz de features
+    independientemente de cómo evolucione `get_feature_cols()`.
+    """
+    os.makedirs(SAVED_MODELS_DIR, exist_ok=True)
+    path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_feature_cols.pkl")
+    with open(path, "wb") as f:
+        pickle.dump(list(feature_cols), f)
+
+
+def load_feature_cols(ticker: str) -> list:
+    """
+    Carga la lista de features con la que se entrenó el scaler del ticker.
+
+    Si el archivo no existe (modelos entrenados antes de introducir este
+    mecanismo), hace fallback a `get_feature_cols(ticker)` y además compara
+    contra `scaler.n_features_in_` para avisar si hay desajuste.
+    """
+    path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_feature_cols.pkl")
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            return pickle.load(f)
+    cols = get_feature_cols(ticker)
+    scaler_path = os.path.join(SAVED_MODELS_DIR, f"{ticker}_scaler.pkl")
+    if os.path.exists(scaler_path):
+        try:
+            with open(scaler_path, "rb") as f:
+                scaler = pickle.load(f)
+            expected = getattr(scaler, "n_features_in_", None)
+            if expected is not None and expected != len(cols):
+                logger.warning(
+                    f"[{ticker}] feature_cols sin persistir y scaler espera "
+                    f"{expected} features pero get_feature_cols devuelve {len(cols)}. "
+                    f"Reentrena el ticker para regenerar el contrato de features."
+                )
+        except Exception:
+            pass
+    return cols
 
 
 def prepare_data_walk_forward(
