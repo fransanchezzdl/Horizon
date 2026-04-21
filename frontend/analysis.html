@@ -89,6 +89,20 @@
             </div>
         </section>
 
+        <!-- Distribución de probabilidades XGBoost -->
+        <section id="probSection" style="display:none; margin-top:18px;">
+            <div class="card">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="opt-title" style="margin:0;">Distribución de confianza — XGBoost</h3>
+                        <p class="opt-info" style="margin:2px 0 0;">Probabilidad asignada a cada dirección por el modelo</p>
+                    </div>
+                    <div id="probAbstentionBadge"></div>
+                </div>
+                <div id="probBarsContainer" class="prob-bars"></div>
+            </div>
+        </section>
+
         <!-- Predicción y noticias -->
         <section style="display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-top:18px;">
             <div class="card">
@@ -150,6 +164,19 @@
                 <div id="shapChartContainer">
                     <div id="shapChart"></div>
                 </div>
+            </div>
+        </section>
+
+        <!-- Evolución temporal SHAP -->
+        <section id="shapTemporalSection" style="margin-top:18px; display:none;">
+            <div class="card">
+                <div class="chart-header">
+                    <div>
+                        <h3 class="opt-title" style="margin:0;">Evolución de factores clave — SHAP</h3>
+                        <p class="opt-info" style="margin:2px 0 0;">Cómo han cambiado los 3 factores más influyentes en las últimas predicciones</p>
+                    </div>
+                </div>
+                <div id="shapTemporalChart"></div>
             </div>
         </section>
         </div>
@@ -218,5 +245,7 @@
 
     </div>
     <script src="js/shapWaterfall.js"></script>
+    <script src="js/shapTemporal.js"></script>
+    <script src="js/probChart.js"></script>
 </body>
 </html>
