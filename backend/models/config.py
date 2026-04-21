@@ -318,5 +318,5 @@ def get_feature_cols(ticker: str) -> list:
     # Añadir técnicas avanzadas si está habilitado
     if USE_ADVANCED_FEATURES:
         base.extend(ADVANCED_TECHNICAL_COLS)
-    
+
     return base

@@ -1715,6 +1715,87 @@ p {
 
 /* #endregion METRICAS - CONTENIDO */
 
+/* Distribución de probabilidades XGBoost */
+.prob-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.prob-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.prob-bar-label {
+    font-size: 12px;
+    font-weight: 600;
+    width: 52px;
+    flex-shrink: 0;
+}
+
+.prob-bar-track {
+    flex: 1;
+    height: 10px;
+    border-radius: 6px;
+    background: #e5e7eb;
+    overflow: hidden;
+    min-width: 0;
+}
+
+[data-theme="dark"] .prob-bar-track {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.prob-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 2px;
+}
+
+.prob-bar-pct {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--color-text-secondary, #6b7280);
+    width: 38px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.prob-abstention-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    cursor: default;
+}
+
+[data-theme="dark"] .prob-abstention-badge {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.25);
+}
+
+.prob-neutral-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    background: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}
+
 /* #endregion METRICAS */
 
 /* #region TABLAS */
