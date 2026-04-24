@@ -43,6 +43,24 @@
                     <span id="rentabilidadValue" class="metric-value">--</span>
                     <span id="rentabilidadSub" class="metric-sub text-muted">Cargando...</span>
                 </div>
+                <div id="rentFooter" class="rent-footer" style="display:none;">
+                    <div class="rent-row">
+                        <span class="rent-arrow rent-arrow-up" aria-hidden="true">↑</span>
+                        <span class="rent-label">Mejor</span>
+                        <span class="rent-right">
+                            <span id="rentBestTicker" class="rent-ticker"></span>
+                            <span id="rentBestChange" class="rent-change"></span>
+                        </span>
+                    </div>
+                    <div class="rent-row">
+                        <span class="rent-arrow rent-arrow-down" aria-hidden="true">↓</span>
+                        <span class="rent-label">Peor</span>
+                        <span class="rent-right">
+                            <span id="rentWorstTicker" class="rent-ticker"></span>
+                            <span id="rentWorstChange" class="rent-change"></span>
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div class="card metric-card">
@@ -58,20 +76,20 @@
                 </div>
             </div>
 
-            <div class="card metric-card">
+            <div id="riskCard" class="card metric-card">
                 <div class="metric-header">
                     <span class="metric-title">Perfil de riesgo</span>
                 </div>
-                <div class="metric-body metric-body-split">
-                    <div class="metric-body-main">
-                        <span id="riskProfileValue" class="metric-value">--</span>
-                        <span id="riskProfileSub" class="metric-sub text-muted">Sin datos</span>
+                <div class="metric-body">
+                    <span id="riskProfileValue" class="metric-value">--</span>
+                    <span id="riskProfileSub" class="metric-sub text-muted">Sin datos</span>
+                </div>
+                <div id="riskAlertContent" class="risk-alert-footer" style="display:none;">
+                    <div class="risk-alert-main">
+                        <span id="riskAlertTitle" class="risk-alert-title"></span>
+                        <span id="riskAlertText" class="risk-alert-text"></span>
                     </div>
-                    <div id="riskAlertDivider" class="metric-split-divider" style="display:none;"></div>
-                    <div id="riskAlertContent" class="metric-body-alert" style="display:none;">
-                        <span id="riskAlertIcon" class="metric-alert-icon"></span>
-                        <span id="riskAlertText" class="metric-alert-text"></span>
-                    </div>
+                    <span id="riskBadge" class="risk-badge"></span>
                 </div>
             </div>
         </section>
@@ -90,13 +108,12 @@
                             <th class="text-left">Precio Actual</th>
                             <th class="text-left">Estabilidad</th>
                             <th class="text-left">Señal IA</th>
-                            <th class="text-left">Estrategia</th>
                             <th class="text-center">Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr id="emptyAssetsRow" class="is-hidden">
-                            <td colspan="6" class="text-center text-muted">
+                            <td colspan="5" class="text-center text-muted">
                                 <p>No hay activos en este portfolio. Haz clic en "Añadir Inversión" para comenzar.</p>
                             </td>
                         </tr>

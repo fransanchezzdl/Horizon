@@ -96,7 +96,8 @@ class PortfolioRecommendationResponse(BaseModel):
 class AlertaPortfolio(BaseModel):
     """Alerta de salud del portfolio"""
     mensaje: str
-    nivel: str  # "ok" | "warning" | "danger"
+    nivel: str   # "ok" | "warning" | "danger"
+    estado: str  # "ok" | "infra" | "sobre"
 
 
 class PortfolioAnalysisResponse(BaseModel):

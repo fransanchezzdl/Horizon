@@ -136,6 +136,24 @@ def listar_activos(q: str = ""):
     return activo_service.listar_activos()
 
 
+@app.get("/activos/variaciones")
+def obtener_variaciones_batch(tickers: str):
+    """
+    Devuelve la variación diaria (%) para varios tickers en una única llamada
+    a yfinance, garantizando coherencia de fechas entre tickers.
+
+    Nota: esta ruta debe declararse antes de /activos/{ticker} para evitar
+    que "variaciones" se interprete como parámetro dinámico.
+
+    tickers: lista separada por comas, ej: "AAPL,META,TSLA"
+    Respuesta: {"AAPL": -0.5, "META": -2.31, "TSLA": null, ...}
+    """
+    lista = [t.strip().upper() for t in tickers.split(",") if t.strip()]
+    if not lista:
+        return {}
+    return PriceHistoryService.get_daily_variations(lista)
+
+
 @app.get("/activos/{ticker}")
 def obtener_activo(ticker: str):
     """
