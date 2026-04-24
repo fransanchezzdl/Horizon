@@ -8,25 +8,22 @@ repos:
     hooks:
       - id: pylint
         name: Pylint
-        entry: python3 scripts/run_tool_with_fallback.py pylint
+        entry: sh -c 'python scripts/run_tool_with_fallback.py pylint --rcfile=.pylintrc --exit-zero "$@" || python3 scripts/run_tool_with_fallback.py pylint --rcfile=.pylintrc --exit-zero "$@"' --
         language: system
         types: [python]
         files: ^backend/(daos/|dtos/|services/|exceptions/|main\.py$)
         stages: [pre-commit]
-        args:
-          - --rcfile=.pylintrc
-          - --exit-zero
         exclude: ^backend/migrations/|\.pyc$
       - id: pytest-unit
         name: Pytest unit (tests/unit)
-        entry: python3 -u scripts/run_tool_with_fallback.py pytest tests/unit -q --disable-warnings -ra
+        entry: sh -c 'python -u scripts/run_tool_with_fallback.py pytest tests/unit -q --disable-warnings -ra || python3 -u scripts/run_tool_with_fallback.py pytest tests/unit -q --disable-warnings -ra'
         language: system
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
       - id: pytest-integration
         name: Pytest integration (tests/integration)
-        entry: python3 -u scripts/run_tool_with_fallback.py pytest tests/integration -q --disable-warnings -ra
+        entry: sh -c 'python -u scripts/run_tool_with_fallback.py pytest tests/integration -q --disable-warnings -ra || python3 -u scripts/run_tool_with_fallback.py pytest tests/integration -q --disable-warnings -ra'
         language: system
         always_run: true
         pass_filenames: false
