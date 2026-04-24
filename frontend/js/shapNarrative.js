@@ -176,15 +176,42 @@
     if (conf == null) return '';
     if (conf >= 0.65) return 'Alta confianza — el modelo ve señales claras en esta dirección.';
     if (conf >= 0.50) return 'Confianza moderada — hay algunas señales contradictorias.';
-    return 'Baja confianza — señales mixtas; interpreta esta predicción con precaución.';
+    return 'Baja confianza — señales mixtas. Toma esta predicción como una pista, no como una certeza.';
   }
 
-  function _featurePhrase(item) {
+  function _confidenceLevel(conf) {
+    if (conf == null) return null;
+    if (conf >= 0.65) return 'alta';
+    if (conf >= 0.50) return 'moderada';
+    return 'baja';
+  }
+
+  function _formatTimestamp(ts) {
+    if (!ts) return null;
+    try {
+      const d = new Date(ts);
+      if (isNaN(d)) return null;
+      const now = new Date();
+      const diffMs = now - d;
+      const diffH = Math.floor(diffMs / 3600000);
+      const diffM = Math.floor(diffMs / 60000);
+      if (diffM < 2)  return 'Actualizado ahora mismo';
+      if (diffM < 60) return `Actualizado hace ${diffM} min`;
+      if (diffH < 24) return `Actualizado hace ${diffH}h`;
+      return `Datos del ${d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}`;
+    } catch { return null; }
+  }
+
+  function _featurePhrase(item, senal) {
     const parsed = _parseFeatureName(item.feature);
     const v = Number(item.value);
     const hasVal = !isNaN(v);
     const interp = parsed.interpret && hasVal ? parsed.interpret(v) : null;
     if (interp) return interp;
+    if ((senal || '').toUpperCase() === 'LATERAL') {
+      // Sin interpret disponible: mostrar simplemente el nombre descriptivo
+      return parsed.label;
+    }
     const dir = item.shap >= 0 ? 'apunta al alza' : 'apunta a la baja';
     return `${parsed.label} — ${dir}`;
   }
@@ -199,9 +226,18 @@
     const pct   = conf != null ? Math.round(conf * 100) : null;
 
     let supporting, opposing;
-    if (senal === 'ALCISTA')      { supporting = values.filter(d => d.shap > 0); opposing = values.filter(d => d.shap < 0); }
-    else if (senal === 'BAJISTA') { supporting = values.filter(d => d.shap < 0); opposing = values.filter(d => d.shap > 0); }
-    else                          { supporting = []; opposing = values; }
+    if (senal === 'ALCISTA') {
+      supporting = values.filter(d => d.shap > 0);
+      opposing   = values.filter(d => d.shap < 0);
+    } else if (senal === 'BAJISTA') {
+      supporting = values.filter(d => d.shap < 0);
+      opposing   = values.filter(d => d.shap > 0);
+    } else {
+      // LATERAL: el signo SHAP no indica dirección de precio.
+      // Mostramos los factores más influyentes (mayor |shap|) sin distinguir signo.
+      supporting = values.slice(0, 3);  // ya ordenados por |shap| desc
+      opposing   = [];
+    }
 
     return { senal, info, conf, pct, topSupport: supporting.slice(0, 3), topOppose: opposing.slice(0, 2) };
   }
@@ -210,48 +246,68 @@
     return String(s).replace(/[&<>"']/g, ch => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[ch]);
   }
 
-  function _renderHTML(n) {
+  function _renderHTML(n, data) {
     const { senal, info, pct, conf, topSupport, topOppose } = n;
+    const tsLabel = _formatTimestamp(data && (data.fecha || data.timestamp || data.date || data.updated_at));
 
     const verdictText = senal === 'LATERAL'
-      ? `Movimiento lateral esperado${pct != null ? ` — ${pct}% de confianza` : ''}`
+      ? `Movimiento lateral esperado${pct != null ? ` — ${pct}%` : ''}`
       : `Señal ${info.label.toLowerCase()} — ${pct != null ? `${pct}% de confianza` : 'sin confianza calculada'}`;
 
     const confLine = _confidenceCtx(conf);
 
-    const supportHTML = topSupport.length
-      ? `<div class="narr-block">
-          <div class="narr-block-title narr-block-title--support">A favor de esta predicción</div>
-          <ul class="narr-list">${topSupport.map(d => `<li>${_esc(_featurePhrase(d))}</li>`).join('')}</ul>
-        </div>`
-      : senal === 'LATERAL'
-        ? `<div class="narr-block"><p class="narr-muted">Ningún factor destaca con fuerza en una dirección — de ahí la señal lateral.</p></div>`
-        : '';
-
-    const opposeHTML = topOppose.length
-      ? `<div class="narr-block">
-          <div class="narr-block-title narr-block-title--oppose">Factores que frenan la señal</div>
-          <ul class="narr-list">${topOppose.map(d => `<li>${_esc(_featurePhrase(d))}</li>`).join('')}</ul>
-        </div>`
+    const tsHTML = tsLabel
+      ? `<span class="narr-timestamp">${_esc(tsLabel)}</span>`
       : '';
+
+    let supportHTML = '';
+    let opposeHTML  = '';
+
+    if (senal === 'LATERAL' && topSupport.length) {
+      // Ancho completo con chips horizontales — evita el bloque vacío a la derecha
+      const totalAbs = topSupport.reduce((s, d) => s + Math.abs(d.shap), 0) || 1;
+      const chips = topSupport.map(d => {
+        const pctVal = Math.round((Math.abs(d.shap) / totalAbs) * 100);
+        const phrase = _esc(_featurePhrase(d, senal));
+        return `<span class="narr-chip">${phrase}<span class="narr-chip-pct">${pctVal}%</span></span>`;
+      }).join('');
+      supportHTML = `<div class="narr-block narr-block--full">
+          <div class="narr-block-title narr-block-title--lateral">Factores más influyentes</div>
+          <div class="narr-chips">${chips}</div>
+        </div>`;
+    } else if (topSupport.length) {
+      supportHTML = `<div class="narr-block">
+          <div class="narr-block-title narr-block-title--support">A favor de esta predicción</div>
+          <ul class="narr-list">${topSupport.map(d => `<li>${_esc(_featurePhrase(d, senal))}</li>`).join('')}</ul>
+        </div>`;
+    }
+
+    if (topOppose.length) {
+      opposeHTML = `<div class="narr-block">
+          <div class="narr-block-title narr-block-title--oppose">Factores que frenan la señal</div>
+          <ul class="narr-list">${topOppose.map(d => `<li>${_esc(_featurePhrase(d, senal))}</li>`).join('')}</ul>
+        </div>`;
+    }
 
     return `
 <div class="narr-card narr-card--${info.cls}">
+  <p class="narr-disclaimer narr-disclaimer--top" role="note">
+    Predicción estadística. No es una recomendación de inversión.
+  </p>
   <div class="narr-head">
     <span class="shap-badge shap-badge--${info.cls}" aria-label="Señal ${info.label}">${info.label}</span>
     <div class="narr-head-text">
       <p class="narr-verdict">${_esc(verdictText)}</p>
       ${confLine ? `<p class="narr-conf">${_esc(confLine)}</p>` : ''}
     </div>
+    <div class="narr-head-meta">
+      ${tsHTML}
+    </div>
   </div>
   <div class="narr-factors">
     ${supportHTML}
     ${opposeHTML}
   </div>
-  <p class="narr-disclaimer">
-    Predicción estadística basada en datos históricos. No es una recomendación de inversión.
-    El modelo puede equivocarse ante eventos imprevistos (resultados, noticias macro, etc.).
-  </p>
 </div>`;
   }
 
@@ -260,6 +316,6 @@
     if (!el) return;
     if (!data || !data.shap_values) { el.innerHTML = ''; return; }
     const n = _buildNarrative(data);
-    el.innerHTML = n ? _renderHTML(n) : '';
+    el.innerHTML = n ? _renderHTML(n, data) : '';
   };
 }());

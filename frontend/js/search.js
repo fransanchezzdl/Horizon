@@ -554,9 +554,6 @@ function initSearch() {
         if (typeof window.initShapWaterfall === 'function') {
             window.initShapWaterfall(selectedTicker);
         }
-        if (typeof window.initShapTemporal === 'function') {
-            window.initShapTemporal(selectedTicker);
-        }
     }
 
     // Carga y muestra las métricas de fiabilidad del modelo para el ticker.
@@ -599,13 +596,13 @@ function initSearch() {
                 MODERADA:  'Señal moderada',
                 DÉBIL:     'Señal débil',
                 SIN_SEÑAL: 'Sin señal clara',
-                SIN_DATOS: 'Sin datos offline',
+                SIN_DATOS: 'Sin historial',
             }[data.señal] || data.señal;
 
-            let subParts = [`${señalLabel} · Base azar: ${data.baseline}%`];
+            let subParts = [`${señalLabel} · ref. ${parseFloat(data.baseline).toFixed(1)}%`];
 
             if (live.resueltas > 0) {
-                subParts.push(`Live: ${live.correctas}/${live.resueltas} correctas`);
+                subParts.push(`${live.correctas}/${live.resueltas} aciertos`);
             } else if (live.total > 0) {
                 subParts.push(`${live.total} pred. en seguimiento`);
             }

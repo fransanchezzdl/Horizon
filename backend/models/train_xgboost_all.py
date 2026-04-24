@@ -316,7 +316,7 @@ def train_xgboost_all() -> None:
     
     try:
         # Import dinámico para evitar dependencias circulares
-        from tests.generate_xai_explanations import generar_explicaciones_todos
+        from tests.scripts.generate_xai_explanations import generar_explicaciones_todos
         
         xai_success = generar_explicaciones_todos()
         
