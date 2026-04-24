@@ -46,6 +46,65 @@ class PriceHistoryService:
         return {"candles": candles, "signals": signals}
 
     @staticmethod
+    def get_daily_variations(tickers: List[str]) -> Dict[str, Optional[float]]:
+        """
+        Devuelve la variación diaria (%) para múltiples tickers en una única llamada
+        a yfinance usando period="5d". Garantiza consistencia de fechas entre tickers
+        y evita fallos por rate-limiting de llamadas paralelas por ticker.
+
+        Returns: {ticker: variacion_pct | None}
+        """
+        result: Dict[str, Optional[float]] = {t: None for t in tickers}
+        if not tickers:
+            return result
+
+        try:
+            data = yf.download(
+                tickers=" ".join(tickers),
+                period="5d",
+                interval="1d",
+                progress=False,
+                auto_adjust=True,
+                group_by="ticker",
+                threads=True,
+            )
+
+            if data is None or data.empty:
+                logger.warning(f"[PriceHistoryService] Sin datos batch para {tickers}")
+                return result
+
+            for ticker in tickers:
+                try:
+                    # yfinance agrupa por ticker cuando son múltiples; si es uno solo,
+                    # devuelve DataFrame plano.
+                    if len(tickers) == 1:
+                        closes = data["Close"].dropna()
+                    else:
+                        closes = data[ticker]["Close"].dropna()
+
+                    if len(closes) < 2:
+                        logger.warning(f"[PriceHistoryService] {ticker}: <2 closes válidos")
+                        continue
+
+                    prev_close = float(closes.iloc[-2])
+                    last_close = float(closes.iloc[-1])
+                    if prev_close <= 0:
+                        continue
+
+                    variacion = ((last_close - prev_close) / prev_close) * 100
+                    # Sin redondeo prematuro: el frontend redondea al mostrar.
+                    result[ticker] = variacion
+                except (KeyError, IndexError, ValueError) as e:
+                    logger.warning(f"[PriceHistoryService] {ticker}: {e}")
+                    continue
+
+            return result
+
+        except Exception as e:
+            logger.error(f"[PriceHistoryService] Error batch variations: {e}")
+            return result
+
+    @staticmethod
     def _fetch_ohlc(ticker: str, start_date: datetime, end_date: datetime) -> List[Dict]:
         """Descarga OHLC de yfinance y lo convierte al formato esperado por Lightweight Charts."""
         try:

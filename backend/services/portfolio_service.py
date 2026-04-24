@@ -423,13 +423,15 @@ class PortfolioService:
         if not acciones:
             return AlertaPortfolio(
                 mensaje="Portfolio vacío, añade activos para empezar",
-                nivel="danger"
+                nivel="danger",
+                estado="infra"
             )
 
         if len(acciones) == 1:
             return AlertaPortfolio(
                 mensaje="Solo 1 activo — considera diversificar",
-                nivel="warning"
+                nivel="warning",
+                estado="infra"
             )
 
         # Consultar estabilidad de cada ticker único
@@ -451,16 +453,19 @@ class PortfolioService:
             if pct_estables >= 0.70:
                 return AlertaPortfolio(
                     mensaje="Cartera alineada con tu perfil conservador",
-                    nivel="ok"
+                    nivel="ok",
+                    estado="ok"
                 )
             if pct_estables >= 0.40:
                 return AlertaPortfolio(
                     mensaje="Bastantes activos volátiles para perfil conservador",
-                    nivel="warning"
+                    nivel="warning",
+                    estado="sobre"
                 )
             return AlertaPortfolio(
                 mensaje="Cartera demasiado arriesgada para perfil conservador",
-                nivel="danger"
+                nivel="danger",
+                estado="sobre"
             )
 
         if riesgo < 0.65:
@@ -468,27 +473,32 @@ class PortfolioService:
             if 0.40 <= pct_estables <= 0.70:
                 return AlertaPortfolio(
                     mensaje="Buena diversificación para perfil moderado",
-                    nivel="ok"
+                    nivel="ok",
+                    estado="ok"
                 )
             if pct_estables < 0.40:
                 return AlertaPortfolio(
                     mensaje="Alta concentración en volátiles para perfil moderado",
-                    nivel="warning"
+                    nivel="warning",
+                    estado="sobre"
                 )
             return AlertaPortfolio(
                 mensaje="Cartera demasiado conservadora para perfil moderado",
-                nivel="warning"
+                nivel="warning",
+                estado="infra"
             )
 
         # Agresivo: quiere mayoría volátil
         if pct_estables <= 0.50:
             return AlertaPortfolio(
                 mensaje="Cartera alineada con tu perfil agresivo",
-                nivel="ok"
+                nivel="ok",
+                estado="ok"
             )
         return AlertaPortfolio(
             mensaje="Cartera más conservadora que tu perfil agresivo",
-            nivel="warning"
+            nivel="warning",
+            estado="infra"
         )
 
 
@@ -497,4 +507,5 @@ class PortfolioService:
 def get_portfolio_service(portfolio_dao=None, prediction_service: PredictionService = None) -> PortfolioService:
     """Helper para obtener instancia del servicio."""
     return PortfolioService(portfolio_dao, prediction_service)
+
 
