@@ -5107,10 +5107,12 @@ body > section {
 #predictionChartContainer {
     border-radius: 8px;
     overflow: hidden;
+    min-height: 300px;
 }
 
 #priceSignalChart {
     width: 100%;
+    min-height: 300px;
 }
 
 .chart-loading,
@@ -5154,7 +5156,7 @@ body > section {
 }
 
 .legend-incorrect {
-    opacity: 0.65;
+    opacity: 1;
 }
 
 .legend-toggle {
@@ -5260,4 +5262,206 @@ body > section {
     background: rgba(245, 158, 11, 0.15);
     color: #f59e0b;
     border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* ── Veredicto SHAP en lenguaje natural ─────────────────────────────────── */
+.shap-narrative {
+    margin: 0 0 var(--spacing-xl);
+}
+.shap-narrative:empty { display: none; }
+
+.narr-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-black-a04);
+    border-left: 3px solid transparent;
+    border-radius: var(--radius-xl);
+    box-shadow: 0 4px 14px var(--color-slate-a06);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+.narr-card--alcista { border-left-color: var(--color-success-alt); }
+.narr-card--bajista { border-left-color: var(--color-danger-700); }
+.narr-card--lateral { border-left-color: #d97706; }
+
+.narr-head {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+}
+.narr-head-text { flex: 1; }
+
+.narr-verdict {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+}
+.narr-conf {
+    margin: 3px 0 0;
+    font-size: 13px;
+    color: var(--color-tertiary);
+    line-height: 1.4;
+}
+
+.narr-factors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+}
+@media (max-width: 640px) {
+    .narr-factors { grid-template-columns: 1fr; }
+}
+
+.narr-block {
+    background: var(--color-bg-lighter);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+}
+
+.narr-block-title {
+    margin: 0 0 8px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+}
+.narr-block-title--support { color: var(--color-success-alt); }
+.narr-block-title--oppose  { color: #d97706; }
+
+.narr-list {
+    margin: 0;
+    padding-left: 16px;
+    font-size: 13px;
+    color: var(--color-text-soft);
+    line-height: 1.6;
+}
+.narr-list li { margin-bottom: 2px; }
+.narr-list li::marker { font-size: 10px; }
+
+.narr-muted {
+    margin: 0;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    font-style: italic;
+    line-height: 1.5;
+}
+
+.narr-disclaimer {
+    margin: 0;
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border-subtle);
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--color-text-muted);
+}
+
+/* ── Panel de información de indicador (hover sobre el gráfico SHAP) ─────── */
+.shap-feature-info {
+    display: flex;
+    align-items: stretch;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    min-height: 52px;
+    background: var(--color-bg-lighter);
+    border: 1px solid var(--color-border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.shap-feature-info.is-active {
+    border-color: var(--color-border-soft);
+    box-shadow: 0 2px 8px var(--color-slate-a06);
+}
+
+.shap-info-accent {
+    display: block;
+    width: 3px;
+    flex-shrink: 0;
+    background: var(--color-border-soft);
+    transition: background 0.15s ease;
+}
+
+.shap-info-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px 0;
+    gap: 3px;
+    min-width: 0;
+}
+
+.shap-info-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.shap-info-name.shap-info-idle {
+    font-weight: 400;
+    color: var(--color-text-muted);
+}
+
+.shap-info-desc {
+    font-size: 12px;
+    color: var(--color-text-soft);
+    line-height: 1.45;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.shap-info-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px var(--spacing-md) 10px 0;
+    flex-shrink: 0;
+}
+
+.shap-info-val {
+    font-size: 12px;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+}
+
+.shap-info-dir {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+/* Cursor interactivo en el gráfico SHAP */
+.shap-label-feat { cursor: pointer; }
+
+/* ── Dark mode ─────────────────────────────────────────────────────────── */
+[data-theme="dark"] .narr-card {
+    background: var(--color-surface);
+    border-color: rgba(255,255,255,0.06);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+[data-theme="dark"] .narr-block {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .narr-block-title--support { color: #22c55e; }
+[data-theme="dark"] .narr-block-title--oppose  { color: #f59e0b; }
+[data-theme="dark"] .narr-disclaimer { border-top-color: rgba(255,255,255,0.06); }
+[data-theme="dark"] .shap-feature-info {
+    background: rgba(255,255,255,0.03);
+    border-color: rgba(255,255,255,0.06);
+}
+[data-theme="dark"] .shap-feature-info.is-active {
+    border-color: rgba(255,255,255,0.12);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
 }
