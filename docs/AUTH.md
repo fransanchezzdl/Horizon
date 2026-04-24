@@ -18,6 +18,21 @@ La autenticación está centralizada en backend. El frontend nunca decide por s�
   - `window.fetchWithAuth(url, options)` para llamadas autenticadas.
   - `window.getAccessToken()`, `window.setAccessToken(token)` y `window.clearAuthSession()` para sesión local.
 
+## Arquitectura de clientes Supabase
+
+El backend usa dos formas de acceso a Supabase:
+
+1. Cliente compartido para datos normales.
+   - Se usa en DAOs y servicios que leen o escriben tablas con RLS.
+   - Es el camino habitual para activos, noticias, portfolios y consultas de usuario.
+2. Cliente aislado para Auth.
+   - Se crea por operación cuando hace falta login, registro, validación de token o cambio de contraseña.
+   - Evita que una sesión de Auth quede "pegada" al proceso y afecte a otra petición.
+
+Esto significa que no hace falta modificar cada servicio.
+Solo los servicios que llamen a Supabase Auth deben usar el cliente aislado.
+Los servicios de datos, como el de noticias, pueden seguir usando el cliente compartido si no tocan `.auth.*`.
+
 ## Flujo 1: login y registro
 
 ### Login
@@ -102,6 +117,7 @@ Si una página consume datos privados o acciones de usuario:
 - `access_token` se almacena en `localStorage`.
 - El perfil de usuario puede cachearse en `localStorage` para UI.
 - Ante cierre de sesión o token inválido, se eliminan ambos.
+- El backend no debe cerrar la sesión global compartida después de un login correcto, porque puede invalidar el token recién emitido para otra petición.
 
 ## Resultado esperado del sistema
 
@@ -109,3 +125,4 @@ Si una página consume datos privados o acciones de usuario:
 - Cualquier endpoint protegido aplica la misma verificación.
 - Cualquier página protegida aplica la misma verificación al entrar.
 - El patrón escala sin cambios estructurales al añadir nuevas funcionalidades.
+- Los servicios de datos siguen funcionando con normalidad para varios usuarios simultáneos mientras Auth use su cliente aislado.
