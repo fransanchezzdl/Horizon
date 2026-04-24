@@ -47,3 +47,9 @@ def get_supabase() -> Client:
 def get_supabase_admin() -> Optional[Client]:
     """Helper para obtener el cliente admin (necesario para operaciones privilegiadas)."""
     return supabase_admin
+
+
+def create_supabase_client(use_service_role: bool = False) -> Client:
+    """Crea un cliente Supabase nuevo para evitar compartir estado de sesión entre servicios."""
+    client_key = service_role_key if use_service_role and service_role_key else key
+    return create_client(url, client_key)

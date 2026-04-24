@@ -1,4 +1,4 @@
-from ..database import supabase
+from ..database import supabase, create_supabase_client
 from ..daos import usuario_dao, UsuarioDAO
 from ..dtos import UsuarioResponse
 from fastapi import HTTPException, Header
@@ -17,10 +17,19 @@ class AuthService:
         self.usuario_dao = usuario_dao_instance
         self.storage_service = storage_service_instance
 
+    def _auth_client(self) -> Client:
+        """Crea un cliente Supabase nuevo para operaciones de Auth."""
+        # En tests se inyecta un cliente mock; en producción usamos un cliente
+        # aislado para evitar reutilizar la sesión del cliente compartido.
+        if self.db is supabase:
+            return create_supabase_client()
+        return self.db
+
 
     def iniciar_sesion(self, email: str, password: str) -> tuple[str, UsuarioResponse]:
         try:
-            auth_response = self.db.auth.sign_in_with_password({"email": email, "password": password})
+            auth_client = self._auth_client()
+            auth_response = auth_client.auth.sign_in_with_password({"email": email, "password": password})
 
             if isinstance(auth_response, dict):
                 user = auth_response.get("user")
@@ -36,10 +45,6 @@ class AuthService:
 
             perfil = self.usuario_dao.obtener_por_id(user_id)
             if not perfil:
-                try:
-                    self.db.auth.sign_out()
-                except Exception:
-                    pass
                 raise HTTPException(status_code=403, detail="Usuario no registrado en el sistema.")
 
             self.storage_service.hydrate_user_avatar_safe(perfil, "[AUTH]")
@@ -55,7 +60,8 @@ class AuthService:
 
     def registrar_usuario(self, email: str, password: str, nombre: str | None = None, apellidos: str | None = None, foto_perfil: str | None = None) -> tuple[str | None, UsuarioResponse | None]:
         try:
-            sign_response = self.db.auth.sign_up({"email": email, "password": password})
+            auth_client = self._auth_client()
+            sign_response = auth_client.auth.sign_up({"email": email, "password": password})
 
             if isinstance(sign_response, dict):
                 user = sign_response.get("user")
@@ -83,7 +89,7 @@ class AuthService:
                 access_token = session.get("access_token") if isinstance(session, dict) else getattr(session, "access_token", None)
             else:
                 try:
-                    auth_resp = self.db.auth.sign_in_with_password({"email": email, "password": password})
+                    auth_resp = auth_client.auth.sign_in_with_password({"email": email, "password": password})
                     if isinstance(auth_resp, dict):
                         s = auth_resp.get("session")
                     else:
@@ -121,7 +127,8 @@ class AuthService:
         try:
             # Validar el token contra Supabase Auth
             # Esto verifica: firma criptográfica, expiración y revocación
-            user_response = self.db.auth.get_user(token)
+            auth_client = self._auth_client()
+            user_response = auth_client.auth.get_user(token)
             
             # Extraer el objeto user (la estructura puede variar según la versión de supabase-py)
             if hasattr(user_response, 'user'):
@@ -224,19 +231,14 @@ class AuthService:
         
         try:
             # 2. Verificar que la contraseña actual es correcta
-            self.db.auth.sign_in_with_password({
+            auth_client = self._auth_client()
+            auth_client.auth.sign_in_with_password({
                 "email": usuario.email,
                 "password": password_actual
             })
             
             # 3. Si el login es exitoso, actualizar la contraseña
-            self.db.auth.update_user({"password": password_nueva})
-            
-            # 4. Cerrar la sesión temporal del backend
-            try:
-                self.db.auth.sign_out()
-            except Exception:
-                pass
+            auth_client.auth.update_user({"password": password_nueva})
             
             return {"mensaje": "Contraseña actualizada correctamente"}
             
