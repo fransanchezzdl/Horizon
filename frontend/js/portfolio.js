@@ -156,13 +156,13 @@ async function loadPortfolioDetails(portfolioId) {
         console.log(`✅ Portfolio cargado:`, portfolio);
         const accionesEnriquecidas = await enrichPortfolioStocks(portfolio.acciones || []);
         const uniqueTickers = [...new Set(accionesEnriquecidas.map((a) => a.ticker).filter(Boolean))];
-        const [variacion, analysisResp] = await Promise.all([
+        const [variaciones, analysisResp] = await Promise.all([
             loadPortfolioVariation(uniqueTickers),
             window.fetchWithAuth(`${API_BASE}/portfolios/${portfolioId}/analysis`),
         ]);
         const analysis = analysisResp?.ok ? await analysisResp.json() : null;
         renderAssetsTable(accionesEnriquecidas);
-        renderPortfolioMetrics(portfolio, accionesEnriquecidas, variacion);
+        renderPortfolioMetrics(portfolio, accionesEnriquecidas, variaciones);
         renderRiskAlert(analysis?.alerta ?? null);
     } catch (error) {
         console.error('❌ Error:', error);
@@ -208,45 +208,47 @@ async function enrichPortfolioStocks(acciones) {
     });
 }
 
-// Para cada ticker, obtiene las dos últimas velas del historial de 7 días
-// y calcula la variación diaria. Devuelve la media entre todos los tickers,
-// o null si no hay datos suficientes. Misma lógica que loadPrecioStats() en search.js.
+// Obtiene la variación diaria (%) de todos los tickers en una sola llamada batch
+// al backend. Garantiza coherencia de fechas entre tickers y evita que fallos
+// aislados de yfinance dejen tickers sin dato.
+// Devuelve { media, porTicker: [{ticker, variacion}] } o null si no hay datos.
 async function loadPortfolioVariation(tickers) {
     if (!tickers.length) return null;
 
-    const results = await Promise.all(
-        tickers.map(async (ticker) => {
-            try {
-                const resp = await window.fetchWithAuth(
-                    `${API_BASE}/activos/${encodeURIComponent(ticker)}/price-history?days=7`
-                );
-                if (!resp.ok) return null;
-                const data = await resp.json();
-                const candles = data.candles;
-                if (!candles || candles.length < 2) return null;
-                const prevClose = candles[candles.length - 2].close;
-                const lastClose = candles[candles.length - 1].close;
-                return ((lastClose - prevClose) / prevClose) * 100;
-            } catch {
-                return null;
-            }
-        })
-    );
+    try {
+        const qs = encodeURIComponent(tickers.join(','));
+        const resp = await window.fetchWithAuth(`${API_BASE}/activos/variaciones?tickers=${qs}`);
+        if (!resp.ok) {
+            console.warn('⚠️ Variaciones batch HTTP', resp.status);
+            return null;
+        }
+        const data = await resp.json();
 
-    const valid = results.filter((v) => v !== null);
-    if (!valid.length) return null;
-    return valid.reduce((sum, v) => sum + v, 0) / valid.length;
+        const porTicker = tickers
+            .map((ticker) => ({ ticker, variacion: data[ticker] }))
+            .filter((r) => typeof r.variacion === 'number' && Number.isFinite(r.variacion));
+
+        console.log('📈 Variaciones (batch):', porTicker);
+
+        if (!porTicker.length) return null;
+        const media = porTicker.reduce((sum, r) => sum + r.variacion, 0) / porTicker.length;
+        return { media, porTicker };
+    } catch (err) {
+        console.error('Error obteniendo variaciones batch:', err);
+        return null;
+    }
 }
 
-function renderPortfolioMetrics(portfolio, accionesEnriquecidas, variacion) {
+function renderPortfolioMetrics(portfolio, accionesEnriquecidas, variaciones) {
     // Card 1: Rentabilidad diaria — media igual-ponderada de variación de cada ticker
     const rentabilidadValue = document.getElementById('rentabilidadValue');
     const rentabilidadSub = document.getElementById('rentabilidadSub');
+    const media = variaciones?.media;
     if (rentabilidadValue && rentabilidadSub) {
-        if (variacion !== null && variacion !== undefined) {
-            const signo = variacion >= 0 ? '+' : '';
-            rentabilidadValue.textContent = `${signo}${variacion.toFixed(2)}%`;
-            rentabilidadValue.style.color = variacion >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+        if (media !== null && media !== undefined) {
+            const signo = media >= 0 ? '+' : '';
+            rentabilidadValue.textContent = `${signo}${media.toFixed(2)}%`;
+            rentabilidadValue.style.color = media >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
             rentabilidadSub.textContent = 'variación media hoy';
             rentabilidadSub.style.color = '';
         } else {
@@ -254,6 +256,8 @@ function renderPortfolioMetrics(portfolio, accionesEnriquecidas, variacion) {
             rentabilidadSub.textContent = 'Sin datos de precio';
         }
     }
+
+    renderBestWorstAssets(variaciones?.porTicker ?? []);
 
     // Card 2: Activos alcistas — tickers con señal IA = ALCISTA
     const totalActivos = accionesEnriquecidas.length;
@@ -281,13 +285,13 @@ function renderPortfolioMetrics(portfolio, accionesEnriquecidas, variacion) {
     }
 
     let riskLabel = 'Moderado';
-    let riskText = 'riesgo medio';
+    let riskText = 'moderado';
     if (risk < 0.35) {
-        riskLabel = 'Bajo';
-        riskText = 'riesgo bajo';
+        riskLabel = 'Conservador';
+        riskText = 'conservador';
     } else if (risk >= 0.65) {
-        riskLabel = 'Alto';
-        riskText = 'riesgo alto';
+        riskLabel = 'Agresivo';
+        riskText = 'agresivo';
     }
 
     const riskPercentage = Math.round(risk * 100);
@@ -295,34 +299,64 @@ function renderPortfolioMetrics(portfolio, accionesEnriquecidas, variacion) {
     if (riskProfileSub) riskProfileSub.textContent = `${riskPercentage}% · ${riskText}`;
 }
 
-// Muestra u oculta la alerta en el lado derecho del card de perfil de riesgo.
-// alerta: { mensaje: string, nivel: "ok" | "warning" | "danger" } | null
+// Rellena las filas "Mejor" / "Peor" del card de rentabilidad comparando
+// la variación diaria por ticker. Oculta la sección si la cartera está vacía.
+function renderBestWorstAssets(porTicker) {
+    const footer = document.getElementById('rentFooter');
+    if (!footer) return;
+
+    if (!porTicker || porTicker.length === 0) {
+        footer.style.display = 'none';
+        return;
+    }
+
+    const ordenados = [...porTicker].sort((a, b) => b.variacion - a.variacion);
+    const mejor = ordenados[0];
+    const peor = ordenados[ordenados.length - 1];
+
+    const fmt = (v) => `${v >= 0 ? '+' : ''}${v.toFixed(2)}%`;
+
+    footer.style.display = '';
+    document.getElementById('rentBestTicker').textContent = mejor.ticker;
+    const bestChange = document.getElementById('rentBestChange');
+    bestChange.textContent = fmt(mejor.variacion);
+    bestChange.style.color = mejor.variacion >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+
+    document.getElementById('rentWorstTicker').textContent = peor.ticker;
+    const worstChange = document.getElementById('rentWorstChange');
+    worstChange.textContent = fmt(peor.variacion);
+    worstChange.style.color = peor.variacion >= 0 ? 'var(--color-success)' : 'var(--color-danger)';
+}
+
+// Muestra u oculta la alerta en la cabecera y pie del card de perfil de riesgo.
+// alerta: { mensaje: string, nivel: "ok"|"warning"|"danger", estado: "ok"|"infra"|"sobre" } | null
 function renderRiskAlert(alerta) {
-    const divider = document.getElementById('riskAlertDivider');
+    const badge   = document.getElementById('riskBadge');
     const content = document.getElementById('riskAlertContent');
-    const icon    = document.getElementById('riskAlertIcon');
+    const title   = document.getElementById('riskAlertTitle');
     const text    = document.getElementById('riskAlertText');
 
-    if (!divider || !content || !icon || !text) return;
+    if (!badge || !content || !title || !text) return;
 
     if (!alerta) {
-        divider.style.display = 'none';
         content.style.display = 'none';
         return;
     }
 
-    const colores = {
-        ok:      'var(--color-success)',
-        warning: 'var(--color-warning)',
-        danger:  'var(--color-danger)',
+    const estadoConfig = {
+        ok:    { icon: '✓',  bg: '#E6F4EA', color: '#2D7A3A', label: 'Cartera alineada con tu perfil' },
+        infra: { icon: '⚠', bg: '#FAEEDA', color: '#BA7517', label: 'Cartera infra-ponderada en riesgo' },
+        sobre: { icon: '!',  bg: '#FDECEA', color: '#C0392B', label: 'Cartera sobre-ponderada en riesgo' },
     };
-    const color = colores[alerta.nivel] || colores.warning;
+    const cfg = estadoConfig[alerta.estado] ?? estadoConfig.infra;
 
-    icon.textContent = '';
-    text.textContent = alerta.mensaje;
-    text.style.color = color;
+    badge.textContent      = cfg.icon;
+    badge.style.background = cfg.bg;
+    badge.style.color      = cfg.color;
 
-    divider.style.display = '';
+    title.textContent = cfg.label;
+    text.textContent  = alerta.mensaje;
+
     content.style.display = '';
 }
 
@@ -440,7 +474,6 @@ function renderAssetsTable(acciones) {
             </td>
             <td><span class="badge ${estabilidad.badge}">${estabilidad.text}</span></td>
             <td><span class="text-bold ${senalClase}">${senalTexto}</span></td>
-            <td><span class="badge badge-blue-soft">Monitoreo</span></td>
             <td class="text-center">
                 <div class="row-action-buttons">
                     <button class="table-action-btn" type="button" title="Ver en análisis" onclick="goToTickerAnalysis('${activo.ticker}')">↗</button>

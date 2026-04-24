@@ -1673,44 +1673,103 @@ p {
     transition: width 0.25s ease;
 }
 
-/* Perfil de riesgo: layout dividido izquierda (label) + derecha (alerta) */
-.metric-body-split {
+/* Perfil de riesgo: footer con icono circular */
+.risk-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
-    gap: 14px;
-}
-
-.metric-body-main {
-    display: flex;
-    flex-direction: column;
+    justify-content: center;
+    font-size: 15px;
+    font-weight: 700;
     flex-shrink: 0;
 }
 
-.metric-split-divider {
-    width: 1px;
-    align-self: stretch;
-    background: var(--color-border);
-    opacity: 0.6;
+.risk-alert-footer {
+    border-top: 1px solid var(--color-border);
+    padding-top: 5px;
+    margin-top: 5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
-.metric-body-alert {
+.risk-alert-main {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+    gap: 1px;
 }
 
-.metric-alert-icon {
-    font-size: 20px;
-    line-height: 1;
-}
-
-.metric-alert-text {
+.risk-alert-title {
     font-size: 12px;
-    line-height: 1.4;
     font-weight: 500;
-    word-break: break-word;
+    line-height: 1.2;
+    color: #BA7517;
+}
+
+#riskCard .metric-value {
+    font-size: 22px;
+    margin-bottom: 2px;
+}
+
+.risk-alert-text {
+    font-size: 11px;
+    line-height: 1.2;
+    color: var(--color-text-secondary);
+}
+
+/* Rentabilidad diaria: footer con mejor/peor activo */
+.rent-footer {
+    border-top: 1px solid var(--color-border);
+    padding-top: 8px;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rent-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.rent-arrow {
+    font-size: 12px;
+    font-weight: 700;
+    width: 14px;
+    text-align: center;
+}
+
+.rent-arrow-up {
+    color: var(--color-success);
+}
+
+.rent-arrow-down {
+    color: var(--color-danger);
+}
+
+.rent-label {
+    color: var(--color-text-secondary);
+    flex: 1;
+}
+
+.rent-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.rent-ticker {
+    font-weight: 700;
+    color: var(--color-text-primary);
+}
+
+.rent-change {
+    font-weight: 600;
 }
 
 /* #endregion METRICAS - CONTENIDO */
