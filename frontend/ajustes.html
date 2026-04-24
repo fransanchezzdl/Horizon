@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ajustes | Horizon</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <style>
+        body.page-loading #dashboard-contenido {
+            opacity: 0;
+            visibility: hidden;
+        }
+    </style>
+    <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+</head>
+<body class="page-loading">
+    <script src="js/config.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/ajustes.js"></script>
+
+    <div id="dashboard-contenido">
+        <header class="page-header">
+            <div class="header-titles">
+                <h1>Ajustes</h1>
+                <p class="subtitle">Configura tus preferencias principales de la aplicación.</p>
+            </div>
+        </header>
+
+        <section class="profile-content">
+            <div class="profile-grid settings-grid">
+                <article class="card settings-interface-card">
+                    <div class="settings-card-head">
+                        <div class="settings-card-icon" aria-hidden="true">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v8A2.5 2.5 0 0 1 18.5 16h-5v2h1.75a1 1 0 1 1 0 2h-6.5a1 1 0 1 1 0-2H10.5v-2h-5A2.5 2.5 0 0 1 3 13.5v-8zM5.5 5a.5.5 0 0 0-.5.5v8a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-8a.5.5 0 0 0-.5-.5h-13z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2>Preferencias de Interfaz</h2>
+                            <p class="opt-info">Personaliza el aspecto visual de Horizon para adaptarlo a tu forma de uso.</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-theme-block">
+                        <label for="settingTheme" class="info-label">Tema visual</label>
+                        <select id="settingTheme" class="portfolio-selector-select settings-theme-select">
+                            <option value="system">Seguir sistema</option>
+                            <option value="light">Claro</option>
+                            <option value="dark">Oscuro</option>
+                        </select>
+                        <div class="theme-preview-grid" aria-hidden="true">
+                            <div class="theme-preview theme-preview-light">
+                                <svg class="theme-preview-art theme-preview-sun" viewBox="0 0 120 120" fill="none">
+                                    <circle cx="60" cy="60" r="24" fill="currentColor" opacity="0.32"></circle>
+                                    <circle cx="60" cy="60" r="34" stroke="currentColor" stroke-width="8" opacity="0.35"></circle>
+                                    <path d="M60 10V0M60 120v-10M110 60h10M0 60h10M95 25l7-7M18 102l7-7M95 95l7 7M18 18l7 7" stroke="currentColor" stroke-width="8" stroke-linecap="round" opacity="0.35"></path>
+                                </svg>
+                                <span>Claro</span>
+                            </div>
+                            <div class="theme-preview theme-preview-dark">
+                                <svg class="theme-preview-art theme-preview-moon" viewBox="0 0 24 24" fill="none">
+                                    <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z" fill="currentColor" opacity="0.9"></path>
+                                </svg>
+                                <span>Oscuro</span>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            </div>
+
+            <div class="profile-actions">
+                <button class="btn-secondary" id="btnSettingsCancel">Volver</button>
+                <button class="btn-primary" id="btnSettingsSave">Guardar Ajustes</button>
+            </div>
+            <p id="settingsMessage" class="opt-info" style="margin-top: var(--spacing-md);"></p>
+        </section>
+    </div>
+</body>
+</html>

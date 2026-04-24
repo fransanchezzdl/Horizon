@@ -1,0 +1,1082 @@
+{
+  "_meta": {
+    "ran_at": "2026-04-15T23:56:28.470171",
+    "n_splits": 5,
+    "method": "TimeSeriesSplit (sklearn)",
+    "model": "XGBoost v5 multi:softprob",
+    "labeling": "frozen_per_ticker_percentile_33_67",
+    "tickers_total": 15,
+    "tickers_ok": 15
+  },
+  "aggregate": {
+    "ba_mean": 34.27,
+    "ba_std": 1.48
+  },
+  "tickers": {
+    "KO": {
+      "ticker": "KO",
+      "asset_type": "stable",
+      "n_splits_done": 5,
+      "ba_mean": 33.27,
+      "ba_std": 1.83,
+      "f1_mean": 30.91,
+      "f1_std": 3.23,
+      "conf_mean": 36.93,
+      "ba_folds": [
+        32.1,
+        35.85,
+        33.94,
+        30.49,
+        33.99
+      ],
+      "f1_folds": [
+        30.29,
+        35.11,
+        34.1,
+        26.8,
+        28.26
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 278,
+          "test_size": 322,
+          "ba": 32.1,
+          "f1": 30.29,
+          "conf": 35.51
+        },
+        {
+          "fold": 2,
+          "train_size": 552,
+          "test_size": 322,
+          "ba": 35.85,
+          "f1": 35.11,
+          "conf": 39.88
+        },
+        {
+          "fold": 3,
+          "train_size": 826,
+          "test_size": 322,
+          "ba": 33.94,
+          "f1": 34.1,
+          "conf": 36.89
+        },
+        {
+          "fold": 4,
+          "train_size": 1100,
+          "test_size": 322,
+          "ba": 30.49,
+          "f1": 26.8,
+          "conf": 34.02
+        },
+        {
+          "fold": 5,
+          "train_size": 1373,
+          "test_size": 322,
+          "ba": 33.99,
+          "f1": 28.26,
+          "conf": 38.36
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.005188,
+        "alcista": 0.012016
+      },
+      "ran_at": "2026-04-15T23:53:40.914167"
+    },
+    "AAPL": {
+      "ticker": "AAPL",
+      "asset_type": "stable",
+      "n_splits_done": 5,
+      "ba_mean": 36.31,
+      "ba_std": 3.85,
+      "f1_mean": 33.87,
+      "f1_std": 4.86,
+      "conf_mean": 35.82,
+      "ba_folds": [
+        35.78,
+        37.11,
+        34.78,
+        31.01,
+        42.86
+      ],
+      "f1_folds": [
+        32.09,
+        35.79,
+        33.3,
+        26.65,
+        41.53
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 278,
+          "test_size": 322,
+          "ba": 35.78,
+          "f1": 32.09,
+          "conf": 34.87
+        },
+        {
+          "fold": 2,
+          "train_size": 552,
+          "test_size": 322,
+          "ba": 37.11,
+          "f1": 35.79,
+          "conf": 34.34
+        },
+        {
+          "fold": 3,
+          "train_size": 826,
+          "test_size": 322,
+          "ba": 34.78,
+          "f1": 33.3,
+          "conf": 41.17
+        },
+        {
+          "fold": 4,
+          "train_size": 1100,
+          "test_size": 322,
+          "ba": 31.01,
+          "f1": 26.65,
+          "conf": 34.51
+        },
+        {
+          "fold": 5,
+          "train_size": 1373,
+          "test_size": 322,
+          "ba": 42.86,
+          "f1": 41.53,
+          "conf": 34.23
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.007786,
+        "alcista": 0.021983
+      },
+      "ran_at": "2026-04-15T23:53:50.627968"
+    },
+    "GC=F": {
+      "ticker": "GC=F",
+      "asset_type": "stable",
+      "n_splits_done": 5,
+      "ba_mean": 34.45,
+      "ba_std": 2.77,
+      "f1_mean": 30.67,
+      "f1_std": 3.75,
+      "conf_mean": 37.26,
+      "ba_folds": [
+        38.01,
+        33.07,
+        30.11,
+        34.4,
+        36.67
+      ],
+      "f1_folds": [
+        36.61,
+        32.0,
+        29.29,
+        25.06,
+        30.39
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 276,
+          "test_size": 319,
+          "ba": 38.01,
+          "f1": 36.61,
+          "conf": 37.46
+        },
+        {
+          "fold": 2,
+          "train_size": 547,
+          "test_size": 319,
+          "ba": 33.07,
+          "f1": 32.0,
+          "conf": 43.03
+        },
+        {
+          "fold": 3,
+          "train_size": 818,
+          "test_size": 319,
+          "ba": 30.11,
+          "f1": 29.29,
+          "conf": 34.62
+        },
+        {
+          "fold": 4,
+          "train_size": 1089,
+          "test_size": 319,
+          "ba": 34.4,
+          "f1": 25.06,
+          "conf": 37.24
+        },
+        {
+          "fold": 5,
+          "train_size": 1360,
+          "test_size": 319,
+          "ba": 36.67,
+          "f1": 30.39,
+          "conf": 33.92
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.005727,
+        "alcista": 0.008912
+      },
+      "ran_at": "2026-04-15T23:54:01.665769"
+    },
+    "SI=F": {
+      "ticker": "SI=F",
+      "asset_type": "stable",
+      "n_splits_done": 5,
+      "ba_mean": 32.78,
+      "ba_std": 4.07,
+      "f1_mean": 30.44,
+      "f1_std": 4.32,
+      "conf_mean": 37.43,
+      "ba_folds": [
+        30.54,
+        40.15,
+        34.22,
+        29.76,
+        29.27
+      ],
+      "f1_folds": [
+        27.55,
+        36.52,
+        33.84,
+        29.85,
+        24.43
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 276,
+          "test_size": 319,
+          "ba": 30.54,
+          "f1": 27.55,
+          "conf": 34.45
+        },
+        {
+          "fold": 2,
+          "train_size": 547,
+          "test_size": 319,
+          "ba": 40.15,
+          "f1": 36.52,
+          "conf": 42.78
+        },
+        {
+          "fold": 3,
+          "train_size": 818,
+          "test_size": 319,
+          "ba": 34.22,
+          "f1": 33.84,
+          "conf": 34.28
+        },
+        {
+          "fold": 4,
+          "train_size": 1089,
+          "test_size": 319,
+          "ba": 29.76,
+          "f1": 29.85,
+          "conf": 41.33
+        },
+        {
+          "fold": 5,
+          "train_size": 1360,
+          "test_size": 319,
+          "ba": 29.27,
+          "f1": 24.43,
+          "conf": 34.32
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.010645,
+        "alcista": 0.014997
+      },
+      "ran_at": "2026-04-15T23:54:13.400489"
+    },
+    "GOOGL": {
+      "ticker": "GOOGL",
+      "asset_type": "stable",
+      "n_splits_done": 5,
+      "ba_mean": 34.5,
+      "ba_std": 3.46,
+      "f1_mean": 29.34,
+      "f1_std": 5.65,
+      "conf_mean": 41.01,
+      "ba_folds": [
+        33.83,
+        29.29,
+        35.85,
+        33.61,
+        39.93
+      ],
+      "f1_folds": [
+        19.61,
+        29.29,
+        30.84,
+        29.72,
+        37.26
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 278,
+          "test_size": 322,
+          "ba": 33.83,
+          "f1": 19.61,
+          "conf": 46.31
+        },
+        {
+          "fold": 2,
+          "train_size": 552,
+          "test_size": 322,
+          "ba": 29.29,
+          "f1": 29.29,
+          "conf": 39.88
+        },
+        {
+          "fold": 3,
+          "train_size": 826,
+          "test_size": 322,
+          "ba": 35.85,
+          "f1": 30.84,
+          "conf": 36.03
+        },
+        {
+          "fold": 4,
+          "train_size": 1100,
+          "test_size": 322,
+          "ba": 33.61,
+          "f1": 29.72,
+          "conf": 47.77
+        },
+        {
+          "fold": 5,
+          "train_size": 1373,
+          "test_size": 322,
+          "ba": 39.93,
+          "f1": 37.26,
+          "conf": 35.08
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.009872,
+        "alcista": 0.018807
+      },
+      "ran_at": "2026-04-15T23:54:26.509411"
+    },
+    "MSFT": {
+      "ticker": "MSFT",
+      "asset_type": "stable",
+      "n_splits_done": 5,
+      "ba_mean": 34.9,
+      "ba_std": 4.19,
+      "f1_mean": 34.13,
+      "f1_std": 3.79,
+      "conf_mean": 34.88,
+      "ba_folds": [
+        28.47,
+        36.09,
+        33.23,
+        35.33,
+        41.39
+      ],
+      "f1_folds": [
+        28.39,
+        34.66,
+        32.39,
+        35.24,
+        39.97
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 278,
+          "test_size": 322,
+          "ba": 28.47,
+          "f1": 28.39,
+          "conf": 35.32
+        },
+        {
+          "fold": 2,
+          "train_size": 552,
+          "test_size": 322,
+          "ba": 36.09,
+          "f1": 34.66,
+          "conf": 34.19
+        },
+        {
+          "fold": 3,
+          "train_size": 826,
+          "test_size": 322,
+          "ba": 33.23,
+          "f1": 32.39,
+          "conf": 34.75
+        },
+        {
+          "fold": 4,
+          "train_size": 1100,
+          "test_size": 322,
+          "ba": 35.33,
+          "f1": 35.24,
+          "conf": 34.21
+        },
+        {
+          "fold": 5,
+          "train_size": 1373,
+          "test_size": 322,
+          "ba": 41.39,
+          "f1": 39.97,
+          "conf": 35.91
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.006914,
+        "alcista": 0.020213
+      },
+      "ran_at": "2026-04-15T23:54:35.531783"
+    },
+    "TSLA": {
+      "ticker": "TSLA",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 32.45,
+      "ba_std": 3.71,
+      "f1_mean": 28.26,
+      "f1_std": 5.75,
+      "conf_mean": 41.02,
+      "ba_folds": [
+        32.14,
+        38.14,
+        33.74,
+        31.64,
+        26.61
+      ],
+      "f1_folds": [
+        23.98,
+        38.13,
+        28.57,
+        29.3,
+        21.32
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 266,
+          "test_size": 307,
+          "ba": 32.14,
+          "f1": 23.98,
+          "conf": 49.13
+        },
+        {
+          "fold": 2,
+          "train_size": 527,
+          "test_size": 307,
+          "ba": 38.14,
+          "f1": 38.13,
+          "conf": 36.95
+        },
+        {
+          "fold": 3,
+          "train_size": 788,
+          "test_size": 307,
+          "ba": 33.74,
+          "f1": 28.57,
+          "conf": 39.73
+        },
+        {
+          "fold": 4,
+          "train_size": 1049,
+          "test_size": 307,
+          "ba": 31.64,
+          "f1": 29.3,
+          "conf": 37.31
+        },
+        {
+          "fold": 5,
+          "train_size": 1309,
+          "test_size": 307,
+          "ba": 26.61,
+          "f1": 21.32,
+          "conf": 41.98
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.026768,
+        "alcista": 0.040127
+      },
+      "ran_at": "2026-04-15T23:54:51.235002"
+    },
+    "NVDA": {
+      "ticker": "NVDA",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 34.61,
+      "ba_std": 3.72,
+      "f1_mean": 29.39,
+      "f1_std": 5.53,
+      "conf_mean": 38.0,
+      "ba_folds": [
+        35.19,
+        35.18,
+        29.12,
+        40.6,
+        32.98
+      ],
+      "f1_folds": [
+        21.24,
+        34.02,
+        27.47,
+        36.95,
+        27.27
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 266,
+          "test_size": 307,
+          "ba": 35.19,
+          "f1": 21.24,
+          "conf": 49.53
+        },
+        {
+          "fold": 2,
+          "train_size": 527,
+          "test_size": 307,
+          "ba": 35.18,
+          "f1": 34.02,
+          "conf": 38.95
+        },
+        {
+          "fold": 3,
+          "train_size": 788,
+          "test_size": 307,
+          "ba": 29.12,
+          "f1": 27.47,
+          "conf": 33.94
+        },
+        {
+          "fold": 4,
+          "train_size": 1049,
+          "test_size": 307,
+          "ba": 40.6,
+          "f1": 36.95,
+          "conf": 33.81
+        },
+        {
+          "fold": 5,
+          "train_size": 1309,
+          "test_size": 307,
+          "ba": 32.98,
+          "f1": 27.27,
+          "conf": 33.74
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.015604,
+        "alcista": 0.036773
+      },
+      "ran_at": "2026-04-15T23:55:01.388806"
+    },
+    "BTC-USD": {
+      "ticker": "BTC-USD",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 34.08,
+      "ba_std": 2.58,
+      "f1_mean": 31.21,
+      "f1_std": 3.45,
+      "conf_mean": 38.12,
+      "ba_folds": [
+        30.59,
+        32.21,
+        36.55,
+        37.43,
+        33.6
+      ],
+      "f1_folds": [
+        29.34,
+        25.91,
+        36.04,
+        33.37,
+        31.41
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 397,
+          "test_size": 465,
+          "ba": 30.59,
+          "f1": 29.34,
+          "conf": 44.23
+        },
+        {
+          "fold": 2,
+          "train_size": 793,
+          "test_size": 465,
+          "ba": 32.21,
+          "f1": 25.91,
+          "conf": 33.89
+        },
+        {
+          "fold": 3,
+          "train_size": 1188,
+          "test_size": 465,
+          "ba": 36.55,
+          "f1": 36.04,
+          "conf": 36.89
+        },
+        {
+          "fold": 4,
+          "train_size": 1583,
+          "test_size": 465,
+          "ba": 37.43,
+          "f1": 33.37,
+          "conf": 41.49
+        },
+        {
+          "fold": 5,
+          "train_size": 1978,
+          "test_size": 465,
+          "ba": 33.6,
+          "f1": 31.41,
+          "conf": 34.11
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.018812,
+        "alcista": 0.026839
+      },
+      "ran_at": "2026-04-15T23:55:16.059321"
+    },
+    "ETH-USD": {
+      "ticker": "ETH-USD",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 32.14,
+      "ba_std": 2.0,
+      "f1_mean": 28.23,
+      "f1_std": 5.16,
+      "conf_mean": 35.79,
+      "ba_folds": [
+        34.31,
+        30.23,
+        30.21,
+        31.19,
+        34.79
+      ],
+      "f1_folds": [
+        30.66,
+        26.07,
+        19.6,
+        29.9,
+        34.94
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 397,
+          "test_size": 465,
+          "ba": 34.31,
+          "f1": 30.66,
+          "conf": 35.55
+        },
+        {
+          "fold": 2,
+          "train_size": 793,
+          "test_size": 465,
+          "ba": 30.23,
+          "f1": 26.07,
+          "conf": 34.59
+        },
+        {
+          "fold": 3,
+          "train_size": 1188,
+          "test_size": 465,
+          "ba": 30.21,
+          "f1": 19.6,
+          "conf": 37.02
+        },
+        {
+          "fold": 4,
+          "train_size": 1583,
+          "test_size": 465,
+          "ba": 31.19,
+          "f1": 29.9,
+          "conf": 34.8
+        },
+        {
+          "fold": 5,
+          "train_size": 1978,
+          "test_size": 465,
+          "ba": 34.79,
+          "f1": 34.94,
+          "conf": 37.01
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.024762,
+        "alcista": 0.03832
+      },
+      "ran_at": "2026-04-15T23:55:27.163885"
+    },
+    "AMZN": {
+      "ticker": "AMZN",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 34.05,
+      "ba_std": 2.44,
+      "f1_mean": 28.45,
+      "f1_std": 3.87,
+      "conf_mean": 37.81,
+      "ba_folds": [
+        29.56,
+        35.06,
+        33.62,
+        35.4,
+        36.61
+      ],
+      "f1_folds": [
+        28.93,
+        33.61,
+        31.53,
+        23.67,
+        24.5
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 266,
+          "test_size": 307,
+          "ba": 29.56,
+          "f1": 28.93,
+          "conf": 33.91
+        },
+        {
+          "fold": 2,
+          "train_size": 527,
+          "test_size": 307,
+          "ba": 35.06,
+          "f1": 33.61,
+          "conf": 42.51
+        },
+        {
+          "fold": 3,
+          "train_size": 788,
+          "test_size": 307,
+          "ba": 33.62,
+          "f1": 31.53,
+          "conf": 40.01
+        },
+        {
+          "fold": 4,
+          "train_size": 1049,
+          "test_size": 307,
+          "ba": 35.4,
+          "f1": 23.67,
+          "conf": 36.91
+        },
+        {
+          "fold": 5,
+          "train_size": 1309,
+          "test_size": 307,
+          "ba": 36.61,
+          "f1": 24.5,
+          "conf": 35.68
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.013231,
+        "alcista": 0.019635
+      },
+      "ran_at": "2026-04-15T23:55:39.393374"
+    },
+    "BABA": {
+      "ticker": "BABA",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 33.74,
+      "ba_std": 2.15,
+      "f1_mean": 31.98,
+      "f1_std": 3.54,
+      "conf_mean": 36.92,
+      "ba_folds": [
+        37.14,
+        32.43,
+        30.91,
+        33.19,
+        35.01
+      ],
+      "f1_folds": [
+        36.38,
+        28.33,
+        27.41,
+        32.98,
+        34.81
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 266,
+          "test_size": 307,
+          "ba": 37.14,
+          "f1": 36.38,
+          "conf": 40.85
+        },
+        {
+          "fold": 2,
+          "train_size": 527,
+          "test_size": 307,
+          "ba": 32.43,
+          "f1": 28.33,
+          "conf": 35.89
+        },
+        {
+          "fold": 3,
+          "train_size": 788,
+          "test_size": 307,
+          "ba": 30.91,
+          "f1": 27.41,
+          "conf": 34.75
+        },
+        {
+          "fold": 4,
+          "train_size": 1049,
+          "test_size": 307,
+          "ba": 33.19,
+          "f1": 32.98,
+          "conf": 33.7
+        },
+        {
+          "fold": 5,
+          "train_size": 1309,
+          "test_size": 307,
+          "ba": 35.01,
+          "f1": 34.81,
+          "conf": 39.42
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.024788,
+        "alcista": 0.019441
+      },
+      "ran_at": "2026-04-15T23:55:50.597933"
+    },
+    "INTC": {
+      "ticker": "INTC",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 36.34,
+      "ba_std": 2.59,
+      "f1_mean": 30.72,
+      "f1_std": 3.01,
+      "conf_mean": 40.99,
+      "ba_folds": [
+        34.18,
+        33.25,
+        40.21,
+        35.76,
+        38.31
+      ],
+      "f1_folds": [
+        25.68,
+        32.98,
+        30.92,
+        29.62,
+        34.41
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 266,
+          "test_size": 307,
+          "ba": 34.18,
+          "f1": 25.68,
+          "conf": 33.95
+        },
+        {
+          "fold": 2,
+          "train_size": 527,
+          "test_size": 307,
+          "ba": 33.25,
+          "f1": 32.98,
+          "conf": 35.29
+        },
+        {
+          "fold": 3,
+          "train_size": 788,
+          "test_size": 307,
+          "ba": 40.21,
+          "f1": 30.92,
+          "conf": 49.1
+        },
+        {
+          "fold": 4,
+          "train_size": 1049,
+          "test_size": 307,
+          "ba": 35.76,
+          "f1": 29.62,
+          "conf": 40.98
+        },
+        {
+          "fold": 5,
+          "train_size": 1309,
+          "test_size": 307,
+          "ba": 38.31,
+          "f1": 34.41,
+          "conf": 45.66
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.014786,
+        "alcista": 0.018627
+      },
+      "ran_at": "2026-04-15T23:56:07.952168"
+    },
+    "META": {
+      "ticker": "META",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 37.52,
+      "ba_std": 4.22,
+      "f1_mean": 35.57,
+      "f1_std": 4.58,
+      "conf_mean": 34.95,
+      "ba_folds": [
+        31.85,
+        40.46,
+        42.35,
+        39.86,
+        33.1
+      ],
+      "f1_folds": [
+        31.55,
+        36.91,
+        41.93,
+        38.19,
+        29.27
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 266,
+          "test_size": 307,
+          "ba": 31.85,
+          "f1": 31.55,
+          "conf": 34.2
+        },
+        {
+          "fold": 2,
+          "train_size": 527,
+          "test_size": 307,
+          "ba": 40.46,
+          "f1": 36.91,
+          "conf": 34.05
+        },
+        {
+          "fold": 3,
+          "train_size": 788,
+          "test_size": 307,
+          "ba": 42.35,
+          "f1": 41.93,
+          "conf": 33.91
+        },
+        {
+          "fold": 4,
+          "train_size": 1049,
+          "test_size": 307,
+          "ba": 39.86,
+          "f1": 38.19,
+          "conf": 33.86
+        },
+        {
+          "fold": 5,
+          "train_size": 1309,
+          "test_size": 307,
+          "ba": 33.1,
+          "f1": 29.27,
+          "conf": 38.73
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.015118,
+        "alcista": 0.023577
+      },
+      "ran_at": "2026-04-15T23:56:17.195230"
+    },
+    "NFLX": {
+      "ticker": "NFLX",
+      "asset_type": "volatile",
+      "n_splits_done": 5,
+      "ba_mean": 32.92,
+      "ba_std": 4.91,
+      "f1_mean": 29.07,
+      "f1_std": 4.74,
+      "conf_mean": 38.07,
+      "ba_folds": [
+        32.71,
+        29.23,
+        42.09,
+        32.35,
+        28.2
+      ],
+      "f1_folds": [
+        28.82,
+        26.88,
+        37.94,
+        23.85,
+        27.84
+      ],
+      "fold_details": [
+        {
+          "fold": 1,
+          "train_size": 266,
+          "test_size": 307,
+          "ba": 32.71,
+          "f1": 28.82,
+          "conf": 48.36
+        },
+        {
+          "fold": 2,
+          "train_size": 527,
+          "test_size": 307,
+          "ba": 29.23,
+          "f1": 26.88,
+          "conf": 35.86
+        },
+        {
+          "fold": 3,
+          "train_size": 788,
+          "test_size": 307,
+          "ba": 42.09,
+          "f1": 37.94,
+          "conf": 34.79
+        },
+        {
+          "fold": 4,
+          "train_size": 1049,
+          "test_size": 307,
+          "ba": 32.35,
+          "f1": 23.85,
+          "conf": 37.61
+        },
+        {
+          "fold": 5,
+          "train_size": 1309,
+          "test_size": 307,
+          "ba": 28.2,
+          "f1": 27.84,
+          "conf": 33.73
+        }
+      ],
+      "thresholds": {
+        "bajista": -0.017936,
+        "alcista": 0.022759
+      },
+      "ran_at": "2026-04-15T23:56:28.466182"
+    }
+  }
+}

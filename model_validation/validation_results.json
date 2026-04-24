@@ -1,0 +1,364 @@
+{
+  "timestamp": "2026-03-31T10:37:38.793926",
+  "test_1_learning_curves": {
+    "GOOGL": {
+      "ticker": "GOOGL",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.0006554280416767226,
+      "train_return_std": 0.01978951135226568,
+      "val_return_mean": 0.001537033871520446,
+      "val_return_std": 0.018679464263328522,
+      "test_return_mean": 0.0013931739485182543,
+      "test_return_std": 0.01897291008081339,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 0.94x (acceptable)"
+    },
+    "MSFT": {
+      "ticker": "MSFT",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.0010817183601844937,
+      "train_return_std": 0.01957648637800174,
+      "val_return_mean": 0.0013804884672676038,
+      "val_return_std": 0.014771605999350096,
+      "test_return_mean": -0.00015754204711650933,
+      "test_return_std": 0.015632056721990747,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 0.75x (acceptable)"
+    },
+    "KO": {
+      "ticker": "KO",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.0004901208294806894,
+      "train_return_std": 0.013653883083297394,
+      "val_return_mean": 0.00035731971703306664,
+      "val_return_std": 0.008211009666810466,
+      "test_return_mean": 0.00040636013148075367,
+      "test_return_std": 0.010446441473365244,
+      "diagnosis": "\u26a0\ufe0f UNDERFITTING DETECTED",
+      "diagnosis_detail": "Model too simple - not capturing variance"
+    },
+    "AAPL": {
+      "ticker": "AAPL",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.0012182721106211542,
+      "train_return_std": 0.021102273283018485,
+      "val_return_mean": 0.0011939381818690676,
+      "val_return_std": 0.01414647889007043,
+      "test_return_mean": 0.000457452485792647,
+      "test_return_std": 0.018061011952174712,
+      "diagnosis": "\u26a0\ufe0f UNDERFITTING DETECTED",
+      "diagnosis_detail": "Model too simple - not capturing variance"
+    },
+    "AMZN": {
+      "ticker": "AMZN",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.0005745592697594144,
+      "train_return_std": 0.022566344911452266,
+      "val_return_mean": 0.001741842008566074,
+      "val_return_std": 0.019674824542737168,
+      "test_return_mean": 0.0006444828163321603,
+      "test_return_std": 0.020575650583273496,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 0.87x (acceptable)"
+    },
+    "BABA": {
+      "ticker": "BABA",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": -0.00014899498596288727,
+      "train_return_std": 0.03004294170842355,
+      "val_return_mean": 6.796630086878462e-05,
+      "val_return_std": 0.02472507458720213,
+      "test_return_mean": 0.0015622427679878787,
+      "test_return_std": 0.029266785362879046,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 0.82x (acceptable)"
+    },
+    "INTC": {
+      "ticker": "INTC",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": -4.252118353575455e-06,
+      "train_return_std": 0.023971142759210484,
+      "val_return_mean": -0.00020272671862658909,
+      "val_return_std": 0.027371409876884644,
+      "test_return_mean": 0.0023615953755274223,
+      "test_return_std": 0.03976983339828169,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 1.14x (acceptable)"
+    },
+    "META": {
+      "ticker": "META",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 8.816793571245363e-06,
+      "train_return_std": 0.027251557372247527,
+      "val_return_mean": 0.0038402528018340815,
+      "val_return_std": 0.025712695207363946,
+      "test_return_mean": 0.0004914877977112313,
+      "test_return_std": 0.022470290206347825,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 0.94x (acceptable)"
+    },
+    "NFLX": {
+      "ticker": "NFLX",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.0008126167415969316,
+      "train_return_std": 0.030057189638189027,
+      "val_return_mean": 0.0019105615815273639,
+      "val_return_std": 0.022448178221473946,
+      "test_return_mean": 0.0012282039249098499,
+      "test_return_std": 0.021293087269595775,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 0.75x (acceptable)"
+    },
+    "TSLA": {
+      "ticker": "TSLA",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.002531253600681952,
+      "train_return_std": 0.04109713550265607,
+      "val_return_mean": 0.0010737860807523705,
+      "val_return_std": 0.03600988440182343,
+      "test_return_mean": 0.0020471265063301417,
+      "test_return_std": 0.03907841381207431,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 0.88x (acceptable)"
+    },
+    "NVDA": {
+      "ticker": "NVDA",
+      "status": "OK",
+      "n_samples": 2070,
+      "train_size": 1242,
+      "val_size": 414,
+      "test_size": 414,
+      "train_return_mean": 0.0014890622070875366,
+      "train_return_std": 0.032626088242024606,
+      "val_return_mean": 0.005103914507419653,
+      "val_return_std": 0.03259822727776692,
+      "test_return_mean": 0.0014849877662051142,
+      "test_return_std": 0.029668006644184446,
+      "diagnosis": "\u2705 GOOD FIT",
+      "diagnosis_detail": "Volatility ratio: 1.00x (acceptable)"
+    }
+  },
+  "test_2_out_of_sample": {
+    "GOOGL": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "GOOGL"
+    },
+    "MSFT": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "MSFT"
+    },
+    "KO": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "KO"
+    },
+    "AAPL": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "AAPL"
+    },
+    "AMZN": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "AMZN"
+    },
+    "BABA": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "BABA"
+    },
+    "INTC": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "INTC"
+    },
+    "META": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "META"
+    },
+    "NFLX": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "NFLX"
+    },
+    "TSLA": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "TSLA"
+    },
+    "NVDA": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "traceback": "Traceback (most recent call last):\n  File \"D:\\Uni\\TFG\\Horizon\\backend\\models\\validate_model_reliability.py\", line 145, in test_2_out_of_sample_backtest\n    data.loc[:, 'predicted_direction'] = (data['Close'] > data['SMA_20']).astype(int)\n                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\ops\\common.py\", line 76, in new_method\n    return method(self, other)\n           ^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\arraylike.py\", line 56, in __gt__\n    return self._cmp_method(other, operator.gt)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 7919, in _cmp_method\n    self, other = self._align_for_op(other, axis, flex=False, level=None)\n                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\vinap\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pandas\\core\\frame.py\", line 8227, in _align_for_op\n    raise ValueError(\nValueError: Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.\n",
+      "ticker": "NVDA"
+    }
+  },
+  "test_3_walk_forward": {
+    "GOOGL": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "GOOGL"
+    },
+    "MSFT": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "MSFT"
+    },
+    "KO": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "KO"
+    },
+    "AAPL": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "AAPL"
+    },
+    "AMZN": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "AMZN"
+    },
+    "BABA": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "BABA"
+    },
+    "INTC": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "INTC"
+    },
+    "META": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "META"
+    },
+    "NFLX": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "NFLX"
+    },
+    "TSLA": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "TSLA"
+    },
+    "NVDA": {
+      "status": "ERROR",
+      "error": "Operands are not aligned. Do `left, right = left.align(right, axis=1, copy=False)` before operating.",
+      "ticker": "NVDA"
+    }
+  },
+  "test_4_vs_benchmark": {
+    "GOOGL": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "GOOGL"
+    },
+    "MSFT": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "MSFT"
+    },
+    "KO": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "KO"
+    },
+    "AAPL": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "AAPL"
+    },
+    "AMZN": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "AMZN"
+    },
+    "BABA": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "BABA"
+    },
+    "INTC": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "INTC"
+    },
+    "META": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "META"
+    },
+    "NFLX": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "NFLX"
+    },
+    "TSLA": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "TSLA"
+    },
+    "NVDA": {
+      "status": "ERROR",
+      "error": "The truth value of a Series is ambiguous. Use a.empty, a.bool(), a.item(), a.any() or a.all().",
+      "ticker": "NVDA"
+    }
+  },
+  "summary": {}
+}

@@ -8,3 +8,18 @@ __pycache__/
 env/
 venv/
 ENV/
+
+# Modelos entrenados (pesados, no subir a git)
+backend/models/saved_models/*.pth
+backend/models/saved_models/*.pkl
+backend/models/saved_models/
+
+# Claude / Agentes
+.claude/
+.agents/skills/
+windsurf/
+superpowers/
+sixth_claude/
+agents/
+skills-lock.json
+checkpoints/

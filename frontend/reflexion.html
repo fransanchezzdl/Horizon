@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reflexión del Día | Horizon</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+</head>
+<body>
+    <script src="js/config.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/reflexion.js"></script>
+
+    <div id="dashboard-contenido">
+
+        <!-- Hero del artículo -->
+        <section class="articulo-hero">
+            <div class="articulo-hero-inner">
+                <span id="articulo-tema" class="articulo-tema-badge">Cargando…</span>
+                <h1 id="articulo-titulo" class="articulo-titulo">—</h1>
+                <div class="articulo-meta">
+                    <span id="articulo-autor" class="articulo-meta-item">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                        </svg>
+                        <span id="articulo-autor-texto">—</span>
+                    </span>
+                    <span id="articulo-tiempo" class="articulo-meta-item articulo-meta-tiempo">
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"/>
+                        </svg>
+                        <span id="articulo-tiempo-texto">— min</span>
+                    </span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cita destacada -->
+        <section class="articulo-cita-section">
+            <blockquote id="articulo-cita" class="articulo-cita">
+                &ldquo;&rdquo;
+            </blockquote>
+        </section>
+
+        <!-- Cuerpo del artículo -->
+        <section class="articulo-cuerpo-section">
+            <div id="articulo-contenido" class="articulo-contenido">
+                <!-- Contenido cargado dinámicamente -->
+            </div>
+
+            <!-- Tags -->
+            <div id="articulo-tags" class="articulo-tags">
+                <!-- Tags cargados dinámicamente -->
+            </div>
+
+            <!-- Volver -->
+            <div class="articulo-footer">
+                <a href="index.html" class="btn-primary">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                        <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                    </svg>
+                    Volver al Dashboard
+                </a>
+            </div>
+        </section>
+
+    </div>
+</body>
+</html>

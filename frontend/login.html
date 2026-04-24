@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión | Horizon</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/config.js"></script>
+    <script src="js/login.js"></script>
+    <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+</head>
+<body class="login-page">
+    <div class="login-container">
+        <div class="login-header">
+            <img class="logo-icon" id="sidebarLogo" src="assets/icon/logo_lightmode.png" data-logo-light="assets/icon/logo_lightmode.png" data-logo-dark="assets/icon/logo_darkmode.png" alt="Logo de Horizon">
+            <h1>Horizon</h1>
+            <p>Inicia sesión para continuar</p>
+        </div>
+
+        <div id="errorMessage" class="error-message"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Correo</label>
+                <input 
+                    type="email" 
+                    id="email" 
+                    name="email" 
+                    placeholder="tu@email.com" 
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    name="password" 
+                    placeholder="••••••••" 
+                    required
+                >
+            </div>
+
+            <button type="submit" class="login-btn">Iniciar Sesión</button>
+        </form>
+        <div class="login-footer">
+            <p>¿No tienes cuenta? <a class="card-link" href="register.html">Regístrate</a></p>
+        </div>
+    </div>
+</body>
+</html>

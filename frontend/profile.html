@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Horizon</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="icon" type="image/x-icon" href="assets/icon/favicon.ico">
+</head>
+<body>
+    <script src="js/config.js"></script>
+    <script src="js/layout.js"></script>
+    <script src="js/logout.js"></script>
+    <script src="js/profile.js"></script>
+    <div id="dashboard-contenido">
+        <section class="profile-header">
+            <div class="profile-banner"></div>
+            <div class="profile-card">
+                <div class="profile-avatar-container" id="btnAvatarEdit" role="button" tabindex="0" aria-label="Cambiar foto de perfil">
+                    <div class="profile-avatar" id="profileAvatar">A</div>
+                    <div class="avatar-hover-hint">Cambiar foto</div>
+                </div>
+                <div class="profile-basic-info">
+                    <h1 id="profileName">Cargando...</h1>
+                    <p class="profile-email" id="profileEmail">email@example.com</p>
+                    <div class="profile-plan-badge" id="profilePlan">Plan Free</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-content">
+            <div class="profile-grid">
+                <!-- Información General -->
+                <div class="card">
+                    <h2>Información General</h2>
+                    <div class="info-list">
+                        <div class="info-item">
+                            <span class="info-label">Nombre Completo</span>
+                            <p class="info-value" id="infoNombre">-</p>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">Email</span>
+                            <p class="info-value" id="infoEmail">-</p>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btnEditProfile">Editar Perfil</button>
+                </div>
+
+                <!-- Estadísticas -->
+                <div class="card">
+                    <h2>Estadísticas</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statPortfolio">0</div>
+                            <div class="stat-label">Activos en Portfolio</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statPredictions">0</div>
+                            <div class="stat-label">Portfolios</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plan y Membresía -->
+                <div class="card">
+                    <h2>Plan y Membresía</h2>
+                    <div class="membership-info">
+                        <div class="membership-item">
+                            <span class="membership-label">Plan Actual</span>
+                            <p class="membership-value" id="membershipPlan">Free</p>
+                        </div>
+                        <div class="membership-item">
+                            <span class="membership-label">Fecha de Registro</span>
+                            <p class="membership-value" id="membershipDate">-</p>
+                        </div>
+                        <div class="membership-item">
+                            <span class="membership-label">Estado</span>
+                            <p class="membership-value status-active" id="membershipStatus">Activo</p>
+                        </div>
+                    </div>
+                    <button class="btn-primary" id="btnUpgrade">Actualizar Plan</button>
+                </div>
+
+                <!-- Seguridad -->
+                <div class="card" id="securityCard">
+                    <h2>Seguridad</h2>
+                    <div class="security-options">
+                        <div class="security-item">
+                            <div class="security-info">
+                                <h3>Cambiar Contraseña</h3>
+                                <p>Actualiza tu contraseña regularmente para mantener tu cuenta segura</p>
+                            </div>
+                            <button class="btn-secondary" id="btnChangePassword">Cambiar</button>
+                        </div>
+                        <div class="security-item">
+                            <div class="security-info">
+                                <h3>Eliminar Cuenta</h3>
+                                <p>Elimina permanentemente tu cuenta y todos tus datos</p>
+                            </div>
+                            <button class="btn-logout btn-logout-compact" id="btnDeleteAccount">Eliminar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-actions">
+                <button class="btn-secondary" id="btnSupport">Ayuda</button>
+                <button class="btn-secondary" id="btnOpenSettings">Ajustes</button>
+                <button class="btn-logout profile-logout-mobile" id="logoutBtnProfile">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    <span>Cerrar Sesión</span>
+                </button>
+            </div>
+
+        </section>
+    </div>
+
+    <!-- Modal de Edición de Perfil -->
+    <div id="modalEditProfile" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0;">Editar Perfil</h2>
+            </div>
+            <form id="formEditProfile">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="editNombre">Nombre</label>
+                        <input type="text" id="editNombre" placeholder="Tu nombre">
+                    </div>
+                    <div class="form-group">
+                        <label for="editApellidos">Apellidos</label>
+                        <input type="text" id="editApellidos" placeholder="Tus apellidos">
+                    </div>
+                    <div class="form-group">
+                        <label for="editEmail">Email</label>
+                        <input type="email" id="editEmail" placeholder="tu@email.com" readonly>
+                    </div>
+                    <div id="editMessage" class="modal-message"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelEdit">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSaveEdit">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalEditAvatar" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0;">Cambiar foto de perfil</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="profilePhotoUpload">Foto de perfil</label>
+                    <div class="profile-photo-selector">
+                        <div class="profile-photos-grid">
+                            <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png" title="Opción 1">
+                                <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-1.png" alt="Foto 1">
+                            </div>
+
+                            <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png" title="Opción 2">
+                                <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-2.png" alt="Foto 2">
+                            </div>
+
+                            <div class="profile-photo-option" data-photo="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-3.png" title="Opción 3">
+                                <img src="https://fzxtliowdmhumnxfskvy.supabase.co/storage/v1/object/public/avatars-default/default/default-3.png" alt="Foto 3">
+                            </div>
+
+                            <div class="profile-photo-option upload" title="Sube tu foto">
+                                <label for="profilePhotoUpload" class="upload-label">
+                                    <span class="plus-icon">+</span>
+                                </label>
+                                <input type="file" id="profilePhotoUpload" name="profilePhotoUpload" accept="image/*" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="fotoPerfilUrl" name="foto_perfil" value="">
+                </div>
+
+                <div id="avatarMessage" class="modal-message"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="btnCancelAvatar">Cancelar</button>
+                <button type="button" class="btn-primary" id="btnSaveAvatar">Guardar foto</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="deleteAccountModal" class="modal is-hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="delete-account-title-wrap">
+                    <span class="delete-account-title-icon" aria-hidden="true">
+                        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 9v4"></path>
+                            <path d="M12 17h.01"></path>
+                            <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                        </svg>
+                    </span>
+                    <h3>Eliminar cuenta</h3>
+                </div>
+            </div>
+            <div class="modal-body">
+                <div class="delete-account-warning-box">
+                    <span class="delete-account-warning-icon" aria-hidden="true">!</span>
+                    <div>
+                        <strong>Esta acción es irreversible</strong>
+                        <p>Se eliminarán permanentemente tu cuenta, portfolios y todos tus datos.</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="deleteAccountConfirmInput">Escribe tu nombre de usuario para confirmar:</label>
+                    <div id="deleteAccountExpectedName" class="delete-account-expected-name"></div>
+                    <input type="text" id="deleteAccountConfirmInput" autocomplete="off" placeholder="Escribe tu nombre aquí...">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="deleteAccountCancelBtn">Cancelar</button>
+                <button class="btn-logout btn-logout-compact" id="deleteAccountConfirmBtn" disabled>Eliminar cuenta</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Cambio de Contraseña -->
+     <div id="modalChangePassword" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0;">Cambiar Contraseña</h2>
+            </div>
+            <form id="formChangePassword">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="currentPassword">Contraseña Actual</label>
+                        <input type="password" id="currentPassword" placeholder="Tu contraseña actual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newPassword">Nueva Contraseña</label>
+                        <input type="password" id="newPassword" placeholder="Nueva contraseña" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirmNewPassword">Repetir Nueva Contraseña</label>
+                        <input type="password" id="confirmNewPassword" placeholder="Repite tu nueva contraseña" required>
+                    </div>
+                    <div id="passwordMessage" class="modal-message"></div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" id="btnCancelPassword">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="btnSavePassword">Actualizar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- FIN Modal de Cambio de Contraseña -->
+
+    <!-- Modal de Actualizar Plan -->
+    <div id="modalUpgradePlan" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 style="margin: 0;">Actualizar a Plan Pro</h2>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <p>Estás a punto de actualizar tu plan a <strong>Pro</strong>.</p>
+                </div>
+                <div id="upgradeMessage" class="modal-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" id="btnCancelUpgrade">Cancelar</button>
+                <button type="button" class="btn-primary" id="btnConfirmUpgrade">Confirmar Pago</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
