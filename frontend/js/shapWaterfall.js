@@ -7,134 +7,75 @@
 (function () {
   'use strict';
 
-  // ── Estado interno ──────────────────────────────────────────────────────────
   let _currentData   = null;
   let _resizeHandler = null;
 
-  // ── Colores por tema ─────────────────────────────────────────────────────────
+  // ── Colores por tema ──────────────────────────────────────────────────────────
   const COLORS_DARK = {
-    ALCISTA_OK: '#22c55e',
-    BAJISTA_OK: '#ef4444',
-    LATERAL_OK: '#f59e0b',
-    BG:         'transparent',
-    GRID:       '#1e293b',
-    TEXT:       '#94a3b8',
-    TEXT_MUTED: '#64748b',
+    ALCISTA_OK: '#22c55e', BAJISTA_OK: '#ef4444', LATERAL_OK: '#f59e0b',
+    BG: 'transparent', GRID: '#1e293b', TEXT: '#94a3b8', TEXT_MUTED: '#64748b',
   };
-
   const COLORS_LIGHT = {
-    ALCISTA_OK: '#16a34a',
-    BAJISTA_OK: '#dc2626',
-    LATERAL_OK: '#d97706',
-    BG:         'transparent',
-    GRID:       '#e2e8f0',
-    TEXT:       '#374151',
-    TEXT_MUTED: '#9ca3af',
+    ALCISTA_OK: '#16a34a', BAJISTA_OK: '#dc2626', LATERAL_OK: '#d97706',
+    BG: 'transparent', GRID: '#e2e8f0', TEXT: '#374151', TEXT_MUTED: '#9ca3af',
   };
 
   function _getColors() {
     return document.documentElement.getAttribute('data-theme') === 'dark'
-      ? COLORS_DARK
-      : COLORS_LIGHT;
+      ? COLORS_DARK : COLORS_LIGHT;
   }
 
-  // ── Mapeo de nombres de features a español legible ───────────────────────────
+  // ── Etiqueta legible — delega en shapNarrative.js ───────────────────────────
+  const CHAR_PX = 6.8;   // ancho aproximado por carácter a 12px Inter
+  const MAX_LABEL_LEN = 30;
 
-  const FEATURE_LABELS = {
-    // Precio y volumen base
-    close:                    'Precio de cierre',
-    volume:                   'Volumen',
-    log_return:               'Retorno logarítmico',
-    volume_ratio:             'Ratio de volumen',
-    high_low_ratio:           'Ratio máximo / mínimo',
-    close_range_pct:          'Rango de cierre %',
-    price_acceleration:       'Aceleración del precio',
-
-    // Medias móviles y tendencia
-    ema:                      'Media móvil exponencial',
-    sma200_dist:              'Distancia SMA 200',
-    sma50_slope:              'Pendiente SMA 50',
-    sma200_regime:            'Régimen SMA 200',
-
-    // Momentum y osciladores
-    rsi:                      'RSI',
-    rsi_14:                   'RSI 14 períodos',
-    macd:                     'MACD',
-    macd_signal:              'Señal MACD',
-    momentum_5d:              'Momentum 5 días',
-    roc_10:                   'Tasa de cambio 10d',
-    cci:                      'Índice canal (CCI)',
-    tsi:                      'Fuerza verdadera (TSI)',
-    kst:                      'Know Sure Thing (KST)',
-    cmo:                      'Oscilador Chande (CMO)',
-    ultimate_osc:             'Oscilador último',
-    dx:                       'Índice direccional (DX)',
-
-    // Volatilidad
-    bollinger_pctb:           'Bandas Bollinger %B',
-    bbands_pct:               'Bandas Bollinger %B',
-    atr:                      'Rango medio verdadero (ATR)',
-    atr_14:                   'ATR 14 períodos',
-    realized_vol:             'Volatilidad realizada',
-    volatility_std:           'Volatilidad estándar',
-    vix_close:                'VIX (índice de volatilidad)',
-
-    // Volumen avanzado
-    obv:                      'Volumen en balance (OBV)',
-    obv_momentum:             'Momentum OBV',
-    cmf:                      'Flujo de dinero Chaikin',
-    volume_sma_ratio:         'Ratio volumen / SMA',
-
-    // Aroon
-    aroon_up:                 'Aroon alcista',
-    aroon_down:               'Aroon bajista',
-
-    // Macro / mercado
-    nasdaq_return:            'Retorno NASDAQ',
-    dollar_proxy:             'Proxy del dólar',
-    real_rates_proxy:         'Tipos de interés reales',
-    risk_sentiment:           'Sentimiento de riesgo',
-    industrial_demand:        'Demanda industrial',
-
-    // Sentimiento de noticias
-    sentiment_score:          'Puntuación de sentimiento',
-    sentiment_magnitude:      'Magnitud del sentimiento',
-    news_volume:              'Volumen de noticias',
-    sentiment_lag_1d:         'Sentimiento hace 1 día',
-    sentiment_lag_2d:         'Sentimiento hace 2 días',
-    sentiment_lag_3d:         'Sentimiento hace 3 días',
-    sentiment_lag_4d:         'Sentimiento hace 4 días',
-    sentiment_lag_5d:         'Sentimiento hace 5 días',
-    sentiment_ma_3d:          'Media sentimiento 3d',
-    sentiment_ma_5d:          'Media sentimiento 5d',
-    sentiment_vol_normalized: 'Sentimiento vol. normalizado',
-    sentiment_vol_norm_lag_1d:'Sent. vol. norm. hace 1d',
-    sentiment_vol_norm_lag_2d:'Sent. vol. norm. hace 2d',
-    sentiment_momentum_5d:    'Momentum sentimiento 5d',
-    sentiment_deviation:      'Desviación del sentimiento',
-  };
-
-  /**
-   * Devuelve la etiqueta legible en español para un nombre de feature técnico.
-   * Fallback: reemplaza guiones bajos por espacios y capitaliza la primera letra.
-   */
   function _labelFeature(name) {
     if (!name) return '';
-    const key = name.toLowerCase();
-    if (FEATURE_LABELS[key]) return FEATURE_LABELS[key];
-    // Fallback: underscores → espacios, primera letra mayúscula
+    if (typeof window.parseFeatureName === 'function') {
+      return window.parseFeatureName(name).label;
+    }
     return name.replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase());
   }
 
+  function _shortLabel(name) {
+    const full = _labelFeature(name);
+    return full.length > MAX_LABEL_LEN ? full.slice(0, MAX_LABEL_LEN - 1) + '…' : full;
+  }
+
+  // ── Panel de descripción de feature ──────────────────────────────────────────
+  function _getInfoPanel() { return document.getElementById('shapFeatureInfo'); }
+
+  function _showFeatureInfo(d, C) {
+    const panel = _getInfoPanel();
+    if (!panel) return;
+    const parsed = (typeof window.parseFeatureName === 'function')
+      ? window.parseFeatureName(d.feature)
+      : { label: _labelFeature(d.feature), desc: '' };
+    const dir  = d.shap >= 0 ? 'Impulso al alza' : 'Impulso a la baja';
+    const col  = d.shap >= 0 ? C.ALCISTA_OK : C.BAJISTA_OK;
+    const val  = (d.value != null && !isNaN(Number(d.value)))
+      ? `<span class="shap-info-val">Valor: ${Number(d.value).toFixed(3)}</span>` : '';
+    panel.innerHTML = `
+      <span class="shap-info-accent" style="background:${col};"></span>
+      <div class="shap-info-body">
+        <span class="shap-info-name">${parsed.label}</span>
+        ${parsed.desc ? `<span class="shap-info-desc">${parsed.desc}</span>` : ''}
+      </div>
+      <div class="shap-info-meta">
+        ${val}
+        <span class="shap-info-dir" style="color:${col};">${dir}</span>
+      </div>`;
+    panel.classList.add('is-active');
+  }
+
+  function _hideFeatureInfo() {
+    const panel = _getInfoPanel();
+    if (panel) panel.classList.remove('is-active');
+  }
+
   // ── Helpers ──────────────────────────────────────────────────────────────────
-
-  function _getChartContainer() {
-    return document.getElementById('shapChart');
-  }
-
-  function _getSection() {
-    return document.getElementById('shapSection');
-  }
+  function _getChartContainer() { return document.getElementById('shapChart'); }
+  function _getSection()        { return document.getElementById('shapSection'); }
 
   function _showLoading() {
     const c = _getChartContainer();
@@ -148,23 +89,23 @@
     if (badge) badge.innerHTML = '';
   }
 
+  // ── Badge de señal ────────────────────────────────────────────────────────────
+  const BADGE_CLASS = {
+    ALCISTA: 'shap-badge--alcista',
+    BAJISTA: 'shap-badge--bajista',
+    LATERAL: 'shap-badge--lateral',
+  };
+
   function _renderBadge(data) {
     const badge = document.getElementById('shapSignalBadge');
     if (!badge) return;
-
-    const pct = Math.round((data.confianza || 0) * 100);
-    const cls  = data.senal === 'ALCISTA' ? 'shap-badge--alcista'
-               : data.senal === 'BAJISTA' ? 'shap-badge--bajista'
-               : 'shap-badge--lateral';
-    const correctaIcon = data.correcta === true  ? ' ✓'
-                       : data.correcta === false ? ' ✗'
-                       : '';
-
-    badge.innerHTML = `<span class="shap-badge ${cls}">${data.senal}&nbsp;${pct}%${correctaIcon}</span>`;
+    const pct  = Math.round((data.confianza || 0) * 100);
+    const cls  = BADGE_CLASS[data.senal] || 'shap-badge--lateral';
+    const mark = data.correcta === true ? ' ✓' : data.correcta === false ? ' ✗' : '';
+    badge.innerHTML = `<span class="shap-badge ${cls}">${data.senal} ${pct}%${mark}</span>`;
   }
 
-  // ── Renderizado D3 ───────────────────────────────────────────────────────────
-
+  // ── Renderizado D3 ────────────────────────────────────────────────────────────
   function _renderChart(data) {
     const container = _getChartContainer();
     if (!container) return;
@@ -178,11 +119,16 @@
 
     const C = _getColors();
 
-    const margin      = { top: 8, right: 90, bottom: 16, left: 170 };
-    const totalWidth  = container.clientWidth || 600;
-    const innerWidth  = Math.max(totalWidth - margin.left - margin.right, 80);
-    const barHeight   = 30;
-    const bandPad     = 0.22;
+    // Margen izquierdo dinámico según la etiqueta más larga
+    const maxLabelChars = Math.min(
+      d3.max(values, d => _shortLabel(d.feature).length) || 20,
+      MAX_LABEL_LEN
+    );
+    const margin     = { top: 8, right: 90, bottom: 16, left: Math.ceil(maxLabelChars * CHAR_PX) + 20 };
+    const totalWidth = container.clientWidth || 600;
+    const innerWidth = Math.max(totalWidth - margin.left - margin.right, 80);
+    const barHeight  = 30;
+    const bandPad    = 0.22;
     const innerHeight = values.length * barHeight;
 
     const svg = d3.select(container)
@@ -195,23 +141,19 @@
 
     const maxAbs = d3.max(values, d => d.abs) || 1;
 
-    const xScale = d3.scaleLinear()
-      .domain([-maxAbs, maxAbs])
-      .range([0, innerWidth]);
-
+    const xScale = d3.scaleLinear().domain([-maxAbs, maxAbs]).range([0, innerWidth]);
     const yScale = d3.scaleBand()
       .domain(values.map(d => d.feature))
       .range([0, innerHeight])
       .padding(bandPad);
 
-    // Línea central en x = 0
+    // Línea central
     svg.append('line')
       .attr('x1', xScale(0)).attr('x2', xScale(0))
       .attr('y1', 0).attr('y2', innerHeight)
-      .attr('stroke', C.GRID)
-      .attr('stroke-width', 1);
+      .attr('stroke', C.GRID).attr('stroke-width', 1);
 
-    // Barras
+    // Barras — con eventos hover para el panel de info
     svg.selectAll('.shap-bar')
       .data(values)
       .join('rect')
@@ -221,9 +163,12 @@
         .attr('width',  d => Math.max(Math.abs(xScale(d.shap) - xScale(0)), 2))
         .attr('height', yScale.bandwidth())
         .attr('fill',   d => d.shap >= 0 ? C.ALCISTA_OK : C.BAJISTA_OK)
-        .attr('rx', 3).attr('ry', 3);
+        .attr('rx', 3).attr('ry', 3)
+        .style('cursor', 'pointer')
+        .on('mouseover', (_, d) => _showFeatureInfo(d, C))
+        .on('mouseleave', _hideFeatureInfo);
 
-    // Etiquetas de nombre de feature (izquierda)
+    // Etiquetas de nombre (izquierda) — texto truncado, hover abre el panel
     svg.selectAll('.shap-label-feat')
       .data(values)
       .join('text')
@@ -235,9 +180,12 @@
         .attr('fill',        C.TEXT)
         .attr('font-size',   '12px')
         .attr('font-family', 'Inter, system-ui, sans-serif')
-        .text(d => _labelFeature(d.feature));
+        .style('cursor', 'pointer')
+        .text(d => _shortLabel(d.feature))
+        .on('mouseover', (_, d) => _showFeatureInfo(d, C))
+        .on('mouseleave', _hideFeatureInfo);
 
-    // Etiquetas de valor SHAP (junto a la barra, mismo color que barra)
+    // Valores SHAP junto a la barra
     svg.selectAll('.shap-label-shap')
       .data(values)
       .join('text')
@@ -252,7 +200,7 @@
         .attr('font-family', 'Inter, system-ui, sans-serif')
         .text(d => (d.shap >= 0 ? '+' : '') + d.shap.toFixed(3));
 
-    // Etiquetas de valor real de la feature (derecha)
+    // Valores reales de la feature (derecha)
     svg.selectAll('.shap-label-val')
       .data(values)
       .join('text')
@@ -265,30 +213,23 @@
         .attr('font-size',   '11px')
         .attr('font-family', 'Inter, system-ui, sans-serif')
         .text(d => {
-          if (d.value === null || d.value === undefined) return '';
+          if (d.value == null) return '';
           const n = Number(d.value);
           return isNaN(n) ? String(d.value) : n.toFixed(2);
         });
   }
 
-  // ── Tema ─────────────────────────────────────────────────────────────────────
-
+  // ── Tema ──────────────────────────────────────────────────────────────────────
   function _applyTheme() {
-    if (_currentData) {
-      _renderChart(_currentData);
-      _renderBadge(_currentData);
-    }
+    if (_currentData) { _renderChart(_currentData); _renderBadge(_currentData); }
   }
 
-  // ── Carga de datos ───────────────────────────────────────────────────────────
-
+  // ── Carga de datos ────────────────────────────────────────────────────────────
   async function _loadData(ticker) {
     _showLoading();
-
     let data;
     try {
-      const url  = `${window.API_BASE}/activos/${encodeURIComponent(ticker)}/xai/latest-shap`;
-      const resp = await fetch(url, { cache: 'no-store' });
+      const resp = await fetch(`${window.API_BASE}/activos/${encodeURIComponent(ticker)}/xai/latest-shap`, { cache: 'no-store' });
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
       data = await resp.json();
     } catch (err) {
@@ -300,38 +241,29 @@
     }
 
     _currentData = data;
-
-    // Mostrar sección (estaba oculta por defecto)
     const section = _getSection();
     if (section) section.style.display = '';
 
     _renderBadge(data);
     _renderChart(data);
+    if (typeof window.renderShapNarrative === 'function') window.renderShapNarrative(data);
   }
 
-  // ── Resize ───────────────────────────────────────────────────────────────────
-
-  _resizeHandler = function () {
-    if (_currentData) _renderChart(_currentData);
-  };
+  // ── Resize + tema ─────────────────────────────────────────────────────────────
+  _resizeHandler = function () { if (_currentData) _renderChart(_currentData); };
   window.addEventListener('resize', _resizeHandler);
-
-  // Escuchar cambios de tema para actualizar colores sin recargar datos
   window.addEventListener('horizon:theme-changed', _applyTheme);
 
-  // ── API pública ──────────────────────────────────────────────────────────────
-
-  window.initShapWaterfall = function (ticker) {
-    _loadData(ticker);
-  };
+  // ── API pública ───────────────────────────────────────────────────────────────
+  window.initShapWaterfall = function (ticker) { _loadData(ticker); };
 
   window.destroyShapWaterfall = function () {
-    if (_resizeHandler) {
-      window.removeEventListener('resize', _resizeHandler);
-      _resizeHandler = null;
-    }
+    if (_resizeHandler) { window.removeEventListener('resize', _resizeHandler); _resizeHandler = null; }
     const c = _getChartContainer();
     if (c) c.innerHTML = '';
+    const narr = document.getElementById('shapNarrative');
+    if (narr) narr.innerHTML = '';
+    _hideFeatureInfo();
     _currentData = null;
     const section = _getSection();
     if (section) section.style.display = 'none';

@@ -121,13 +121,19 @@ def _get_actual_price(ticker: str, target_date: date) -> Tuple[float, bool]:
 
 
 def _build_xgb_features(window: np.ndarray) -> np.ndarray:
-    """[window_size, n_feat] → [4*n_feat] (last, mean, std, trend)."""
-    return np.concatenate([
-        window[-1, :],
-        window.mean(axis=0),
-        window.std(axis=0),
-        window[-1, :] - window[0, :],
-    ])
+    """
+    [window_size, n_feat] → [12*n_feat] (last, mean, std, trend sobre 3 sub-ventanas).
+
+    Debe ser idéntico a _build_xgb_features en prediction_log_service.py
+    y a build_xgb_features en xgboost_model.py.
+    """
+    W = window.shape[0]
+    sub_windows = [max(2, W // 6), W // 2, W]
+    parts = []
+    for sw in sub_windows:
+        sl = window[-sw:, :]
+        parts.extend([sl[-1, :], sl.mean(axis=0), sl.std(axis=0), sl[-1, :] - sl[0, :]])
+    return np.concatenate(parts)
 
 
 def _classify_return(ret: float, dn: float, up: float) -> str:
