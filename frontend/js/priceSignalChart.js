@@ -44,17 +44,20 @@
     return { ...SIGNAL_COLORS, ...THEME_COLORS[theme] || THEME_COLORS.light };
   }
 
-  // Opacidad hex para señales incorrectas (~40%)
-  const INCORRECT_ALPHA = '66';
+  const INCORRECT_COLOR = '#9ca3af';
+  // Pendientes: color de la señal con ~50% de opacidad
+  const PENDING_ALPHA = '80';
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
 
   function _markerColor(signal, correct) {
-    if (correct === null || correct === undefined) return SIGNAL_COLORS.PENDING;
     const base = signal === 'ALCISTA' ? SIGNAL_COLORS.ALCISTA_OK
                : signal === 'BAJISTA' ? SIGNAL_COLORS.BAJISTA_OK
                : SIGNAL_COLORS.LATERAL_OK;
-    return correct ? base : base + INCORRECT_ALPHA;
+    if (correct === false) return INCORRECT_COLOR;
+    if (correct === true)  return base;
+    // null/undefined → pendiente de evaluar: color de la señal semitransparente
+    return base + PENDING_ALPHA;
   }
 
   function _markerPosition(signal) {
@@ -71,9 +74,14 @@
   const _activeFilters = { ALCISTA: true, BAJISTA: true, LATERAL: false };
 
   function _markerText(signal, confidence, correct) {
-    const pct = confidence != null ? ` ${Math.round(confidence * 100)}%` : '';
-    const mark = correct === false ? ' ✗' : correct === true ? '' : ' ?';
-    return `${signal}${pct}${mark}`;
+    return correct === false ? '✗' : '';
+  }
+
+  // Días máximos de silencio antes de forzar una flecha recordatorio
+  const MAX_GAP_DAYS = 7;
+
+  function _daysBetween(dateA, dateB) {
+    return Math.abs((new Date(dateA).getTime() - new Date(dateB).getTime()) / 86400000);
   }
 
   /**
@@ -87,43 +95,77 @@
     const grouped = [];
     let group = [sorted[0]];
 
+    const _bestOfGroup = (grp) => {
+      // Preferir señales resueltas (correct !== null) sobre pendientes
+      const resueltas = grp.filter(s => s.correct !== null && s.correct !== undefined);
+      const pool = resueltas.length > 0 ? resueltas : grp;
+      return pool.reduce((best, s) =>
+        (s.confidence || 0) > (best.confidence || 0) ? s : best
+      );
+    };
+
     for (let i = 1; i < sorted.length; i++) {
       const prev = group[0];
       const curr = sorted[i];
-      const daysDiff = Math.abs(
-        (new Date(curr.time).getTime() - new Date(prev.time).getTime()) / 86400000
-      );
-      if (curr.signal === prev.signal && daysDiff <= 3) {
+      if (curr.signal === prev.signal && _daysBetween(curr.time, prev.time) <= 3) {
         group.push(curr);
       } else {
-        // Conservar la de mayor confianza del grupo
-        grouped.push(group.reduce((best, s) =>
-          (s.confidence || 0) > (best.confidence || 0) ? s : best
-        ));
+        grouped.push(_bestOfGroup(group));
         group = [curr];
       }
     }
-    grouped.push(group.reduce((best, s) =>
-      (s.confidence || 0) > (best.confidence || 0) ? s : best
-    ));
+    grouped.push(_bestOfGroup(group));
 
     return grouped;
   }
 
-  function _buildMarkers(signals) {
+  /**
+   * Añade flechas recordatorio cuando hay un hueco de más de MAX_GAP_DAYS
+   * sin ninguna señal visible, usando la última señal activa como referencia.
+   * Las flechas insertadas se marcan con _reminder:true para no tratarlas como incorrectas.
+   */
+  function _fillGaps(grouped, candleDates) {
+    if (!grouped.length || !candleDates.length) return grouped;
+
+    const result = [];
+    const dates = [...candleDates].sort();
+
+    for (let i = 0; i < grouped.length; i++) {
+      result.push(grouped[i]);
+      const nextSignal = grouped[i + 1];
+      const nextDate   = nextSignal ? nextSignal.time : dates[dates.length - 1];
+      let   lastDate   = grouped[i].time;
+
+      while (_daysBetween(lastDate, nextDate) > MAX_GAP_DAYS) {
+        // Avanzar MAX_GAP_DAYS días desde lastDate usando las fechas reales del chart
+        const targetMs = new Date(lastDate).getTime() + MAX_GAP_DAYS * 86400000;
+        const candidate = dates.find(d => new Date(d).getTime() >= targetMs);
+        if (!candidate || candidate >= nextDate) break;
+
+        result.push({ ...grouped[i], time: candidate, _reminder: true });
+        lastDate = candidate;
+      }
+    }
+
+    return result;
+  }
+
+  function _buildMarkers(signals, candleDates) {
     const filtered = signals
       .filter(s => s.time && s.signal)
       .filter(s => _activeFilters[s.signal] !== false);
 
-    return _groupSignals(filtered)
+    const grouped = _groupSignals(filtered);
+    const withReminders = _fillGaps(grouped, candleDates || []);
+
+    return withReminders
       .map(s => ({
         time:     s.time,
         position: _markerPosition(s.signal),
-        color:    _markerColor(s.signal, s.correct),
+        color:    _markerColor(s.signal, s._reminder ? true : s.correct),
         shape:    _markerShape(s.signal),
-        text:     _markerText(s.signal, s.confidence, s.correct),
-        // Señales incorrectas más pequeñas para reducir ruido visual
-        size:     s.correct === false ? 0.7 : 1,
+        text:     s._reminder ? '' : _markerText(s.signal, s.confidence, s.correct),
+        size:     s.correct === false && !s._reminder ? 0.7 : 1,
       }))
       .sort((a, b) => (a.time < b.time ? -1 : 1));
   }
@@ -266,7 +308,8 @@
     _candleSeries.setData(data.candles);
 
     if (data.signals && data.signals.length > 0) {
-      _candleSeries.setMarkers(_buildMarkers(data.signals));
+      const candleDates = data.candles.map(c => c.time);
+      _candleSeries.setMarkers(_buildMarkers(data.signals, candleDates));
     }
 
     _chart.timeScale().fitContent();
@@ -281,8 +324,11 @@
 
   window.initPriceSignalChart = function (ticker) {
     _currentTicker = ticker;
-    _currentDays   = 30;
-    _loadData(ticker, 30);
+    // Respetar el rango activo en el selector del DOM (si el usuario ya había elegido 7/30/90)
+    const activeBtn = document.querySelector('.range-btn.active');
+    const days = activeBtn ? parseInt(activeBtn.dataset.days, 10) || 30 : 30;
+    _currentDays = days;
+    _loadData(ticker, days);
   };
 
   window.updatePriceSignalChart = function (days) {

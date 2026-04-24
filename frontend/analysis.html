@@ -18,7 +18,7 @@
     <script src="js/portfolio_modal.js"></script>
     <script src="js/search.js"></script>
     <script src="js/analysis.js"></script>
-    <script src="js/priceSignalChart.js"></script>
+    <script src="js/priceSignalChart.js?v=7"></script>
     <div id="dashboard-contenido" class="analysis-home">
         <!-- Buscador de Tickers (reescrito: responsive y contenido limitado) -->
         <section class="search-section card analysis-search-shell">
@@ -89,20 +89,6 @@
             </div>
         </section>
 
-        <!-- Distribución de probabilidades XGBoost -->
-        <section id="probSection" style="display:none; margin-top:18px;">
-            <div class="card">
-                <div class="chart-header">
-                    <div>
-                        <h3 class="opt-title" style="margin:0;">Distribución de confianza — XGBoost</h3>
-                        <p class="opt-info" style="margin:2px 0 0;">Probabilidad asignada a cada dirección por el modelo</p>
-                    </div>
-                    <div id="probAbstentionBadge"></div>
-                </div>
-                <div id="probBarsContainer" class="prob-bars"></div>
-            </div>
-        </section>
-
         <!-- Predicción y noticias -->
         <section style="display:grid; grid-template-columns:2fr 1fr; gap:18px; margin-top:18px;">
             <div class="card">
@@ -133,7 +119,19 @@
                         <input type="checkbox" onchange="setPriceSignalFilter('LATERAL', this.checked)">
                         <span class="legend-dot" style="color:#f59e0b;">●</span> Lateral
                     </label>
-                    <span class="legend-item legend-incorrect"><span class="legend-dot">✗</span> Incorrecta (opacidad)</span>
+                    <span class="legend-item legend-incorrect"><span class="legend-dot">✗</span> Predicción incorrecta</span>
+                    <span class="legend-item">◆ Sin evaluar aún</span>
+                </div>
+                <!-- Distribución de probabilidades XGBoost (incrustada bajo la gráfica) -->
+                <div id="probSection" style="display:none; margin-top:22px; padding-top:16px; border-top:1px solid var(--color-border, #e5e7eb);">
+                    <div class="chart-header" style="padding-bottom:8px;">
+                        <div>
+                            <h3 class="opt-title" style="margin:0;">Distribución de confianza — XGBoost</h3>
+                            <p class="opt-info" style="margin:2px 0 0;">Probabilidad asignada a cada dirección por el modelo</p>
+                        </div>
+                        <div id="probAbstentionBadge"></div>
+                    </div>
+                    <div id="probBarsContainer" class="prob-bars"></div>
                 </div>
             </div>
 
@@ -161,8 +159,17 @@
                     </div>
                     <div id="shapSignalBadge"></div>
                 </div>
+                <!-- Veredicto en lenguaje natural (auto-generado desde SHAP) -->
+                <div id="shapNarrative" class="shap-narrative"></div>
                 <div id="shapChartContainer">
                     <div id="shapChart"></div>
+                </div>
+                <!-- Panel de descripción de indicador (se activa al hacer hover sobre el gráfico) -->
+                <div id="shapFeatureInfo" class="shap-feature-info">
+                    <span class="shap-info-accent"></span>
+                    <div class="shap-info-body">
+                        <span class="shap-info-name shap-info-idle">Pasa el cursor sobre un indicador para ver su descripción</span>
+                    </div>
                 </div>
             </div>
         </section>
@@ -244,6 +251,7 @@
         </div>
 
     </div>
+    <script src="js/shapNarrative.js"></script>
     <script src="js/shapWaterfall.js"></script>
     <script src="js/shapTemporal.js"></script>
     <script src="js/probChart.js"></script>
