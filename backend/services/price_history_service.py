@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import yfinance as yf
 import logging
+import pandas as pd
 
 from ..daos.prediction_log_dao import PredictionLogDAO
 
@@ -48,9 +49,9 @@ class PriceHistoryService:
     @staticmethod
     def get_daily_variations(tickers: List[str]) -> Dict[str, Optional[float]]:
         """
-        Devuelve la variación diaria (%) para múltiples tickers en una única llamada
-        a yfinance usando period="5d". Garantiza consistencia de fechas entre tickers
-        y evita fallos por rate-limiting de llamadas paralelas por ticker.
+        Devuelve la variación diaria (%) para múltiples tickers con la misma
+        lógica temporal que usa la vista de análisis (últimos 7 días, auto_adjust),
+        calculada como ((close_ultimo - close_previo) / close_previo) * 100.
 
         Returns: {ticker: variacion_pct | None}
         """
@@ -59,14 +60,18 @@ class PriceHistoryService:
             return result
 
         try:
+            end_date = datetime.utcnow()
+            start_date = end_date - timedelta(days=7)
+
             data = yf.download(
                 tickers=" ".join(tickers),
-                period="5d",
+                start=start_date.strftime("%Y-%m-%d"),
+                end=end_date.strftime("%Y-%m-%d"),
                 interval="1d",
                 progress=False,
                 auto_adjust=True,
                 group_by="ticker",
-                threads=True,
+                threads=False,
             )
 
             if data is None or data.empty:
@@ -75,12 +80,11 @@ class PriceHistoryService:
 
             for ticker in tickers:
                 try:
-                    # yfinance agrupa por ticker cuando son múltiples; si es uno solo,
-                    # devuelve DataFrame plano.
-                    if len(tickers) == 1:
-                        closes = data["Close"].dropna()
-                    else:
-                        closes = data[ticker]["Close"].dropna()
+                    closes = PriceHistoryService._extract_close_series(data, ticker, len(tickers) > 1)
+                    if closes is None:
+                        logger.warning(f"[PriceHistoryService] {ticker}: columna Close no encontrada")
+                        continue
+                    closes = closes.dropna()
 
                     if len(closes) < 2:
                         logger.warning(f"[PriceHistoryService] {ticker}: <2 closes válidos")
@@ -103,6 +107,46 @@ class PriceHistoryService:
         except Exception as e:
             logger.error(f"[PriceHistoryService] Error batch variations: {e}")
             return result
+
+    @staticmethod
+    def _extract_close_series(data: pd.DataFrame, ticker: str, is_multi: bool):
+        """Extrae la serie de cierre para ticker manejando layouts distintos de yfinance."""
+        try:
+            if not is_multi:
+                if "Close" in data.columns:
+                    return data["Close"]
+
+                if isinstance(data.columns, pd.MultiIndex):
+                    if "Close" in data.columns.get_level_values(0):
+                        close_df = data["Close"]
+                        if isinstance(close_df, pd.DataFrame):
+                            return close_df.iloc[:, 0]
+                        return close_df
+                    if "Close" in data.columns.get_level_values(1):
+                        cols = [col for col in data.columns if len(col) > 1 and col[1] == "Close"]
+                        if cols:
+                            return data[cols[0]]
+                return None
+
+            if isinstance(data.columns, pd.MultiIndex):
+                lvl0 = set(data.columns.get_level_values(0))
+                lvl1 = set(data.columns.get_level_values(1))
+
+                # group_by="ticker": (ticker, campo)
+                if ticker in lvl0 and "Close" in lvl1:
+                    ticker_df = data[ticker]
+                    if "Close" in ticker_df.columns:
+                        return ticker_df["Close"]
+
+                # layout alternativo: (campo, ticker)
+                if "Close" in lvl0 and ticker in lvl1:
+                    close_df = data["Close"]
+                    if isinstance(close_df, pd.DataFrame) and ticker in close_df.columns:
+                        return close_df[ticker]
+
+            return None
+        except Exception:
+            return None
 
     @staticmethod
     def _fetch_ohlc(ticker: str, start_date: datetime, end_date: datetime) -> List[Dict]:
