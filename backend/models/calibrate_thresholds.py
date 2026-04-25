@@ -31,7 +31,7 @@ from datetime import datetime
 
 import numpy as np
 
-from .config import TICKERS, get_config
+from .config import TICKERS, PREDICTION_HORIZON, get_config
 from .data_pipeline import prepare_data_multi_window
 
 THRESHOLDS_FILE = os.path.join(os.path.dirname(__file__), "thresholds_frozen.json")
@@ -96,15 +96,14 @@ def main():
             "version": "1.0",
             "calibrated_at": datetime.now().isoformat(),
             "method": f"percentile_{PERCENTILE_LOWER}_{PERCENTILE_UPPER}",
-            "horizon_days": 3,
+            "horizon_days": PREDICTION_HORIZON,
             "split": "train_only_70pct",
             "description": (
-                "Umbrales fijos de etiquetado calibrados UNA SOLA VEZ sobre la "
-                "portion train de retornos log a 3 días (cambiado de 5d tras "
-                "comparativa empírica walk-forward 2026-04-13). NO MODIFICAR: la "
-                "reproducibilidad del modelo depende de que estos valores sean "
-                "inmutables. Si se necesita recalibrar, hacer en una nueva "
-                "version del modelo."
+                f"Umbrales fijos de etiquetado calibrados UNA SOLA VEZ sobre la "
+                f"portion train de retornos log a {PREDICTION_HORIZON} días. "
+                f"NO MODIFICAR: la reproducibilidad del modelo depende de que estos "
+                f"valores sean inmutables. Si se necesita recalibrar, hacer en una "
+                f"nueva version del modelo."
             ),
         }
     }
