@@ -461,9 +461,6 @@ class ActivoDAO:
         """
         Elimina un activo.
         
-        Nota: Esto también eliminará referencias en historico_activos y 
-        portfolio_activo (si hay foreign keys con ON DELETE CASCADE).
-        
         Args:
             ticker: Símbolo del ticker
         

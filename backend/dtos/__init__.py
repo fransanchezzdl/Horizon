@@ -9,12 +9,6 @@ from .activo_dto import (
     ActivoResponse,
     ActivoListResponse,
 )
-from .historico_dto import (
-    HistoricoActivoCreateRequest,
-    HistoricoActivoUpdateRequest,
-    HistoricoActivoResponse,
-    HistoricoActivoListResponse,
-)
 from .login_dto import LoginRequest, LoginResponse
 from .register_dto import RegisterRequest, RegisterResponse
 from .portfolio_dto import (
@@ -63,11 +57,6 @@ __all__ = [
     "ActivoUpdateRequest",
     "ActivoResponse",
     "ActivoListResponse",
-    # Histórico DTOs
-    "HistoricoActivoCreateRequest",
-    "HistoricoActivoUpdateRequest",
-    "HistoricoActivoResponse",
-    "HistoricoActivoListResponse",
     "LoginRequest",
     "LoginResponse",
     "RegisterRequest",
