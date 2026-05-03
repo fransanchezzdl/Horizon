@@ -102,9 +102,18 @@ async function cargarCursos() {
 
         console.log(`[CURSOS] ${cursos.length} cursos cargados`);
 
-        renderizarGridCursos(cursos);
+        // --- Cargar progreso individual para cada curso ---
+        const progressPromises = cursos.map(curso => 
+            window.fetchWithAuth(`${API_BASE}/cursos/${curso.id_curso || curso.id}/progreso`, { method: 'GET' })
+        );
+        const progressResponses = await Promise.all(progressPromises);
+        const progressData = await Promise.all(
+            progressResponses.map(res => res.ok ? res.json() : null)
+        );
 
-        // --- ¡NUEVO! Cargar el resumen global de progreso ---
+        renderizarGridCursos(cursos, progressData);
+
+        // --- Cargar el resumen global de progreso ---
         const resumenRes = await window.fetchWithAuth(`${API_BASE}/cursos/resumen/progreso`, { method: 'GET' });
         if (resumenRes.ok) {
             const resumenData = await resumenRes.json();
@@ -120,15 +129,21 @@ async function cargarCursos() {
 /**
  * Renderiza el grid de cursos disponibles
  */
-function renderizarGridCursos(cursos) {
+function renderizarGridCursos(cursos, progressData = []) {
     const grid = document.getElementById('cursos-grid');
     if (!grid) return;
 
     grid.innerHTML = ''; // Limpiar
 
-    cursos.forEach(curso => {
+    cursos.forEach((curso, index) => {
+        const progress = progressData[index];
+        const isCompleted = progress && progress.completado;
+
         const card = document.createElement('a');
         card.className = 'card';
+        if (isCompleted) {
+            card.classList.add('completed');
+        }
         card.href = '#';
         card.onclick = (e) => {
             e.preventDefault();
@@ -149,6 +164,11 @@ function renderizarGridCursos(cursos) {
                         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="32" letter-spacing="2">PRO</text>
                     </svg>
                 </div>
+                <div class="completed-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                </div>
                 <h3 class="opt-title">${curso.titulo}</h3>
                 <p class="opt-info">${curso.descripcion || 'Sin descripción'}</p>
                 <span class="card-link">Acceder al curso PRO →</span>
@@ -163,6 +183,11 @@ function renderizarGridCursos(cursos) {
                 <div class="card-icon-hero" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-.1zM21 18.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/>
+                    </svg>
+                </div>
+                <div class="completed-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"></polyline>
                     </svg>
                 </div>
                 <h3 class="opt-title">${curso.titulo}</h3>

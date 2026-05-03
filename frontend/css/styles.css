@@ -2493,6 +2493,60 @@ body > section {
     }
 }
 
+
+/* Estilos para cursos completados */
+.card.completed {
+    background: linear-gradient(135deg, var(--color-primary-a15) 0%, var(--color-secondary-a10) 100%);
+    border: 1px solid var(--color-primary-a20);
+}
+
+.card.completed .card-link {
+    color: var(--color-primary);
+}
+
+.card.completed .opt-title,
+.card.completed .opt-info {
+    color: var(--color-text-primary);
+}
+
+.completed-icon {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 24px;
+    height: 24px;
+    color: var(--color-success);
+    z-index: 3;
+}
+
+.card.completed .completed-icon {
+    display: block;
+}
+
+.card.completed .card-icon-hero {
+    color: var(--color-primary-a22);
+}
+
+.card.completed .card-icon svg {
+    color: var(--color-primary);
+}
+
+[data-theme="dark"] .card.completed {
+    background: linear-gradient(135deg, var(--color-primary-a22) 0%, var(--color-primary-a14) 100%);
+    border-color: var(--color-primary-a30);
+}
+
+[data-theme="dark"] .card.completed .completed-icon {
+    color: var(--color-success-700);
+}
+
+[data-theme="dark"] .card.completed .card-link,
+[data-theme="dark"] .card.completed .opt-title,
+[data-theme="dark"] .card.completed .opt-info {
+    color: var(--color-white);
+}
+
 /* #endregion ESTILOS PAGINA ACADEMY - CONTENIDO */
 
 /* #endregion ESTILOS PAGINA ACADEMY */
