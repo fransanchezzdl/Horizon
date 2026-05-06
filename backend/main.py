@@ -435,6 +435,18 @@ def obtener_price_history(ticker: str, days: int = 30):
     return PriceHistoryService.get_price_and_signals(ticker=ticker, days=days)
 
 
+@app.get("/activos/{ticker}/quote")
+def obtener_quote(ticker: str):
+    """
+    Cotización en vivo (precio, cierre anterior, % hoy) alineada con Google.
+    Endpoint ligero para tarjetas de precio: no descarga histórico ni señales.
+    """
+    activo = activo_service.obtener_activo(ticker)
+    if not activo:
+        raise HTTPException(status_code=404, detail="Activo no encontrado")
+    return PriceHistoryService.get_quote(ticker)
+
+
 @app.get("/activos/{ticker}/xai/shap-temporal")
 def obtener_shap_temporal(ticker: str, limit: int = 30):
     """
