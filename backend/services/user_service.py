@@ -185,7 +185,13 @@ class UserService:
             raise HTTPException(status_code=409, detail="El usuario ya tiene avatar. Usa PUT para reemplazar")
 
         avatar_ref = self.storage_service.upload_avatar(user_id, file)
-        self.usuario_dao.actualizar_foto_perfil(user_id, avatar_ref)
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            raise HTTPException(
+                status_code=500,
+                detail="Cliente admin no disponible para actualizar foto_perfil.",
+            )
+        UsuarioDAO(admin_client).actualizar_foto_perfil(user_id, avatar_ref)
         return self._obtener_usuario_hidratado_or_500(user_id)
 
     def actualizar_avatar(self, user_id: str, file: UploadFile):
@@ -195,7 +201,13 @@ class UserService:
         new_avatar_ref = self.storage_service.upload_avatar(user_id, file)
 
         try:
-            self.usuario_dao.actualizar_foto_perfil(user_id, new_avatar_ref)
+            admin_client = get_supabase_admin()
+            if not admin_client:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Cliente admin no disponible para actualizar foto_perfil.",
+                )
+            UsuarioDAO(admin_client).actualizar_foto_perfil(user_id, new_avatar_ref)
         except Exception:
             # Rollback best-effort: si falla la DB, eliminar el archivo recién subido.
             try:
@@ -219,5 +231,11 @@ class UserService:
         if perfil.foto_perfil:
             self.storage_service.delete_avatar(user_id, perfil.foto_perfil)
 
-        self.usuario_dao.actualizar_foto_perfil(user_id, None)
+        admin_client = get_supabase_admin()
+        if not admin_client:
+            raise HTTPException(
+                status_code=500,
+                detail="Cliente admin no disponible para actualizar foto_perfil.",
+            )
+        UsuarioDAO(admin_client).actualizar_foto_perfil(user_id, None)
         return {"status": "exito", "mensaje": "Avatar eliminado correctamente"}

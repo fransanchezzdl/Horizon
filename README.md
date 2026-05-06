@@ -1,86 +1,72 @@
-# Horizon: Manual del Desarrollador
+# Horizon
 
-Bienvenido al repositorio de **Horizon**. Síguelo para evitar conflictos en Git y mantener el código limpio.
+Horizon es una aplicacion para consultar informacion de mercados, revisar activos, ver el portfolio, entrar a la academia, leer la reflexion del dia y gestionar opciones basicas de usuario.
 
----
+## Que puedes hacer en Horizon
 
-## 🛠️ 1. Configuración Inicial (Primeros pasos)
+La aplicacion esta pensada para que un usuario nuevo pueda entrar, moverse por las pantallas principales y consultar la informacion sin complicaciones.
 
-Si eres nuevo en el equipo o estás configurando tu ordenador desde cero, sigue **una** de estas dos opciones:
+Las paginas principales son:
 
-### Opción A: Aún no tienes la carpeta en tu PC (Recomendado)
-Abre tu terminal en la carpeta donde guardas tus proyectos y ejecuta:
+- `login.html` y `register.html`: iniciar sesion y registrarse.
+- `index.html`: dashboard principal de la aplicacion.
+- `portfolio.html`: ver tus portfolios.
+- `analysis.html`: explorar activos y consultar un ticker.
+- `academia.html`: acceder al contenido de academia y aprendizaje.
+- `reflexion.html`: leer la reflexion del dia.
+- `profile.html`: ver y editar tu perfil.
+- `ajustes.html`: cambiar ajustes de la cuenta o de la interfaz.
+- `ayuda.html`: abrir el centro de ayuda.
 
-```bash
-git clone [https://github.com/fransanchezzdl/Horizon.git](https://github.com/fransanchezzdl/Horizon.git)
-cd Horizon
-# Automáticamente estarás en la rama 'developer' o 'master'. 
-# Asegúrate de descargar todas las referencias:
-git fetch --all
-```
+## Como levantar el proyecto en local
 
-### Opción B: Ya tienes el código pero no está conectado a Git
-Si ya tienes la carpeta Horizon con archivos en tu disco duro:
+Abre el proyecto Horizon en VS Code y sigue estos pasos.
 
-```bash
-cd "D:\Visual Studio\Proyectos\Horizon"
-git init
-git branch -M master
-git remote add origin [https://github.com/fransanchezzdl/Horizon.git](https://github.com/fransanchezzdl/Horizon.git)
+### 1. Levantar el frontend
 
-# Bajamos la información del servidor sin borrar tus archivos locales
-git fetch --all
-
-# Conectamos tu rama local con la del servidor
-git branch --set-upstream-to=origin/master master
-```
-## 🔄 2. Rutina Diaria (Antes de trabajar)
-⚠️ REGLA DE ORO: Nunca empieces a escribir código sin actualizar tu repositorio. Si no lo haces, crearás conflictos difíciles de arreglar.
-
-Actualizar referencias:
-```bash
-git fetch --all
-Descargar cambios en tu rama:
-Sitúate en la rama de desarrollo e integra lo nuevo:
-```
-```bash
-git checkout developer
-git pull origin developer
-```
-
-## 🌊 3. Metodología GitFlow (Nuestras Ramas)
-Para mantener el orden, usamos una estructura estricta de ramas. ¡No trabajes directamente en master!
-
-📌 Mapa de Ramas
-| Rama | Descripción | Reglas y Permisos |
-| :--- | :--- | :--- |
-| **master** | Código de Producción. Versión final, estable y probada. | 🔒 **SOLO LECTURA.** Nadie hace push directo aquí. |
-| **developer** | Rama de Integración. Aquí se une todo el trabajo del equipo. | ✅ Se aceptan **Pull Requests (PR)**. |
-
-## 🔨 Flujo de Trabajo (Paso a Paso)
-Cada vez que tengas una tarea nueva (ej: "Crear pantalla de Login"), sigue este ciclo:
-
-### 1. Crear la rama (Feature)
-Siempre nace desde developer:
+Abre una terminal dentro de la carpeta `frontend/` y ejecuta:
 
 ```bash
-git checkout developer
-git pull origin developer  # Asegúrate de estar actualizado
+python -m http.server 5000
 ```
 
-### 2. Programar y Guardar (Commit)
-Haz cambios pequeños y frecuentes. Usa mensajes claros:
+Esto dejara disponible la parte visual del proyecto en el puerto 5000.
+
+### 2. Preparar el backend
+
+Desde la raiz del proyecto, crea el entorno virtual del backend e instala las dependencias:
+
 ```bash
-git add .
-git commit -m "x.x.x - <mensaje commit>"
-Tipos de commit: 1.x.x - Version en produccion, x.1.x - Funcionalidad nueva, x.x.1 - Parches y pequeños cambios.
+python -m venv backend/venv
+pip install -r requirements.txt
 ```
 
-### 3. Subir cambios (Push)
-Sube tus actualizaciones al servidor para guardarla:
+### 3. Activar el entorno y arrancar el backend
+
+Abre una terminal Git Bash, activa el entorno virtual y levanta la API:
+
 ```bash
-git push -u origin developer
+. backend/venv/Scripts/activate
+uvicorn backend.main:app --reload
 ```
 
----
-Horizon Project - Guía interna 2026
+### 4. Abrir la aplicacion
+
+Cuando ambos servicios esten levantados, entra en el navegador a:
+
+```text
+localhost:5000/index.html
+```
+
+## Nota importante
+
+Es posible que el servidor casero desplegado no este activo en el momento de la correccion, porque el ordenador de sobremesa de un companero del equipo puede estar inestable. Aun asi, el proyecto se puede levantar y probar completo en local siguiendo este manual.
+
+## Flujo rapido
+
+1. Abrir Horizon en VS Code.
+2. Levantar el frontend en `frontend/` con `python -m http.server 5000`.
+3. Crear `backend/venv` e instalar los requisitos.
+4. Activar el entorno virtual desde Git Bash.
+5. Ejecutar `uvicorn backend.main:app --reload`.
+6. Abrir `localhost:5000/index.html`.
