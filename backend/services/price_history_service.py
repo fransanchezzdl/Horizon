@@ -8,7 +8,6 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 import yfinance as yf
 import logging
-import pandas as pd
 
 from ..daos.prediction_log_dao import PredictionLogDAO
 
@@ -20,18 +19,14 @@ class PriceHistoryService:
     @staticmethod
     def get_price_and_signals(ticker: str, days: int = 30) -> Dict:
         """
-        Devuelve velas OHLC + señales IA para el rango solicitado.
-
-        Args:
-            ticker: Símbolo (ej: "AAPL")
-            days:   Rango en días. Valores permitidos: 7, 30, 90.
+        Devuelve velas OHLC + señales IA + cotización en vivo para el rango solicitado.
 
         Returns:
             {
-                "candles": [{"time": "YYYY-MM-DD", "open": float, "high": float,
-                              "low": float, "close": float}],
-                "signals": [{"time": "YYYY-MM-DD", "signal": str,
-                              "confidence": float, "correct": bool|None}]
+                "candles": [...],
+                "signals": [...],
+                "quote": {"price": float|None, "previous_close": float|None,
+                          "change_percent": float|None}
             }
         """
         if days not in (7, 30, 90):
@@ -43,15 +38,100 @@ class PriceHistoryService:
 
         candles = PriceHistoryService._fetch_ohlc(ticker, start_date, end_date)
         signals = PriceHistoryService._fetch_signals(ticker, start_date)
+        quote = PriceHistoryService.get_quote(ticker)
 
-        return {"candles": candles, "signals": signals}
+        return {"candles": candles, "signals": signals, "quote": quote}
+
+    @staticmethod
+    def get_quote(ticker: str) -> Dict[str, Optional[float]]:
+        """
+        Cotización en vivo alineada con Google: usa precio intradía y previous_close
+        oficial (sin auto_adjust), de modo que change_percent = (last - prev)/prev * 100
+        coincide con el "% hoy" mostrado en Google Finance.
+
+        Returns: {"price", "previous_close", "change_percent"}
+        """
+        empty = {"price": None, "previous_close": None, "change_percent": None}
+        try:
+            t = yf.Ticker(ticker)
+            last = None
+            prev = None
+
+            # 1) fast_info: rápido, sin scraping. Probar varias claves/atributos.
+            try:
+                fi = t.fast_info
+                # Preferir regularMarket* (sin ajustar por dividendos/splits) para
+                # alinear con Google. fast_info["previous_close"] aplica auto-ajuste
+                # en versiones recientes de yfinance y desvía el % cuando hay ex-div.
+                last = PriceHistoryService._read_field(fi, ["regular_market_price", "regularMarketPrice", "last_price", "lastPrice"])
+                prev = PriceHistoryService._read_field(fi, ["regular_market_previous_close", "regularMarketPreviousClose", "previous_close", "previousClose"])
+            except Exception as e:
+                logger.warning(f"[PriceHistoryService] fast_info {ticker}: {e}")
+
+            # 2) Fallback a .info si fast_info no entrega datos.
+            if last is None or prev is None:
+                try:
+                    info = t.info or {}
+                    if last is None:
+                        last = PriceHistoryService._safe_float(
+                            info.get("currentPrice") or info.get("regularMarketPrice")
+                        )
+                    if prev is None:
+                        prev = PriceHistoryService._safe_float(
+                            info.get("regularMarketPreviousClose") or info.get("previousClose")
+                        )
+                except Exception as e:
+                    logger.warning(f"[PriceHistoryService] info {ticker}: {e}")
+
+            if last is None or prev is None or prev <= 0:
+                logger.warning(f"[PriceHistoryService] quote {ticker}: last={last} prev={prev}")
+                return empty
+
+            return {
+                "price": last,
+                "previous_close": prev,
+                "change_percent": ((last - prev) / prev) * 100,
+            }
+        except Exception as e:
+            logger.warning(f"[PriceHistoryService] quote {ticker}: {e}")
+            return empty
+
+    @staticmethod
+    def _read_field(obj, keys):
+        """Lee un campo de un objeto que puede ser dict-like u objeto con atributos."""
+        for k in keys:
+            try:
+                v = obj[k]
+                f = PriceHistoryService._safe_float(v)
+                if f is not None:
+                    return f
+            except (KeyError, TypeError, IndexError):
+                pass
+            v = getattr(obj, k, None)
+            f = PriceHistoryService._safe_float(v)
+            if f is not None:
+                return f
+        return None
+
+    @staticmethod
+    def _safe_float(value) -> Optional[float]:
+        try:
+            if value is None:
+                return None
+            f = float(value)
+            return f if f == f else None  # descartar NaN
+        except (TypeError, ValueError):
+            return None
 
     @staticmethod
     def get_daily_variations(tickers: List[str]) -> Dict[str, Optional[float]]:
         """
-        Devuelve la variación diaria (%) para múltiples tickers con la misma
-        lógica temporal que usa la vista de análisis (últimos 7 días, auto_adjust),
-        calculada como ((close_ultimo - close_previo) / close_previo) * 100.
+        Variación diaria (%) por ticker, alineada con Google y con get_quote():
+            (last_price - previous_close) / previous_close * 100
+
+        Usa fast_info en lugar de un download histórico para que el numerador sea
+        el precio intradía actual (no el cierre de ayer) y el denominador sea el
+        previous_close oficial sin auto_adjust.
 
         Returns: {ticker: variacion_pct | None}
         """
@@ -59,94 +139,10 @@ class PriceHistoryService:
         if not tickers:
             return result
 
-        try:
-            end_date = datetime.utcnow()
-            start_date = end_date - timedelta(days=7)
-
-            data = yf.download(
-                tickers=" ".join(tickers),
-                start=start_date.strftime("%Y-%m-%d"),
-                end=end_date.strftime("%Y-%m-%d"),
-                interval="1d",
-                progress=False,
-                auto_adjust=True,
-                group_by="ticker",
-                threads=False,
-            )
-
-            if data is None or data.empty:
-                logger.warning(f"[PriceHistoryService] Sin datos batch para {tickers}")
-                return result
-
-            for ticker in tickers:
-                try:
-                    closes = PriceHistoryService._extract_close_series(data, ticker, len(tickers) > 1)
-                    if closes is None:
-                        logger.warning(f"[PriceHistoryService] {ticker}: columna Close no encontrada")
-                        continue
-                    closes = closes.dropna()
-
-                    if len(closes) < 2:
-                        logger.warning(f"[PriceHistoryService] {ticker}: <2 closes válidos")
-                        continue
-
-                    prev_close = float(closes.iloc[-2])
-                    last_close = float(closes.iloc[-1])
-                    if prev_close <= 0:
-                        continue
-
-                    variacion = ((last_close - prev_close) / prev_close) * 100
-                    # Sin redondeo prematuro: el frontend redondea al mostrar.
-                    result[ticker] = variacion
-                except (KeyError, IndexError, ValueError) as e:
-                    logger.warning(f"[PriceHistoryService] {ticker}: {e}")
-                    continue
-
-            return result
-
-        except Exception as e:
-            logger.error(f"[PriceHistoryService] Error batch variations: {e}")
-            return result
-
-    @staticmethod
-    def _extract_close_series(data: pd.DataFrame, ticker: str, is_multi: bool):
-        """Extrae la serie de cierre para ticker manejando layouts distintos de yfinance."""
-        try:
-            if not is_multi:
-                if "Close" in data.columns:
-                    return data["Close"]
-
-                if isinstance(data.columns, pd.MultiIndex):
-                    if "Close" in data.columns.get_level_values(0):
-                        close_df = data["Close"]
-                        if isinstance(close_df, pd.DataFrame):
-                            return close_df.iloc[:, 0]
-                        return close_df
-                    if "Close" in data.columns.get_level_values(1):
-                        cols = [col for col in data.columns if len(col) > 1 and col[1] == "Close"]
-                        if cols:
-                            return data[cols[0]]
-                return None
-
-            if isinstance(data.columns, pd.MultiIndex):
-                lvl0 = set(data.columns.get_level_values(0))
-                lvl1 = set(data.columns.get_level_values(1))
-
-                # group_by="ticker": (ticker, campo)
-                if ticker in lvl0 and "Close" in lvl1:
-                    ticker_df = data[ticker]
-                    if "Close" in ticker_df.columns:
-                        return ticker_df["Close"]
-
-                # layout alternativo: (campo, ticker)
-                if "Close" in lvl0 and ticker in lvl1:
-                    close_df = data["Close"]
-                    if isinstance(close_df, pd.DataFrame) and ticker in close_df.columns:
-                        return close_df[ticker]
-
-            return None
-        except Exception:
-            return None
+        for ticker in tickers:
+            quote = PriceHistoryService.get_quote(ticker)
+            result[ticker] = quote.get("change_percent")
+        return result
 
     @staticmethod
     def _fetch_ohlc(ticker: str, start_date: datetime, end_date: datetime) -> List[Dict]:

@@ -637,16 +637,31 @@ function initSearch() {
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
             const data = await response.json();
+            const quote = data.quote || {};
             const candles = data.candles;
 
-            if (!candles || candles.length < 2) {
-                subEl.textContent = 'Sin datos de variación';
-                return;
+            // Sobrescribir el precio con el last_price en vivo de yfinance
+            // para que numerador y denominador del % vengan de la misma foto.
+            if (typeof quote.price === 'number' && Number.isFinite(quote.price)) {
+                valueEl.textContent = quote.price >= 1000
+                    ? `$${quote.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : `$${quote.price.toFixed(2)}`;
             }
 
-            const prevClose = candles[candles.length - 2].close;
-            const lastClose = candles[candles.length - 1].close;
-            const variacion = ((lastClose - prevClose) / prevClose) * 100;
+            let variacion = (typeof quote.change_percent === 'number' && Number.isFinite(quote.change_percent))
+                ? quote.change_percent
+                : null;
+
+            if (variacion === null) {
+                if (!candles || candles.length < 2) {
+                    subEl.textContent = 'Sin datos de variación';
+                    return;
+                }
+                const prevClose = candles[candles.length - 2].close;
+                const lastClose = candles[candles.length - 1].close;
+                variacion = ((lastClose - prevClose) / prevClose) * 100;
+            }
+
             const signo = variacion >= 0 ? '+' : '';
 
             subEl.textContent = `${signo}${variacion.toFixed(2)}% hoy`;
