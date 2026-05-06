@@ -152,3 +152,25 @@ class TestFiabilidadYHistoricoEndpoints:
 
         assert response.status_code == 200
         assert response.json() == payload
+
+    def test_quote_404_si_activo_no_existe(self, client, mock_activo_service):
+        mock_activo_service.obtener_activo.return_value = None
+
+        with patch("backend.main.activo_service", mock_activo_service):
+            response = client.get("/activos/XXXX/quote")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "Activo no encontrado"
+
+    def test_quote_ok(self, client, mock_activo_service):
+        mock_activo_service.obtener_activo.return_value = {"ticker": "AAPL"}
+        payload = {"price": 287.69, "previous_close": 284.18, "change_percent": 1.235}
+
+        with patch("backend.main.activo_service", mock_activo_service), patch(
+            "backend.main.PriceHistoryService.get_quote",
+            return_value=payload,
+        ):
+            response = client.get("/activos/AAPL/quote")
+
+        assert response.status_code == 200
+        assert response.json() == payload

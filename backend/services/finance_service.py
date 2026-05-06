@@ -8,7 +8,7 @@ precios actuales, volatilidad histó rica, etc.
 import yfinance as yf
 import pandas as pd
 import numpy as np
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List
 from datetime import datetime, timedelta
 from cachetools import TTLCache
 import logging
@@ -214,73 +214,6 @@ class FinanceService:
             logger.error(f"❌ Error validando {ticker}: {e}")
             return False
     
-    @staticmethod
-    def get_company_info(ticker: str) -> Optional[Dict]:
-        """
-        Obtiene información básica de la empresa.
-        
-        Args:
-            ticker: Símbolo
-        
-        Returns:
-            Dict con información o None
-        """
-        try:
-            data = yf.Ticker(ticker)
-            info = data.info
-            
-            return {
-                'nombre': info.get('longName'),
-                'sector': info.get('sector'),
-                'industria': info.get('industry'),
-                'capitalizacion': info.get('marketCap'),
-                'precio_actual': info.get('currentPrice') or info.get('regularMarketPrice'),
-                'cambio_diario': info.get('regularMarketChangePercent'),
-                'gap_52_semanas': {
-                    'minimo': info.get('fiftyTwoWeekLow'),
-                    'maximo': info.get('fiftyTwoWeekHigh')
-                },
-                'volumenes': {
-                    'promedio_3m': info.get('averageVolume3months'),
-                    'ultimo_dia': info.get('volume')
-                }
-            }
-        
-        except Exception as e:
-            logger.error(f"❌ Error obteniendo info para {ticker}: {e}")
-            return None
-    
-    @staticmethod
-    def calculate_correlation_matrix(
-        tickers: List[str],
-        period_days: int = 252
-    ) -> Optional[pd.DataFrame]:
-        """
-        Calcula matriz de correlación entre tickers.
-        
-        Args:
-            tickers: Lista de símbolos
-            period_days: Período en días
-        
-        Returns:
-            DataFrame con matriz de correlación
-        """
-        try:
-            data = yf.download(
-                tickers,
-                start=datetime.now() - timedelta(days=period_days),
-                progress=False
-            )['Close']
-            
-            returns = data.pct_change().dropna()
-            correlation = returns.corr()
-            
-            logger.info(f"✅ Matriz de correlación calculada para {len(tickers)} activos")
-            return correlation
-        
-        except Exception as e:
-            logger.error(f"❌ Error calculando correlación: {e}")
-            return None
 
 
 def get_finance_service() -> FinanceService:
