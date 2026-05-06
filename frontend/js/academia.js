@@ -141,6 +141,9 @@ function renderizarGridCursos(cursos, progressData = []) {
 
         const card = document.createElement('a');
         card.className = 'card';
+
+        card.dataset.idCurso = curso.id_curso || curso.id;
+
         if (isCompleted) {
             card.classList.add('completed');
         }
@@ -284,7 +287,7 @@ async function abrirCurso(idCurso) {
 
         // Si el curso ya estaba completado, mostramos el cartel de una vez
         if (progreso && progreso.completado) {
-            mostrarCompletado();
+            showAlert(`Curso ya completado!`, 'info');
         }
 
     } catch (err) {
@@ -444,7 +447,7 @@ function avanzarDiapositiva() {
         
     } else if (nextIndex === estadoCurso.diapositivas.length) {
         // Última diapositiva alcanzada (clic en finalizar)
-        mostrarCompletado();
+        showAlert(`Curso ya completado!`, 'info');
         
         // Aseguramos que se guarde el 100% solo si no estaba completado
         if (!estadoCurso.progreso || !estadoCurso.progreso.completado) {
@@ -478,24 +481,6 @@ function actualizarBotones() {
     if (btnSiguiente) {
         btnSiguiente.disabled = isLastSlide;
     }
-}
-
-/**
- * Muestra el indicador de curso completado
- */
-function mostrarCompletado() {
-    const completadoIndicator = document.getElementById('completado-indicator');
-    const btnSiguiente = document.getElementById('btn-siguiente');
-
-    if (completadoIndicator) {
-        completadoIndicator.style.display = 'block';
-    }
-
-    if (btnSiguiente) {
-        btnSiguiente.disabled = true;
-    }
-
-    console.log('[CURSOS] ✅ Curso completado!');
 }
 
 /**
@@ -541,6 +526,12 @@ async function guardarProgreso(numeroDiapositiva) {
             if (!estabaCompletadoPreviamente && progreso.completado) {
                 cursosCompletados += 1;
                 renderizarProgresoGlobal();
+
+                // Buscamos la tarjeta en el grid y le añadimos la clase visualmente
+                const cardElement = document.querySelector(`.card[data-id-curso="${estadoCurso.id_curso}"]`);
+                if (cardElement) {
+                    cardElement.classList.add('completed');
+                }
             }
 
             console.log(`[PROGRESO] Guardado: diap ${numeroDiapositiva}, completado=${progreso.completado}`);
