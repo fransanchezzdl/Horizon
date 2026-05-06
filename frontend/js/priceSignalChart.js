@@ -96,7 +96,6 @@
     let group = [sorted[0]];
 
     const _bestOfGroup = (grp) => {
-      // Preferir señales resueltas (correct !== null) sobre pendientes
       const resueltas = grp.filter(s => s.correct !== null && s.correct !== undefined);
       const pool = resueltas.length > 0 ? resueltas : grp;
       return pool.reduce((best, s) =>
@@ -105,7 +104,7 @@
     };
 
     for (let i = 1; i < sorted.length; i++) {
-      const prev = group[0];
+      const prev = group[group.length - 1]; // Bug 2 fix: comparar con el último del grupo
       const curr = sorted[i];
       if (curr.signal === prev.signal && _daysBetween(curr.time, prev.time) <= 3) {
         group.push(curr);
@@ -137,10 +136,10 @@
       let   lastDate   = grouped[i].time;
 
       while (_daysBetween(lastDate, nextDate) > MAX_GAP_DAYS) {
-        // Avanzar MAX_GAP_DAYS días desde lastDate usando las fechas reales del chart
         const targetMs = new Date(lastDate).getTime() + MAX_GAP_DAYS * 86400000;
         const candidate = dates.find(d => new Date(d).getTime() >= targetMs);
-        if (!candidate || candidate >= nextDate) break;
+        // Bug 3 fix: comparar como timestamps, no como strings
+        if (!candidate || new Date(candidate).getTime() >= new Date(nextDate).getTime()) break;
 
         result.push({ ...grouped[i], time: candidate, _reminder: true });
         lastDate = candidate;
@@ -148,6 +147,14 @@
     }
 
     return result;
+  }
+
+  // Bug 1 fix: mapear señal a la vela más próxima disponible (fines de semana/festivos)
+  function _snapToCandle(signalTime, candleDates) {
+    if (candleDates.includes(signalTime)) return signalTime;
+    const t = new Date(signalTime).getTime();
+    const forward = candleDates.find(d => new Date(d).getTime() >= t);
+    return forward || candleDates[candleDates.length - 1];
   }
 
   function _buildMarkers(signals, candleDates) {
@@ -160,7 +167,7 @@
 
     return withReminders
       .map(s => ({
-        time:     s.time,
+        time:     _snapToCandle(s.time, candleDates),
         position: _markerPosition(s.signal),
         color:    _markerColor(s.signal, s._reminder ? true : s.correct),
         shape:    _markerShape(s.signal),
@@ -295,9 +302,9 @@
       return;
     }
 
-    // Limpiar container y recrear chart
-    container.innerHTML = '';
+    // Bug 4 fix: destruir antes de limpiar el DOM
     _destroyChart();
+    container.innerHTML = '';
     _createChart(container);
 
     if (!data.candles || data.candles.length === 0) {

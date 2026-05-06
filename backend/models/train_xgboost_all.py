@@ -123,6 +123,7 @@ def train_xgboost_all() -> None:
     print(f"\n[INFO] Tickers a entrenar: {all_tickers}\n")
     
     results = []
+    senales_guardadas: Dict[str, str] = {}  # ticker → senal_ia efectivamente escrita en activos
     total_start = time.time()
     
     # Importar servicio de BD (lazy — evita colgar en fase de imports)
@@ -217,6 +218,7 @@ def train_xgboost_all() -> None:
                         print(f"      Señal: {live['trend']} ({live['confidence']:.0%}) | Precio: {live['current_price']:.2f}")
                         saved_keys = [k for k in update_data if k != "senal_ia"]
                         print(f"      Campos extra guardados: {saved_keys}")
+                        senales_guardadas[ticker] = live["trend"]
                 except Exception as bd_err:
                     print(f"      [ERROR] Error guardando: {bd_err}")
                     result_status = "❌ BD ERROR"
@@ -310,26 +312,32 @@ def train_xgboost_all() -> None:
     print(f"   • Tickers guardados en BD: {db_saves}/{len(results)}")
     print(f"\n{'='*80}\n")
     
-    # ── Generar explicaciones XAI (dinámico) ────────────────────────────────────
+    # ── Generar explicaciones XAI usando la señal ya guardada en activos ────────
+    # Pasamos senal_forzada para que xai_explicaciones.senal_prediccion sea
+    # idéntica a activos.senal_ia y no haya desincronización (bug fix Opción B).
     print("\n[XAI] Iniciando generación automática de explicaciones XAI...")
     print(f"{'='*80}\n")
-    
+
     try:
-        # Import dinámico para evitar dependencias circulares
-        from tests.scripts.generate_xai_explanations import generar_explicaciones_todos
-        
-        xai_success = generar_explicaciones_todos()
-        
-        if xai_success:
+        from tests.scripts.generate_xai_explanations import generar_explicacion_para_ticker
+
+        xai_ok_count = 0
+        for ticker in all_tickers:
+            senal = senales_guardadas.get(ticker)
+            ok = generar_explicacion_para_ticker(ticker, senal_forzada=senal)
+            if ok:
+                xai_ok_count += 1
+
+        if xai_ok_count == len(all_tickers):
             print("\n[XAI] ✅ Explicaciones XAI generadas exitosamente para todos los tickers")
         else:
-            print("\n[XAI] ⚠️ Algunas explicaciones XAI fallaron, pero el entrenamiento fue exitoso")
-    
+            print(f"\n[XAI] ⚠️ {xai_ok_count}/{len(all_tickers)} explicaciones XAI generadas")
+
     except ImportError:
         print("\n[XAI] ⚠️ módulo generate_xai_explanations no disponible")
         print("      Instala SHAP: pip install shap")
         print("      Luego ejecuta manualmente: python tests/generate_xai_explanations.py --all")
-    
+
     except Exception as e:
         print(f"\n[XAI] ⚠️ Error en generación XAI: {e}")
         print("      El entrenamiento fue exitoso, pero sin explicaciones XAI")

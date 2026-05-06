@@ -558,12 +558,14 @@ function initSearch() {
 
     // Carga y muestra las métricas de fiabilidad del modelo para el ticker.
     async function loadReliabilityStats(ticker) {
-        const valueEl = document.getElementById('reliabilityValue');
-        const subEl   = document.getElementById('reliabilitySub');
+        const valueEl   = document.getElementById('reliabilityValue');
+        const subEl     = document.getElementById('reliabilitySub');
+        const bannerEl  = document.getElementById('modelDisclaimerBanner');
         if (!valueEl || !subEl) return;
 
         valueEl.textContent = '--';
         subEl.textContent   = 'Cargando...';
+        if (bannerEl) bannerEl.style.display = 'none';
 
         try {
             const response = await fetch(`${API_BASE}/activos/${encodeURIComponent(ticker)}/reliability`);
@@ -578,13 +580,13 @@ function initSearch() {
 
             // Valor principal: walk-forward > live > base azar
             valueEl.style.color = '';
+            let accuracyPct = null;
             if (wf && wf.ba_mean != null) {
+                accuracyPct = wf.ba_mean;
                 valueEl.textContent = `${wf.ba_mean.toFixed(1)}%`;
             } else if (live && live.resueltas > 0) {
+                accuracyPct = parseFloat(live.accuracy);
                 valueEl.textContent = `${live.accuracy}%`;
-                valueEl.style.color = live.accuracy > data.baseline
-                    //? 'var(--color-success)'
-                    //: 'var(--color-danger)';
             } else {
                 valueEl.textContent = `${data.baseline}%`;
                 valueEl.style.color = 'var(--color-tertiary)';
@@ -609,10 +611,51 @@ function initSearch() {
 
             subEl.textContent = subParts.join(' | ');
 
+            // Disclaimer: solo si accuracy < 33%
+            if (bannerEl) {
+                if (accuracyPct !== null && accuracyPct < 33) {
+                    _renderDisclaimer(bannerEl, 'danger',
+                        'Baja fiabilidad del modelo para este activo',
+                        `La precisión histórica del modelo para ${ticker} es del ${accuracyPct.toFixed(1)}%, por debajo del nivel de referencia aleatorio (33.3%). Las predicciones deben tomarse como referencia orientativa, no como asesoramiento financiero.`);
+                } else {
+                    bannerEl.style.display = 'none';
+                }
+            }
+
         } catch (err) {
             console.error('Error cargando fiabilidad:', err);
             subEl.textContent = 'No disponible';
         }
+    }
+
+    function _renderDisclaimer(el, type, title, message) {
+        const isWarning = type === 'warning';
+        const icon = isWarning
+            ? '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+            : '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+
+        const bgVar     = isWarning ? 'var(--color-warning-bg-soft)' : 'var(--color-danger-bg)';
+        const borderVar = isWarning ? 'var(--color-warning-border-soft)' : 'var(--color-danger-border)';
+        const colorVar  = isWarning ? 'var(--color-warning-700)' : 'var(--color-danger-700)';
+
+        el.style.display = 'block';
+        el.innerHTML = `
+            <div style="
+                display:flex; gap:12px; align-items:flex-start;
+                background:${bgVar};
+                border:1px solid ${borderVar};
+                border-radius:10px;
+                padding:14px 16px;
+                color:${colorVar};
+                font-size:13.5px;
+                line-height:1.5;
+            ">
+                <span style="flex-shrink:0; margin-top:1px;">${icon}</span>
+                <div>
+                    <strong style="display:block; margin-bottom:3px; font-size:14px;">${title}</strong>
+                    ${message}
+                </div>
+            </div>`;
     }
 
     // Carga y muestra el precio actual y la variación diaria del ticker.

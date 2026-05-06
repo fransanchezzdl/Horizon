@@ -200,7 +200,7 @@ def _predict_for_date(ticker: str, pred_date: date) -> Optional[Dict]:
         # 5. Predecir con el modelo guardado
         # confidence_tau=0.36: filtra predicciones sin convicción real
         # sin ser demasiado estricto dado el rango calibrado ~0.33-0.49
-        xgb = predict_xgboost(ticker, xgb_features, confidence_tau=0.36)
+        xgb = predict_xgboost(ticker, xgb_features, confidence_tau=0.0)
 
         direction_map = {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}
         return {

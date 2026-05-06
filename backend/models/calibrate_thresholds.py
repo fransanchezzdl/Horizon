@@ -81,12 +81,27 @@ def main():
     )
     args = parser.parse_args()
 
-    if os.path.exists(THRESHOLDS_FILE) and not args.force:
-        print(f"[SKIP] {THRESHOLDS_FILE} ya existe.")
-        print("Usa --force para recalibrar (perderás reproducibilidad histórica).")
-        sys.exit(0)
-
     all_tickers = args.tickers or (TICKERS["stable"] + TICKERS["volatile"])
+
+    # Cargar JSON existente para hacer merge (preserva tickers ya calibrados)
+    existing = {}
+    if os.path.exists(THRESHOLDS_FILE):
+        if not args.force and not args.tickers:
+            print(f"[SKIP] {THRESHOLDS_FILE} ya existe.")
+            print("Usa --force para recalibrar (perderás reproducibilidad histórica).")
+            sys.exit(0)
+        try:
+            with open(THRESHOLDS_FILE, "r", encoding="utf-8") as f:
+                existing = json.load(f)
+            already = [t for t in all_tickers if t in existing and not args.force]
+            if already:
+                print(f"[SKIP] Ya calibrados (se preservan): {already}")
+            all_tickers = [t for t in all_tickers if t not in existing or args.force]
+            if not all_tickers:
+                print("[OK] Todos los tickers ya están calibrados. Nada que hacer.")
+                sys.exit(0)
+        except Exception as e:
+            print(f"[WARN] No se pudo leer el JSON existente: {e}. Se sobreescribirá.")
     print(f"\n[CALIBRATE] Calibrando umbrales fijos para {len(all_tickers)} tickers")
     print(f"            Método: percentiles {PERCENTILE_LOWER}/{PERCENTILE_UPPER} sobre train")
     print(f"            Output: {THRESHOLDS_FILE}\n")
@@ -123,8 +138,10 @@ def main():
             print(f"    [ERROR] {ticker}: {e}")
             failed.append(ticker)
 
+    # Merge con los tickers existentes (los nuevos sobreescriben, el resto se preserva)
+    merged = {**existing, **results}
     with open(THRESHOLDS_FILE, "w", encoding="utf-8") as f:
-        json.dump(results, f, indent=2)
+        json.dump(merged, f, indent=2)
 
     print(f"\n[OK] Guardado en {THRESHOLDS_FILE}")
     print(f"     Calibrados: {len(results) - 1}/{len(all_tickers)}")

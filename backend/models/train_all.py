@@ -10,7 +10,7 @@ Uso:
 
 import time
 import sys
-from datetime import timedelta
+from datetime import timedelta, date
 from typing import Dict
 
 from .config import TICKERS, USE_SENTIMENT, get_tickers_from_database
@@ -106,12 +106,41 @@ def main() -> None:
                         ensemble_pred_corrected,
                         training_metrics_to_save
                     )
-                    
+
                     metrics["db_saved"] = success
                     if success:
                         print(f"💾 Datos guardados en BD para {ticker}")
                     else:
                         print(f"⚠️ Error al guardar en BD para {ticker}")
+
+                    # Opción B: generar y guardar explicación XAI con el modelo recién entrenado
+                    # Garantiza que xai_explicaciones siempre esté sincronizado con activos.senal_ia
+                    try:
+                        print(f"\n🔍 Generando explicación XAI para {ticker}...")
+                        from ..scripts.backfill_xai import _generar_xai_para_fecha
+                        from ..daos.explicacion_xai_dao import ExplicacionXAIDAO
+
+                        xai_result = _generar_xai_para_fecha(ticker, date.today())
+                        if xai_result is not None:
+                            xai_ok = ExplicacionXAIDAO.crear(
+                                ticker=ticker,
+                                shap_valores=xai_result["shap_valores"],
+                                shap_grafico=xai_result.get("shap_grafico", ""),
+                                features_top20=xai_result["features_top20"],
+                                contribucion_features=xai_result["contribucion_features"],
+                                senal_prediccion=ensemble_pred_corrected.get("trend", "LATERAL"),
+                                confianza_prediccion=float(ensemble_pred_corrected.get("confidence", 0)),
+                                version_modelo="train_all",
+                                seed_modelo=42,
+                            )
+                            if xai_ok:
+                                print(f"   ✅ Explicación XAI guardada para {ticker}")
+                            else:
+                                print(f"   ⚠️ No se pudo guardar explicación XAI para {ticker}")
+                        else:
+                            print(f"   ⚠️ No se pudo generar explicación XAI para {ticker}")
+                    except Exception as xai_err:
+                        print(f"   ⚠️ Error en XAI post-entrenamiento para {ticker}: {xai_err}")
 
                     # Calcular y guardar live_accuracy_30d y volatilidad_30d
                     extra_update = {}
