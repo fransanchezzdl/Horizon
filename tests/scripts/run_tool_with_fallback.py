@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 from typing import Sequence, TextIO
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parent.parent.parent
 SPINNER_FRAMES = ("|", "/", "-", "\\")
 
 
@@ -104,7 +104,7 @@ def run_with_spinner(command: Sequence[str], label: str) -> int:
 
 def main() -> int:
     if len(sys.argv) < 2:
-        print("Uso: python scripts/run_tool_with_fallback.py <modulo> [args...]", file=sys.stderr)
+        print("Uso: python tests/scripts/run_tool_with_fallback.py <modulo> [args...]", file=sys.stderr)
         return 2
 
     module = sys.argv[1]
