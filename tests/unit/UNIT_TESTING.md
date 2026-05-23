@@ -60,10 +60,6 @@ Cobertura actual:
 Archivo: tests/unit/test_usuarios_endpoints.py
 
 Cobertura actual:
-- GET /usuarios
-  - lista con usuarios validos para response_model
-  - lista vacia
-  - error de capa DAO (>=500)
 - GET /auth/me
   - autenticacion valida + usuario encontrado
   - autenticacion valida + usuario no encontrado (401)

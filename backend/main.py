@@ -57,13 +57,6 @@ portfolio_service = PortfolioService(portfolio_dao=PortfolioDAO)
 curso_service = CursoService(CursoDAO)
 user_service = UserService(usuario_dao, storage_service)
 
-
-@app.get("/usuarios", response_model=list[UsuarioResponse])
-def get_usuarios():
-    # Llamamos al DAO en lugar de a la base de datos directamente
-    usuarios = usuario_dao.obtener_todos()
-    return usuarios
-
 @app.post("/login", response_model=LoginResponse)
 def login(credenciales: LoginRequest):
     """
