@@ -5,37 +5,10 @@ services:
       - backend
     ports:
       - "${PUBLIC_PORT:-80}:80"
-      - "443:443"
-    environment:
-      SERVER_NAME: ${SERVER_NAME:-_}
     volumes:
       - ../../frontend:/usr/share/nginx/html:ro
-      - ../nginx/default.conf.template:/etc/nginx/templates/default.conf.template:ro
-      - letsencrypt:/etc/letsencrypt:ro
-      - certbot_webroot:/var/www/certbot:ro
+      - ../nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
     restart: unless-stopped
-    networks:
-      - horizon_net
-
-  certbot:
-    image: certbot/certbot:latest
-    volumes:
-      - letsencrypt:/etc/letsencrypt
-      - certbot_webroot:/var/www/certbot
-    command: sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot --quiet; sleep 12h & wait $${!}; done"
-    restart: unless-stopped
-    networks:
-      - horizon_net
-
-  certbot-init:
-    image: certbot/certbot:latest
-    profiles:
-      - bootstrap
-    ports:
-      - "80:80"
-    volumes:
-      - letsencrypt:/etc/letsencrypt
-    command: certonly --standalone --noninteractive --agree-tos --email ${LETSENCRYPT_EMAIL} -d ${SERVER_NAME}
     networks:
       - horizon_net
 
@@ -54,31 +27,3 @@ services:
     restart: unless-stopped
     networks:
       - horizon_net
-
-  # Scheduler planificado, no implementado.
-  # Queda desactivado por defecto para no afectar estabilidad.
-  # Activacion futura:
-  #   COMPOSE_PROFILES=scheduler docker compose up -d --build
-  scheduler:
-    build:
-      context: ../..
-      dockerfile: infra/docker/Dockerfile.backend
-    env_file:
-      - ../../backend/.env
-    command: python scripts/scheduler_daemon.py --foreground
-    volumes:
-      - ../../backend/models/saved_models:/app/backend/models/saved_models
-      - ../../logs:/logs
-    restart: unless-stopped
-    networks:
-      - horizon_net
-    profiles:
-      - scheduler
-
-networks:
-  horizon_net:
-    driver: bridge
-
-volumes:
-  letsencrypt:
-  certbot_webroot:

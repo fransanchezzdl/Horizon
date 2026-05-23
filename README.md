@@ -34,6 +34,8 @@ Esto dejara disponible la parte visual del proyecto en el puerto 5000.
 
 ### 2. Preparar el backend
 
+Crea el archivo de variables de entorno (.env) en la misma dirección que .env_example. Copia las variables y pega las API keys adjuntas en la entrega.
+
 Desde la raiz del proyecto, crea el entorno virtual del backend e instala las dependencias:
 
 ```bash

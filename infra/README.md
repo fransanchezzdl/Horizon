@@ -1,19 +1,19 @@
 # Infra portable de Horizon
 
-Esta carpeta separa la infraestructura de despliegue del codigo de aplicacion.
+Esta carpeta agrupa toda la infraestructura de despliegue y deja separado lo que es aplicacion de lo que es ejecucion, red y contenedores.
 
 ## Que incluye
 
-- `infra/docker/Dockerfile.backend`: imagen base para backend.
-- `infra/nginx/default.conf.template`: proxy inverso con HTTP, HTTPS y challenge de Let's Encrypt.
-- `infra/compose/docker-compose.yml`: stack de Nginx + backend + Certbot.
+- `infra/docker/Dockerfile.backend`: imagen base para el backend.
+- `infra/nginx/default.conf`: configuracion de Nginx para servir la aplicacion por HTTP.
+- `infra/compose/docker-compose.yml`: stack de Nginx + backend.
 - `infra/compose/.env.template`: variables minimas del host.
 
-## Compatibilidad local (sin romper localhost)
+## Uso con IP local
 
-El frontend debe mantener modo dual:
 - En desarrollo local, usar `http://localhost:8000`.
-- En despliegue con Nginx, usar mismo origen con `/api`.
+- En despliegue compartido, usar `http://<IP_DEL_PC>`.
+- Si el frontend llama al backend con `/api`, debe seguir apuntando al mismo origen para no romper la carga de JSON.
 
 Esto evita errores donde la app espera JSON y recibe HTML.
 
@@ -25,37 +25,16 @@ Esto evita errores donde la app espera JSON y recibe HTML.
 Copy-Item .\infra\compose\.env.template .\infra\compose\.env
 ```
 
-2. Rellenar `SERVER_NAME` y `LETSENCRYPT_EMAIL` en `infra/compose/.env`.
+2. Ajustar `PUBLIC_PORT` en `infra/compose/.env` para usar un puerto distinto.
 
-3. Emitir el primer certificado antes de arrancar Nginx:
-
-```powershell
-Set-Location .\infra\compose
-docker compose --profile bootstrap run --service-ports --rm certbot-init
-```
-
-4. Levantar stack:
+3. Levantar stack:
 
 ```powershell
 Set-Location .\infra\compose
 docker compose up -d --build
 ```
 
-5. Abrir en navegador:
-- `https://tu-dominio.ejemplo.com`
-- `http://tu-dominio.ejemplo.com` debe redirigir a HTTPS
+4. Abrir en navegador:
+- `http://<IP_DEL_PC>`
+- Si el backend expone otro puerto, usar `http://<IP_DEL_PC>:<PUERTO>`
 
-## Pasos HTTPS
-
-1. Asigna `SERVER_NAME` al dominio publico real.
-2. Abre y redirige en el router los puertos `80/TCP` y `443/TCP` hacia la IP fija del PC anfitrion.
-3. Emite el certificado inicial con `docker compose --profile bootstrap run --service-ports --rm certbot-init`.
-4. Arranca el stack con `docker compose up -d --build`.
-5. Verifica que Nginx sirve `https://<dominio>` sin advertencias.
-6. Mantén Certbot activo para renovar automaticamente el certificado.
-
-## Scheduler
-
-El scheduler queda solo planificado y no activo en esta fase.
-
-En `docker-compose.yml` esta definido con profile `scheduler` para activarlo despues, cuando termine su implementacion.
