@@ -1,6 +1,3 @@
--- WARNING: This schema is for context only and is not meant to be run.
--- Table order and constraints may not be valid for execution.
-
 CREATE TABLE public.activos (
   ticker text NOT NULL,
   nombre_completo text,
@@ -43,15 +40,6 @@ CREATE TABLE public.diapositivas (
   num_pag bigint NOT NULL,
   CONSTRAINT diapositivas_pkey PRIMARY KEY (id, id_curso),
   CONSTRAINT diapositivas_id_curso_fkey FOREIGN KEY (id_curso) REFERENCES public.cursos(id)
-);
-CREATE TABLE public.historico_activos (
-  id_historico integer NOT NULL DEFAULT nextval('historico_activos_id_historico_seq'::regclass),
-  ticker text,
-  fecha date,
-  precio_cierre numeric,
-  prediccion_ia numeric,
-  CONSTRAINT historico_activos_pkey PRIMARY KEY (id_historico),
-  CONSTRAINT historico_activos_ticker_fkey FOREIGN KEY (ticker) REFERENCES public.activos(ticker)
 );
 CREATE TABLE public.portfolio_activo (
   id_posicion bigint NOT NULL DEFAULT nextval('portfolio_activo_id_posicion_seq'::regclass),
@@ -166,87 +154,3 @@ CREATE TABLE public.xai_validacion (
   CONSTRAINT xai_validacion_pkey PRIMARY KEY (id),
   CONSTRAINT xai_validacion_id_explicacion_fkey FOREIGN KEY (id_explicacion) REFERENCES public.xai_explicaciones(id)
 );
-
-
-//RELACIONES
-
-[
-  {
-    "table_name": "portfolios",
-    "column_name": "id_usuario",
-    "foreign_table_name": "usuarios",
-    "foreign_column_name": "id_usuario"
-  },
-  {
-    "table_name": "historico_activos",
-    "column_name": "ticker",
-    "foreign_table_name": "activos",
-    "foreign_column_name": "ticker"
-  },
-  {
-    "table_name": "portfolio_activo",
-    "column_name": "id_portfolio",
-    "foreign_table_name": "portfolios",
-    "foreign_column_name": "id_portfolio"
-  },
-  {
-    "table_name": "portfolio_activo",
-    "column_name": "ticker",
-    "foreign_table_name": "activos",
-    "foreign_column_name": "ticker"
-  },
-  {
-    "table_name": "usuario_portfolio",
-    "column_name": "id_usuario",
-    "foreign_table_name": "usuarios",
-    "foreign_column_name": "id_usuario"
-  },
-  {
-    "table_name": "usuario_portfolio",
-    "column_name": "id_portfolio",
-    "foreign_table_name": "portfolios",
-    "foreign_column_name": "id_portfolio"
-  },
-  {
-    "table_name": "diapositivas",
-    "column_name": "id_curso",
-    "foreign_table_name": "cursos",
-    "foreign_column_name": "id"
-  },
-  {
-    "table_name": "progreso_cursos",
-    "column_name": "id_usuario",
-    "foreign_table_name": "usuarios",
-    "foreign_column_name": "id_usuario"
-  },
-  {
-    "table_name": "progreso_cursos",
-    "column_name": "id_curso",
-    "foreign_table_name": "cursos",
-    "foreign_column_name": "id"
-  },
-  {
-    "table_name": "xai_explicaciones",
-    "column_name": "ticker",
-    "foreign_table_name": "activos",
-    "foreign_column_name": "ticker"
-  },
-  {
-    "table_name": "xai_validacion",
-    "column_name": "id_explicacion",
-    "foreign_table_name": "xai_explicaciones",
-    "foreign_column_name": "id"
-  },
-  {
-    "table_name": "prediction_log",
-    "column_name": "ticker",
-    "foreign_table_name": "activos",
-    "foreign_column_name": "ticker"
-  },
-  {
-    "table_name": "chat_rate_limits",
-    "column_name": "id_usuario",
-    "foreign_table_name": "usuarios",
-    "foreign_column_name": "id_usuario"
-  }
-]
