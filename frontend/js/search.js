@@ -245,7 +245,7 @@ function formatConfidence(confianza) {
     return { value: `${rounded}%`, label };
 }
 
-// Normaliza el texto de senal para mostrarlo de forma consistente.
+// Normaliza el texto de señal para mostrarlo de forma consistente.
 function formatSignal(senal) {
     if (!senal || typeof senal !== 'string') {
         return '--';

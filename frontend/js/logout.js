@@ -26,17 +26,17 @@ function handleLogout() {
     try {
         console.log('[LOGOUT] Iniciando cierre de sesión...');
 
-        // 1. Opcional: Feedback visual en el botón
+        // 1. Feedback visual en el botón
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
             logoutBtn.disabled = true;
             logoutBtn.textContent = 'Cerrando sesión...';
         }
 
-        // 2. LA MAGIA REAL: Destruir los datos de sesión local
+        // 2. Destruir los datos de sesión local
         window.clearAuthSession();
         
-        // Por si acaso tu compañero usó sessionStorage en algún momento, lo limpiamos también
+        // Limpiar sessionStorage
         sessionStorage.clear();
 
         console.log('[LOGOUT] Sesión cerrada localmente');

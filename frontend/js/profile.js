@@ -523,7 +523,7 @@ function initProfileEvents() {
             btnSave.textContent = 'Guardando...';
             divMessage.innerHTML = '';
 
-            // Armamos el Payload. El email se envía como el valor actual del usuario (no editable en UI).
+            // Armar el Payload. El email se envía como el valor actual del usuario (no editable en UI).
             const usuarioActual = window.getCurrentUserData();
             const payload = {
                 nombre: document.getElementById('editNombre').value.trim(),
@@ -574,7 +574,6 @@ function initProfileEvents() {
         });
     }
 
-    // --- 2. LÓGICA PENDIENTE (Contraseña) ---
     // Cambiar Contraseña
     const btnChangePassword = document.getElementById('btnChangePassword');
     const formChangePassword = document.getElementById('formChangePassword');

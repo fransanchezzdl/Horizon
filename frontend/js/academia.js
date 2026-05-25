@@ -233,7 +233,7 @@ async function abrirCurso(idCurso) {
         // Comprobamos si el curso es de pago y si el usuario NO tiene la membresía Pro
         if (cursoData.plan_pro && (!usuarioActual || usuarioActual.membresia !== 'Pro')) {
             cerrarModal(); 
-            // Usamos tu función showAlert
+            // Usamos showAlert para informar a usuario
             showAlert(`El curso "${cursoData.titulo}" es exclusivo. ¡Mejora tu plan a PRO para acceder!`, 'warning');
             return; 
         }
@@ -252,21 +252,19 @@ async function abrirCurso(idCurso) {
             progreso = await progResponse.json();
             // Retomar donde lo dejó (diapositiva_alcanzada es 1-based, index es 0-based)
             if (progreso && progreso.diapositiva_alcanzada > 1) {
-                // Si completó el curso, lo dejamos en la primera pág para que lo repase (o en la última, como prefieras)
-                // En este caso lo llevamos a la última que alcanzó
+                // Si completó el curso, lo dejamos en la última que alcanzó
                 indexInicio = progreso.diapositiva_alcanzada - 1;
             }
         }
 
         // Actualizar estado
         estadoCurso.id_curso = idCurso;
-        // Dependiendo de FastAPI, el ID podría venir como cursoData.id o cursoData.id_curso. Usamos fallback:
         const cursoIdReal = cursoData.id_curso || cursoData.id; 
         estadoCurso.diapositivas = cursoData.diapositivas || [];
         estadoCurso.progreso = progreso;
         estadoCurso.visitadas = new Set(); 
 
-        // ¡NUEVO! Pre-llenar las visitadas con su progreso histórico
+        // Pre-llenar las visitadas con su progreso histórico
         if (progreso && progreso.diapositiva_alcanzada > 0) {
             for (let i = 0; i < progreso.diapositiva_alcanzada; i++) {
                 if (estadoCurso.diapositivas[i]) {
@@ -437,7 +435,7 @@ function avanzarDiapositiva() {
     if (nextIndex < estadoCurso.diapositivas.length) {
         mostrarDiapositiva(nextIndex);
 
-        // ¡NUEVO! Solo guardamos en BD si supera su récord personal
+        // Solo guardamos en BD si supera su récord personal
         const nuevaPaginaNumero = nextIndex + 1;
         const recordActual = estadoCurso.progreso ? estadoCurso.progreso.diapositiva_alcanzada : 0;
         
@@ -446,7 +444,7 @@ function avanzarDiapositiva() {
         }
         
     } else if (nextIndex === estadoCurso.diapositivas.length) {
-        // Última diapositiva alcanzada (clic en finalizar)
+        // Última diapositiva alcanzada
         showAlert(`Curso ya completado!`, 'info');
         
         // Aseguramos que se guarde el 100% solo si no estaba completado
