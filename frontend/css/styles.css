@@ -819,7 +819,6 @@ p {
 .text-bold { font-weight: 700; }
 .uppercase { text-transform: uppercase; }
 
-/* Aquí !important evita que otros estilos de presentación accidentalmente hagan los modales visibles antes de tiempo.*/ 
 .is-hidden { display: none !important; }
 
 .icon-trend-up { color: var(--color-success); }
@@ -1824,7 +1823,7 @@ body > section {
     right: 24px;
     width: 380px;
     max-height: 600px;
-    padding: 0;
+    padding: 0 !important;
     display: flex;
     flex-direction: column;
     transition: all 0.25s ease-out;
@@ -1837,8 +1836,8 @@ body > section {
 
 /* ESTADO COLAPSADO: Boton flotante circular en esquina inferior derecha */
 .advisor-sidebar.collapsed {
-    width: 72px;
-    height: 72px;
+    width: 72px !important;
+    height: 72px !important;
     max-height: 72px;
     min-width: 72px;
     min-height: 72px;
