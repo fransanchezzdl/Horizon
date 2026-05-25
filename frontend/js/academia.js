@@ -353,12 +353,6 @@ function mostrarDiapositiva(index) {
         document.getElementById('btn-anterior').disabled = index === 0;
         document.getElementById('btn-siguiente').disabled = index === estadoCurso.diapositivas.length - 1;
     }
-
-    // Ocultar indicador de completado
-    const completadoIndicator = document.getElementById('completado-indicator');
-    if (completadoIndicator) {
-        completadoIndicator.style.display = 'none';
-    }
 }
 
 /**
