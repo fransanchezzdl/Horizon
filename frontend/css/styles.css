@@ -819,8 +819,12 @@ p {
 .text-bold { font-weight: 700; }
 .uppercase { text-transform: uppercase; }
 
-/* Aquí !important evita que otros estilos de presentación accidentalmente hagan los modales visibles antes de tiempo.*/ 
-.is-hidden { display: none !important; }
+/* Clase utilitaria para ocultar elementos sin depender de !important. */
+.is-hidden { display: none; }
+
+#dashboard-contenido > .is-hidden {
+    display: none;
+}
 
 .icon-trend-up { color: var(--color-success); }
 .icon-shield { color: var(--color-primary); }
@@ -4087,11 +4091,16 @@ body > section {
     width: 100%;
     height: 100%;
     background: var(--color-black-a50);
-    display: flex;
+    display: none;
     align-items: center;
     justify-content: center;
     z-index: 10000;
     animation: fadeIn 0.3s ease-out;
+}
+
+/* Mostrar modal sólo cuando no tenga clases de ocultación. */
+.modal:not(.hidden):not(.is-hidden) {
+    display: flex;
 }
 
 @keyframes fadeIn {
