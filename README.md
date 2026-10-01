@@ -1,74 +1,101 @@
 # Horizon
 
-Horizon es una aplicacion para consultar informacion de mercados, revisar activos, ver el portfolio, entrar a la academia, leer la reflexion del dia y gestionar opciones basicas de usuario.
+Plataforma web de análisis financiero con **predicciones de mercado explicables (XAI)**, asesor con IA generativa y una academia de formación en inversión. Proyecto de Trabajo de Fin de Grado (TFG).
 
-## Que puedes hacer en Horizon
+> ⚠️ **Aviso:** Horizon es un proyecto académico. Nada de lo que muestra constituye asesoramiento financiero ni una recomendación de inversión.
 
-La aplicacion esta pensada para que un usuario nuevo pueda entrar, moverse por las pantallas principales y consultar la informacion sin complicaciones.
+## Características
 
-Las paginas principales son:
+- **Predicción de activos:** modelos XGBoost (con calibración de probabilidades y umbrales congelados) para acciones, criptomonedas y materias primas.
+- **IA explicable:** explicaciones SHAP (waterfall y evolución temporal) con narrativa en lenguaje natural.
+- **Asesor IA:** chat financiero basado en Google Gemini con contexto del usuario y del activo.
+- **Portfolios:** creación y análisis de carteras, con optimización y rebalanceo.
+- **Análisis de activos:** precios, variaciones, noticias y sentimiento por ticker.
+- **Academia y reflexión del día:** contenido formativo para nuevos inversores.
+- **Cuentas de usuario:** autenticación con Supabase Auth, perfil y avatar, tema claro/oscuro.
 
-- `login.html` y `register.html`: iniciar sesion y registrarse.
-- `index.html`: dashboard principal de la aplicacion.
-- `portfolio.html`: ver tus portfolios.
-- `analysis.html`: explorar activos y consultar un ticker.
-- `academia.html`: acceder al contenido de academia y aprendizaje.
-- `reflexion.html`: leer la reflexion del dia.
-- `profile.html`: ver y editar tu perfil.
-- `ajustes.html`: cambiar ajustes de la cuenta o de la interfaz.
-- `ayuda.html`: abrir el centro de ayuda.
+## Stack
 
-## Como levantar el proyecto en local
+| Capa | Tecnología |
+|---|---|
+| Frontend | HTML, CSS y JavaScript sin framework |
+| Backend | Python, FastAPI, Uvicorn |
+| Datos y autenticación | Supabase (PostgreSQL + Auth + Storage) |
+| Machine Learning | XGBoost, PyTorch, scikit-learn, SHAP |
+| Datos de mercado | yfinance, Finnhub, Alpha Vantage |
+| IA generativa | Google Gemini |
+| Despliegue | Docker Compose + nginx |
+| Calidad | pytest, pylint, pre-commit |
 
-Abre el proyecto Horizon en VS Code y sigue estos pasos.
+## Estructura
 
-### 1. Levantar el frontend
-
-Abre una terminal dentro de la carpeta `frontend/` y ejecuta:
-
-```bash
-python -m http.server 5000
+```text
+backend/    API FastAPI (daos, dtos, services, routes) y modelos de ML
+frontend/   Páginas HTML, estilos y JavaScript
+docs/       Arquitectura, autenticación, asesor IA y esquema de base de datos
+infra/      Dockerfile, docker-compose y configuración de nginx
+tests/      Tests unitarios, de integración, linting y scripts de entrenamiento
 ```
 
-Esto dejara disponible la parte visual del proyecto en el puerto 5000.
+La arquitectura por capas está descrita en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-### 2. Preparar el backend
+## Puesta en marcha
 
-Crea el archivo de variables de entorno (.env) en la misma dirección que .env_example. Copia las variables y pega las API keys adjuntas en la entrega.
+### Requisitos
 
-Desde la raiz del proyecto, crea el entorno virtual del backend e instala las dependencias:
+- Python 3.11+
+- Un proyecto de [Supabase](https://supabase.com) con el esquema de [`docs/bbdd.sql`](docs/bbdd.sql)
+- Claves de API de Gemini, Finnhub y Alpha Vantage (todas tienen plan gratuito)
+
+### 1. Configurar variables de entorno
+
+Copia `backend/.env_example` a `backend/.env` y rellena los valores:
+
+```env
+SUPABASE_URL=...
+SUPABASE_KEY=...                 # clave anon
+SUPABASE_SERVICE_ROLE_KEY=...    # clave secreta, solo en el backend
+GEMINI_API_KEY=...
+ALPHA_VANTAGE_API_KEY=...
+FINNHUB_API_KEY=...
+```
+
+> Nunca subas `backend/.env` al repositorio ni expongas la `service_role` key en el frontend.
+
+### 2. Backend
 
 ```bash
 python -m venv backend/venv
+. backend/venv/Scripts/activate      # Linux/macOS: source backend/venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 3. Activar el entorno y arrancar el backend
-
-Abre una terminal Git Bash, activa el entorno virtual y levanta la API:
-
-```bash
-. backend/venv/Scripts/activate
 uvicorn backend.main:app --reload
 ```
 
-### 4. Abrir la aplicacion
+La API queda en `http://localhost:8000` (documentación interactiva en `/docs`).
 
-Cuando ambos servicios esten levantados, entra en el navegador a:
+### 3. Frontend
 
-```text
-localhost:5000/index.html
+```bash
+cd frontend
+python -m http.server 5000
 ```
 
-## Nota importante
+Abre `http://localhost:5000/login.html`.
 
-Es posible que el servidor casero desplegado no este activo en el momento de la correccion, porque el ordenador de sobremesa de un companero del equipo puede estar inestable. Aun asi, el proyecto se puede levantar y probar completo en local siguiendo este manual.
+### Con Docker
 
-## Flujo rapido
+```bash
+docker compose -f infra/compose/docker-compose.yml up --build
+```
 
-1. Abrir Horizon en VS Code.
-2. Levantar el frontend en `frontend/` con `python -m http.server 5000`.
-3. Crear `backend/venv` e instalar los requisitos.
-4. Activar el entorno virtual desde Git Bash.
-5. Ejecutar `uvicorn backend.main:app --reload`.
-6. Abrir `localhost:5000/index.html`.
+Más detalles en [`infra/README.md`](infra/README.md).
+
+## Tests
+
+```bash
+pytest tests/unit
+```
+
+## Licencia
+
+Distribuido bajo licencia [MIT](LICENSE).
