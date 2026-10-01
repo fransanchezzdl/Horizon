@@ -29,3 +29,8 @@ checkpoints/
 .pytest_cache/
 *.db
 *.sqlite
+
+# Artefactos de modelos (binarios; pickle ejecuta código al cargarse)
+*.pt
+*.pth
+*.pkl

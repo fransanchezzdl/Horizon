@@ -28,7 +28,7 @@ Configuración:
     - PID file: ./logs/scheduler.pid
 
 En Windows Task Scheduler:
-    - Crear tarea que ejecute: python D:\Uni\TFG\Horizon\scripts\scheduler_daemon.py --foreground
+    - Crear tarea que ejecute: python <ruta-al-repo>/tests/scripts/scheduler_daemon.py --foreground
     - Repetir cada 24 horas a las 2:00 AM
 
 En Linux Cron:

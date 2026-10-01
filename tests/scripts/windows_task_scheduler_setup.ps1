@@ -13,10 +13,10 @@ param(
     [string]$Action,
     
     [string]$PythonPath = "python",
-    [string]$ScriptPath = "D:\Uni\TFG\Horizon\scripts\scheduler_daemon.py",
+    [string]$ScriptPath = (Join-Path $PSScriptRoot "scheduler_daemon.py"),
     [string]$TaskName = "Horizon-Model-Training",
     [string]$TaskHour = "2",  # 2 AM
-    [string]$WorkingDir = "D:\Uni\TFG\Horizon"
+    [string]$WorkingDir = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 )
 
 # Verificar si se ejecuta como Admin
@@ -164,7 +164,7 @@ function Run-TaskNow {
     try {
         Start-ScheduledTask -TaskName $TaskName
         Write-Host "✅ Tarea iniciada" -ForegroundColor Green
-        Write-Host "   Verifica el log en: D:\Uni\TFG\Horizon\logs\scheduler.log" -ForegroundColor Green
+        Write-Host "   Verifica el log en: $WorkingDir\logs\scheduler.log" -ForegroundColor Green
     } catch {
         Write-Host "❌ Error al ejecutar tarea: $_" -ForegroundColor Red
     }
