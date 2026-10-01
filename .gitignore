@@ -23,3 +23,9 @@ sixth_claude/
 agents/
 skills-lock.json
 checkpoints/
+# Herramientas locales y bases de datos
+.kiro/
+.sixth/
+.pytest_cache/
+*.db
+*.sqlite
