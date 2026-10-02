@@ -10,6 +10,8 @@ La memoria completa del Trabajo de Fin de Grado está disponible en PDF:
 
 📄 **[`docs/Memoria_TFG_Horizon_2526.pdf`](docs/Memoria_TFG_Horizon_2526.pdf)**
 
+🎓 **Calificación obtenida:** 9,8 / 10
+
 ## Características
 
 - **Predicción de activos:** modelos XGBoost (con calibración de probabilidades y umbrales congelados) para acciones, criptomonedas y materias primas.
