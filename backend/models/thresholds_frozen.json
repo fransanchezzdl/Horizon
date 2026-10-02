@@ -1,11 +1,11 @@
 {
   "_meta": {
     "version": "1.0",
-    "calibrated_at": "2026-04-13T20:57:42.150095",
+    "calibrated_at": "2026-05-06T20:20:43.010273",
     "method": "percentile_33.33_66.67",
-    "horizon_days": 3,
+    "horizon_days": 5,
     "split": "train_only_70pct",
-    "description": "Umbrales fijos de etiquetado calibrados UNA SOLA VEZ sobre la portion train de retornos log a 3 d\u00edas (cambiado de 5d tras comparativa emp\u00edrica walk-forward 2026-04-13). NO MODIFICAR: la reproducibilidad del modelo depende de que estos valores sean inmutables. Si se necesita recalibrar, hacer en una nueva version del modelo."
+    "description": "Umbrales fijos de etiquetado calibrados UNA SOLA VEZ sobre la portion train de retornos log a 5 d\u00edas. NO MODIFICAR: la reproducibilidad del modelo depende de que estos valores sean inmutables. Si se necesita recalibrar, hacer en una nueva version del modelo."
   },
   "KO": {
     "bajista": -0.005188,
@@ -126,5 +126,37 @@
     "min_return": -0.563669,
     "max_return": 0.247582,
     "std_return": 0.068165
+  },
+  "SPY": {
+    "bajista": -0.003256,
+    "alcista": 0.012463,
+    "n_train_samples": 1399,
+    "min_return": -0.198077,
+    "max_return": 0.16006,
+    "std_return": 0.026879
+  },
+  "JPM": {
+    "bajista": -0.010813,
+    "alcista": 0.016582,
+    "n_train_samples": 1399,
+    "min_return": -0.262759,
+    "max_return": 0.170981,
+    "std_return": 0.041179
+  },
+  "JNJ": {
+    "bajista": -0.007969,
+    "alcista": 0.011118,
+    "n_train_samples": 1399,
+    "min_return": -0.142134,
+    "max_return": 0.179633,
+    "std_return": 0.026224
+  },
+  "GLD": {
+    "bajista": -0.005284,
+    "alcista": 0.008493,
+    "n_train_samples": 1399,
+    "min_return": -0.108103,
+    "max_return": 0.104462,
+    "std_return": 0.0204
   }
 }

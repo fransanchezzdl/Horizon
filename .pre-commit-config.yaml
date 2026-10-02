@@ -8,25 +8,22 @@ repos:
     hooks:
       - id: pylint
         name: Pylint
-        entry: python scripts/run_tool_with_fallback.py pylint
+        entry: python tests/scripts/run_tool_with_fallback.py pylint --rcfile=.pylintrc --exit-zero
         language: system
         types: [python]
         files: ^backend/(daos/|dtos/|services/|exceptions/|main\.py$)
         stages: [pre-commit]
-        args:
-          - --rcfile=.pylintrc
-          - --exit-zero
         exclude: ^backend/migrations/|\.pyc$
       - id: pytest-unit
         name: Pytest unit (tests/unit)
-        entry: python -u scripts/run_tool_with_fallback.py pytest tests/unit -q --disable-warnings -ra
+        entry: python -u tests/scripts/run_tool_with_fallback.py pytest tests/unit -q --disable-warnings -ra
         language: system
         always_run: true
         pass_filenames: false
         stages: [pre-commit]
       - id: pytest-integration
         name: Pytest integration (tests/integration)
-        entry: python -u scripts/run_tool_with_fallback.py pytest tests/integration -q --disable-warnings -ra
+        entry: python -u tests/scripts/run_tool_with_fallback.py pytest tests/integration -q --disable-warnings -ra
         language: system
         always_run: true
         pass_filenames: false
@@ -44,5 +41,5 @@ repos:
       - id: check-json
         name: Check JSON
 
-exclude: ^(\.venv|venv|__pycache__|\.git|migrations|backend/routes|backend/models|backend/scripts)
+exclude: ^(\.venv|venv|__pycache__|\.git|migrations|backend/routes|backend/models|tests/scripts)
 fail_fast: false

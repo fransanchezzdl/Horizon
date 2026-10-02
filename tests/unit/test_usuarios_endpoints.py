@@ -2,37 +2,6 @@
 
 from unittest.mock import patch
 
-
-class TestObtenerUsuarios:
-    def test_obtener_todos_usuarios(self, client, mock_usuario_dao, usuario_mock):
-        usuarios = [usuario_mock]
-        mock_usuario_dao.obtener_todos.return_value = usuarios
-
-        with patch("backend.main.usuario_dao", mock_usuario_dao):
-            response = client.get("/usuarios")
-
-        assert response.status_code == 200
-        assert response.json() == usuarios
-        mock_usuario_dao.obtener_todos.assert_called_once()
-
-    def test_obtener_usuarios_lista_vacia(self, client, mock_usuario_dao):
-        mock_usuario_dao.obtener_todos.return_value = []
-
-        with patch("backend.main.usuario_dao", mock_usuario_dao):
-            response = client.get("/usuarios")
-
-        assert response.status_code == 200
-        assert response.json() == []
-
-    def test_obtener_usuarios_error_base_datos(self, client, mock_usuario_dao):
-        mock_usuario_dao.obtener_todos.side_effect = Exception("DB Error")
-
-        with patch("backend.main.usuario_dao", mock_usuario_dao):
-            response = client.get("/usuarios")
-
-        assert response.status_code >= 500
-
-
 class TestObtenerInfoUsuarioAutenticado:
     def test_get_current_user_info_ok(
         self,

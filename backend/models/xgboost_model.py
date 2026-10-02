@@ -22,7 +22,7 @@ from typing import Dict, Tuple
 
 import numpy as np
 
-from .config import SAVED_MODELS_DIR, XGBOOST_CONFIG, LABELING_FIXED_THRESHOLDS
+from .config import SAVED_MODELS_DIR, XGBOOST_CONFIG, LABELING_FIXED_THRESHOLDS, PREDICTION_HORIZON
 try:
     from .platt_scaling_calibration_v2 import load_calibrator
 except ModuleNotFoundError:
@@ -49,6 +49,13 @@ def _load_frozen_thresholds(ticker: str) -> Tuple[float, float]:
         try:
             with open(THRESHOLDS_FROZEN_FILE, "r", encoding="utf-8") as f:
                 data = json.load(f)
+            meta_horizon = data.get("_meta", {}).get("horizon_days")
+            if meta_horizon is not None and meta_horizon != PREDICTION_HORIZON:
+                logger.warning(
+                    f"[HORIZONTE] thresholds_frozen.json calibrado con horizon_days={meta_horizon} "
+                    f"pero PREDICTION_HORIZON={PREDICTION_HORIZON}. "
+                    f"Recalibrar con: python -m backend.models.calibrate_thresholds --force"
+                )
             if ticker in data:
                 return data[ticker]["bajista"], data[ticker]["alcista"]
             logger.warning(

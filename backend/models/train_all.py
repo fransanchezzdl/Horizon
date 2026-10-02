@@ -10,11 +10,8 @@ Uso:
 
 import time
 import sys
-from datetime import timedelta
+from datetime import timedelta, date
 from typing import Dict
-
-import math
-import numpy as np
 
 from .config import TICKERS, USE_SENTIMENT, get_tickers_from_database
 from .ensemble import train_ensemble, predict_ensemble
@@ -48,7 +45,6 @@ def main() -> None:
             from ..services import ActivoUpdateService
             from ..daos import ActivoDAO
             from ..daos.prediction_log_dao import PredictionLogDAO
-            from ..daos.historico_dao import HistoricoActivoDAO
             use_db = True
             print("✅ Guardado en BD activado (sentiment=false)")
         except Exception as e:
@@ -110,12 +106,41 @@ def main() -> None:
                         ensemble_pred_corrected,
                         training_metrics_to_save
                     )
-                    
+
                     metrics["db_saved"] = success
                     if success:
                         print(f"💾 Datos guardados en BD para {ticker}")
                     else:
                         print(f"⚠️ Error al guardar en BD para {ticker}")
+
+                    # Opción B: generar y guardar explicación XAI con el modelo recién entrenado
+                    # Garantiza que xai_explicaciones siempre esté sincronizado con activos.senal_ia
+                    try:
+                        print(f"\n🔍 Generando explicación XAI para {ticker}...")
+                        from ..scripts.backfill_xai import _generar_xai_para_fecha
+                        from ..daos.explicacion_xai_dao import ExplicacionXAIDAO
+
+                        xai_result = _generar_xai_para_fecha(ticker, date.today())
+                        if xai_result is not None:
+                            xai_ok = ExplicacionXAIDAO.crear(
+                                ticker=ticker,
+                                shap_valores=xai_result["shap_valores"],
+                                shap_grafico=xai_result.get("shap_grafico", ""),
+                                features_top20=xai_result["features_top20"],
+                                contribucion_features=xai_result["contribucion_features"],
+                                senal_prediccion=ensemble_pred_corrected.get("trend", "LATERAL"),
+                                confianza_prediccion=float(ensemble_pred_corrected.get("confidence", 0)),
+                                version_modelo="train_all",
+                                seed_modelo=42,
+                            )
+                            if xai_ok:
+                                print(f"   ✅ Explicación XAI guardada para {ticker}")
+                            else:
+                                print(f"   ⚠️ No se pudo guardar explicación XAI para {ticker}")
+                        else:
+                            print(f"   ⚠️ No se pudo generar explicación XAI para {ticker}")
+                    except Exception as xai_err:
+                        print(f"   ⚠️ Error en XAI post-entrenamiento para {ticker}: {xai_err}")
 
                     # Calcular y guardar live_accuracy_30d y volatilidad_30d
                     extra_update = {}
@@ -127,19 +152,6 @@ def main() -> None:
                             extra_update["live_accuracy_30d"] = float(live_acc)
                     except Exception as acc_err:
                         print(f"⚠️ No se pudo calcular live_accuracy_30d para {ticker}: {acc_err}")
-
-                    try:
-                        historicos = HistoricoActivoDAO.obtener_ultimos_dias(ticker, dias=35)
-                        precios = [float(h.precio_cierre) for h in historicos if h.precio_cierre]
-                        if len(precios) >= 10:
-                            log_returns = [
-                                math.log(precios[i] / precios[i + 1])
-                                for i in range(len(precios) - 1)
-                            ]
-                            volatilidad = float(np.std(log_returns, ddof=1) * 100)
-                            extra_update["volatilidad_30d"] = round(volatilidad, 4)
-                    except Exception as vol_err:
-                        print(f"⚠️ No se pudo calcular volatilidad_30d para {ticker}: {vol_err}")
 
                     if extra_update:
                         ActivoDAO.actualizar(ticker, extra_update)

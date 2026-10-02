@@ -102,9 +102,18 @@ async function cargarCursos() {
 
         console.log(`[CURSOS] ${cursos.length} cursos cargados`);
 
-        renderizarGridCursos(cursos);
+        // --- Cargar progreso individual para cada curso ---
+        const progressPromises = cursos.map(curso => 
+            window.fetchWithAuth(`${API_BASE}/cursos/${curso.id_curso || curso.id}/progreso`, { method: 'GET' })
+        );
+        const progressResponses = await Promise.all(progressPromises);
+        const progressData = await Promise.all(
+            progressResponses.map(res => res.ok ? res.json() : null)
+        );
 
-        // --- ¡NUEVO! Cargar el resumen global de progreso ---
+        renderizarGridCursos(cursos, progressData);
+
+        // --- Cargar el resumen global de progreso ---
         const resumenRes = await window.fetchWithAuth(`${API_BASE}/cursos/resumen/progreso`, { method: 'GET' });
         if (resumenRes.ok) {
             const resumenData = await resumenRes.json();
@@ -120,15 +129,24 @@ async function cargarCursos() {
 /**
  * Renderiza el grid de cursos disponibles
  */
-function renderizarGridCursos(cursos) {
+function renderizarGridCursos(cursos, progressData = []) {
     const grid = document.getElementById('cursos-grid');
     if (!grid) return;
 
     grid.innerHTML = ''; // Limpiar
 
-    cursos.forEach(curso => {
+    cursos.forEach((curso, index) => {
+        const progress = progressData[index];
+        const isCompleted = progress && progress.completado;
+
         const card = document.createElement('a');
         card.className = 'card';
+
+        card.dataset.idCurso = curso.id_curso || curso.id;
+
+        if (isCompleted) {
+            card.classList.add('completed');
+        }
         card.href = '#';
         card.onclick = (e) => {
             e.preventDefault();
@@ -149,6 +167,11 @@ function renderizarGridCursos(cursos) {
                         <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-weight="900" font-size="32" letter-spacing="2">PRO</text>
                     </svg>
                 </div>
+                <div class="completed-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"></polyline>
+                    </svg>
+                </div>
                 <h3 class="opt-title">${curso.titulo}</h3>
                 <p class="opt-info">${curso.descripcion || 'Sin descripción'}</p>
                 <span class="card-link">Acceder al curso PRO →</span>
@@ -163,6 +186,11 @@ function renderizarGridCursos(cursos) {
                 <div class="card-icon-hero" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-.1zM21 18.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/>
+                    </svg>
+                </div>
+                <div class="completed-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="20,6 9,17 4,12"></polyline>
                     </svg>
                 </div>
                 <h3 class="opt-title">${curso.titulo}</h3>
@@ -205,7 +233,7 @@ async function abrirCurso(idCurso) {
         // Comprobamos si el curso es de pago y si el usuario NO tiene la membresía Pro
         if (cursoData.plan_pro && (!usuarioActual || usuarioActual.membresia !== 'Pro')) {
             cerrarModal(); 
-            // Usamos tu función showAlert
+            // Usamos showAlert para informar a usuario
             showAlert(`El curso "${cursoData.titulo}" es exclusivo. ¡Mejora tu plan a PRO para acceder!`, 'warning');
             return; 
         }
@@ -224,21 +252,19 @@ async function abrirCurso(idCurso) {
             progreso = await progResponse.json();
             // Retomar donde lo dejó (diapositiva_alcanzada es 1-based, index es 0-based)
             if (progreso && progreso.diapositiva_alcanzada > 1) {
-                // Si completó el curso, lo dejamos en la primera pág para que lo repase (o en la última, como prefieras)
-                // En este caso lo llevamos a la última que alcanzó
+                // Si completó el curso, lo dejamos en la última que alcanzó
                 indexInicio = progreso.diapositiva_alcanzada - 1;
             }
         }
 
         // Actualizar estado
         estadoCurso.id_curso = idCurso;
-        // Dependiendo de FastAPI, el ID podría venir como cursoData.id o cursoData.id_curso. Usamos fallback:
         const cursoIdReal = cursoData.id_curso || cursoData.id; 
         estadoCurso.diapositivas = cursoData.diapositivas || [];
         estadoCurso.progreso = progreso;
         estadoCurso.visitadas = new Set(); 
 
-        // ¡NUEVO! Pre-llenar las visitadas con su progreso histórico
+        // Pre-llenar las visitadas con su progreso histórico
         if (progreso && progreso.diapositiva_alcanzada > 0) {
             for (let i = 0; i < progreso.diapositiva_alcanzada; i++) {
                 if (estadoCurso.diapositivas[i]) {
@@ -259,7 +285,7 @@ async function abrirCurso(idCurso) {
 
         // Si el curso ya estaba completado, mostramos el cartel de una vez
         if (progreso && progreso.completado) {
-            mostrarCompletado();
+            showAlert(`Curso ya completado!`, 'info');
         }
 
     } catch (err) {
@@ -326,12 +352,6 @@ function mostrarDiapositiva(index) {
         // Habilitar botones inmediatamente
         document.getElementById('btn-anterior').disabled = index === 0;
         document.getElementById('btn-siguiente').disabled = index === estadoCurso.diapositivas.length - 1;
-    }
-
-    // Ocultar indicador de completado
-    const completadoIndicator = document.getElementById('completado-indicator');
-    if (completadoIndicator) {
-        completadoIndicator.style.display = 'none';
     }
 }
 
@@ -409,7 +429,7 @@ function avanzarDiapositiva() {
     if (nextIndex < estadoCurso.diapositivas.length) {
         mostrarDiapositiva(nextIndex);
 
-        // ¡NUEVO! Solo guardamos en BD si supera su récord personal
+        // Solo guardamos en BD si supera su récord personal
         const nuevaPaginaNumero = nextIndex + 1;
         const recordActual = estadoCurso.progreso ? estadoCurso.progreso.diapositiva_alcanzada : 0;
         
@@ -418,8 +438,8 @@ function avanzarDiapositiva() {
         }
         
     } else if (nextIndex === estadoCurso.diapositivas.length) {
-        // Última diapositiva alcanzada (clic en finalizar)
-        mostrarCompletado();
+        // Última diapositiva alcanzada
+        showAlert(`Curso ya completado!`, 'info');
         
         // Aseguramos que se guarde el 100% solo si no estaba completado
         if (!estadoCurso.progreso || !estadoCurso.progreso.completado) {
@@ -453,24 +473,6 @@ function actualizarBotones() {
     if (btnSiguiente) {
         btnSiguiente.disabled = isLastSlide;
     }
-}
-
-/**
- * Muestra el indicador de curso completado
- */
-function mostrarCompletado() {
-    const completadoIndicator = document.getElementById('completado-indicator');
-    const btnSiguiente = document.getElementById('btn-siguiente');
-
-    if (completadoIndicator) {
-        completadoIndicator.style.display = 'block';
-    }
-
-    if (btnSiguiente) {
-        btnSiguiente.disabled = true;
-    }
-
-    console.log('[CURSOS] ✅ Curso completado!');
 }
 
 /**
@@ -516,6 +518,12 @@ async function guardarProgreso(numeroDiapositiva) {
             if (!estabaCompletadoPreviamente && progreso.completado) {
                 cursosCompletados += 1;
                 renderizarProgresoGlobal();
+
+                // Buscamos la tarjeta en el grid y le añadimos la clase visualmente
+                const cardElement = document.querySelector(`.card[data-id-curso="${estadoCurso.id_curso}"]`);
+                if (cardElement) {
+                    cardElement.classList.add('completed');
+                }
             }
 
             console.log(`[PROGRESO] Guardado: diap ${numeroDiapositiva}, completado=${progreso.completado}`);

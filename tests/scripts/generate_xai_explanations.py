@@ -42,7 +42,8 @@ def generar_explicacion_para_ticker(
     ticker: str,
     version_modelo: str = "Phase3",
     seed_modelo: int = 42,
-    save_to_db: bool = True
+    save_to_db: bool = True,
+    senal_forzada: str = None,
 ) -> bool:
     """
     Genera explicación XAI para un ticker.
@@ -160,9 +161,11 @@ def generar_explicacion_para_ticker(
         y_pred = xgb_model.predict(X_test)[0]  # 0=BAJISTA, 1=LATERAL, 2=ALCISTA
         y_proba = xgb_model.predict_proba(X_test)[0]
         
-        # Convertir a tendencia
-        senal_prediccion = {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}.get(y_pred, "LATERAL")
-        
+        # Convertir a tendencia — si viene forzada desde train_xgboost_all, usarla
+        # directamente para garantizar que xai_explicaciones y activos.senal_ia sean idénticas
+        senal_prediccion = senal_forzada if senal_forzada in ("ALCISTA", "BAJISTA", "LATERAL") \
+            else {0: "BAJISTA", 1: "LATERAL", 2: "ALCISTA"}.get(y_pred, "LATERAL")
+
         # 🔧 APLICAR CALIBRACIÓN PLATT SCALING
         calibrator = load_calibrator(ticker)
         if calibrator is not None:

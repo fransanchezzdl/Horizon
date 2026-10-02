@@ -6,6 +6,7 @@ const API_BASE = window.API_BASE;
 let currentPortfolioId = null;
 let currentPortfolios = [];
 let pendingConfirmAction = null;
+let portfolioLoadSequence = 0;
 
 // Carga sesión, valida autenticación y arranca la carga de portfolios.
 async function initPortfolioPage() {
@@ -137,6 +138,8 @@ function showPortfolioMainContent() {
 
 // Carga el detalle de un portfolio concreto y renderiza cabecera + tabla.
 async function loadPortfolioDetails(portfolioId) {
+    const requestId = ++portfolioLoadSequence;
+
     try {
         console.log(`🔐 Cargando portfolio ${portfolioId}`);
         
@@ -161,6 +164,12 @@ async function loadPortfolioDetails(portfolioId) {
             window.fetchWithAuth(`${API_BASE}/portfolios/${portfolioId}/analysis`),
         ]);
         const analysis = analysisResp?.ok ? await analysisResp.json() : null;
+
+        // Evita renderizar datos obsoletos si otra carga más reciente terminó antes.
+        if (requestId !== portfolioLoadSequence || portfolioId !== currentPortfolioId) {
+            return;
+        }
+
         renderAssetsTable(accionesEnriquecidas);
         renderPortfolioMetrics(portfolio, accionesEnriquecidas, variaciones);
         renderRiskAlert(analysis?.alerta ?? null);
@@ -208,9 +217,9 @@ async function enrichPortfolioStocks(acciones) {
     });
 }
 
-// Obtiene la variación diaria (%) de todos los tickers en una sola llamada batch
-// al backend. Garantiza coherencia de fechas entre tickers y evita que fallos
-// aislados de yfinance dejen tickers sin dato.
+// Obtiene la variación diaria (%) de todos los tickers en una única llamada batch
+// al backend. El backend alinea esta fórmula con la vista de análisis para evitar
+// discrepancias entre pantallas.
 // Devuelve { media, porTicker: [{ticker, variacion}] } o null si no hay datos.
 async function loadPortfolioVariation(tickers) {
     if (!tickers.length) return null;
@@ -222,8 +231,8 @@ async function loadPortfolioVariation(tickers) {
             console.warn('⚠️ Variaciones batch HTTP', resp.status);
             return null;
         }
-        const data = await resp.json();
 
+        const data = await resp.json();
         const porTicker = tickers
             .map((ticker) => ({ ticker, variacion: data[ticker] }))
             .filter((r) => typeof r.variacion === 'number' && Number.isFinite(r.variacion));

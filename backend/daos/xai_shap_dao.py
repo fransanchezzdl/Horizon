@@ -32,6 +32,10 @@ class XaiShapDAO:
         los shap_values al formato { feature, shap, value, abs } y los
         ordena por abs descendente, limitando a 12 features.
 
+        La señal mostrada proviene siempre de activos.senal_ia (fuente
+        canónica actualizada en cada entrenamiento), no de senal_prediccion
+        de xai_explicaciones, que puede ser de un modelo anterior.
+
         Returns:
             Dict con keys: ticker, fecha, senal, confianza, correcta, shap_values
             None si no existe ningún registro o hay error.
@@ -39,7 +43,8 @@ class XaiShapDAO:
         try:
             supabase = XaiShapDAO._get_supabase_client()
 
-            response = (
+            # Leer XAI y señal canónica en paralelo
+            xai_resp = (
                 supabase.table("xai_explicaciones")
                 .select(
                     "ticker, fecha_prediccion, shap_valores, "
@@ -51,10 +56,23 @@ class XaiShapDAO:
                 .execute()
             )
 
-            if not response.data:
+            if not xai_resp.data:
                 return None
 
-            row = response.data[0]
+            row = xai_resp.data[0]
+
+            # Obtener senal_ia autoritativa desde activos (Opción A: fuente única)
+            activo_resp = (
+                supabase.table("activos")
+                .select("senal_ia")
+                .eq("ticker", ticker)
+                .limit(1)
+                .execute()
+            )
+            if activo_resp.data:
+                senal_canonica = activo_resp.data[0].get("senal_ia") or row.get("senal_prediccion", "")
+            else:
+                senal_canonica = row.get("senal_prediccion", "")
 
             # shap_valores puede llegar como str (TEXT) o lista (JSONB auto-parseado)
             raw_shap = row.get("shap_valores", "[]")
@@ -93,7 +111,7 @@ class XaiShapDAO:
             return {
                 "ticker":      row.get("ticker", ticker),
                 "fecha":       fecha,
-                "senal":       row.get("senal_prediccion", ""),
+                "senal":       senal_canonica,
                 "confianza":   float(row.get("confianza_prediccion") or 0),
                 "correcta":    row.get("prediccion_correcta"),
                 "shap_values": normalized,

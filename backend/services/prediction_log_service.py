@@ -357,9 +357,12 @@ def get_reliability_stats(ticker: str, walk_forward_path: str = "docs/walk_forwa
         else:
             señal = "SIN_SEÑAL"
 
+    # Detectar causa principal de baja fiabilidad para el disclaimer
+    disclaimer_reason = _compute_disclaimer_reason(ticker, wf_data, live)
+
     return {
-        "ticker":        ticker,
-        "walk_forward":  wf_data,
+        "ticker":           ticker,
+        "walk_forward":     wf_data,
         "live": {
             "total":     live.get("total_predicciones", 0),
             "resueltas": live.get("resueltas", 0),
@@ -367,6 +370,52 @@ def get_reliability_stats(ticker: str, walk_forward_path: str = "docs/walk_forwa
             "accuracy":  live.get("live_accuracy"),
             "por_clase": live.get("por_clase", {}),
         },
-        "baseline": 33.33,
-        "señal":     señal,
+        "baseline":         33.33,
+        "señal":            señal,
+        "disclaimer_reason": disclaimer_reason,
     }
+
+
+def _compute_disclaimer_reason(ticker: str, wf_data: dict | None, live: dict) -> str | None:
+    """
+    Devuelve una cadena corta que describe la causa principal de baja fiabilidad,
+    o None si el modelo funciona aceptablemente.
+
+    Causas detectables (en orden de prioridad):
+        - sesgo_clase:    el modelo predice casi siempre la misma dirección
+        - alta_volatilidad: activo volátil sin señal walk-forward
+        - sin_datos:      menos de 10 predicciones resueltas
+        - ba_baja:        balanced accuracy walk-forward por debajo del azar
+    """
+    VOLATILE_TICKERS = {"TSLA", "NVDA", "BTC-USD", "ETH-USD", "AMZN", "BABA", "INTC", "META", "NFLX"}
+    MIN_RESUELTAS = 10
+    SESGO_THRESHOLD = 0.75  # si >75% de predicciones son de una sola clase → sesgo
+
+    resueltas = live.get("resueltas", 0)
+    por_clase: dict = live.get("por_clase", {})
+
+    # 1. Sesgo de clase (modelo atascado prediciendo siempre lo mismo)
+    if resueltas >= MIN_RESUELTAS and por_clase:
+        total_pred = sum(v["predicciones"] for v in por_clase.values())
+        if total_pred > 0:
+            dominant_clase = max(por_clase, key=lambda k: por_clase[k]["predicciones"])
+            dominant_pct = por_clase[dominant_clase]["predicciones"] / total_pred
+            if dominant_pct >= SESGO_THRESHOLD:
+                clase_label = {"BAJISTA": "bajista", "ALCISTA": "alcista", "LATERAL": "lateral"}.get(dominant_clase, dominant_clase.lower())
+                return f"sesgo_{clase_label}"
+
+    # 2. Sin datos suficientes
+    if resueltas < MIN_RESUELTAS:
+        return "sin_datos"
+
+    # 3. BA walk-forward por debajo del azar
+    if wf_data and wf_data.get("ba_mean", 100) < 33.3:
+        if ticker in VOLATILE_TICKERS:
+            return "alta_volatilidad"
+        return "ba_baja"
+
+    # 4. Sin walk-forward + activo volátil
+    if wf_data is None and ticker in VOLATILE_TICKERS:
+        return "alta_volatilidad"
+
+    return None

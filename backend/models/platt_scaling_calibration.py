@@ -90,7 +90,7 @@ def get_flat_validation_features(ticker: str) -> Tuple[np.ndarray, np.ndarray]:
         raise
 
 
-def calibrate_model_platt_v2(ticker: str, X_val: np.ndarray, y_val: np.ndarray, verbose: bool = True) -> Tuple[LogisticRegression, float]:
+def calibrate_model_platt_v2(
     ticker: str,
     X_val: np.ndarray,
     y_val: np.ndarray,
@@ -301,7 +301,7 @@ def main():
                     continue
                 
                 # Calibrar
-                calibrator, ece = calibrate_model_platt(ticker, X_val, y_val, verbose=True)
+                calibrator, ece = calibrate_model_platt_v2(ticker, X_val, y_val, verbose=True)
                 
                 if calibrator is not None:
                     # Guardar

@@ -203,10 +203,23 @@ async function loadUserStats(userId) {
             document.getElementById('statPredictions').textContent = '0';
         }
 
+        const cursosRes = await window.fetchWithAuth(`${API_BASE}/cursos/resumen/progreso`);
+
+        if (cursosRes.ok) {
+            const resumenCursos = await cursosRes.json();
+            const totalCursosCompletados = Number(resumenCursos?.cursos_completados ?? 0);
+            document.getElementById('statCoursesCompleted').textContent = totalCursosCompletados;
+            console.log('[OK] Total cursos completados:', totalCursosCompletados);
+        } else {
+            console.warn('[WARN] Error cargando resumen de cursos:', cursosRes.status);
+            document.getElementById('statCoursesCompleted').textContent = '0';
+        }
+
     } catch (e) {
         console.warn('[ERROR] No se pudieron cargar las estadisticas:', e);
         document.getElementById('statPortfolio').textContent = '0';
         document.getElementById('statPredictions').textContent = '0';
+        document.getElementById('statCoursesCompleted').textContent = '0';
     }
 }
 
@@ -510,7 +523,7 @@ function initProfileEvents() {
             btnSave.textContent = 'Guardando...';
             divMessage.innerHTML = '';
 
-            // Armamos el Payload. El email se envía como el valor actual del usuario (no editable en UI).
+            // Armar el Payload. El email se envía como el valor actual del usuario (no editable en UI).
             const usuarioActual = window.getCurrentUserData();
             const payload = {
                 nombre: document.getElementById('editNombre').value.trim(),
@@ -561,7 +574,6 @@ function initProfileEvents() {
         });
     }
 
-    // --- 2. LÓGICA PENDIENTE (Contraseña) ---
     // Cambiar Contraseña
     const btnChangePassword = document.getElementById('btnChangePassword');
     const formChangePassword = document.getElementById('formChangePassword');

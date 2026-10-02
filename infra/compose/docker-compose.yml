@@ -7,7 +7,7 @@ services:
       - "${PUBLIC_PORT:-80}:80"
     volumes:
       - ../../frontend:/usr/share/nginx/html:ro
-      - ../nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ../nginx/default.conf:/etc/nginx/templates/default.conf.template:ro
     restart: unless-stopped
     networks:
       - horizon_net
@@ -27,27 +27,3 @@ services:
     restart: unless-stopped
     networks:
       - horizon_net
-
-  # Scheduler planificado, no implementado.
-  # Queda desactivado por defecto para no afectar estabilidad.
-  # Activacion futura:
-  #   COMPOSE_PROFILES=scheduler docker compose up -d --build
-  scheduler:
-    build:
-      context: ../..
-      dockerfile: infra/docker/Dockerfile.backend
-    env_file:
-      - ../../backend/.env
-    command: python scripts/scheduler_daemon.py --foreground
-    volumes:
-      - ../../backend/models/saved_models:/app/backend/models/saved_models
-      - ../../logs:/logs
-    restart: unless-stopped
-    networks:
-      - horizon_net
-    profiles:
-      - scheduler
-
-networks:
-  horizon_net:
-    driver: bridge

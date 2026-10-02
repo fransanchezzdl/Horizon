@@ -1,86 +1,116 @@
-# Horizon: Manual del Desarrollador
+# Horizon
 
-Bienvenido al repositorio de **Horizon**. Síguelo para evitar conflictos en Git y mantener el código limpio.
+Plataforma web de análisis financiero con **predicciones de mercado explicables (XAI)**, asesor con IA generativa y una academia de formación en inversión. Proyecto de Trabajo de Fin de Grado (TFG).
 
----
+> ⚠️ **Aviso:** Horizon es un proyecto académico. Nada de lo que muestra constituye asesoramiento financiero ni una recomendación de inversión.
 
-## 🛠️ 1. Configuración Inicial (Primeros pasos)
+## Memoria del TFG
 
-Si eres nuevo en el equipo o estás configurando tu ordenador desde cero, sigue **una** de estas dos opciones:
+La memoria completa del Trabajo de Fin de Grado está disponible en PDF:
 
-### Opción A: Aún no tienes la carpeta en tu PC (Recomendado)
-Abre tu terminal en la carpeta donde guardas tus proyectos y ejecuta:
+📄 **[`docs/Memoria_TFG_Horizon_2526.pdf`](docs/Memoria_TFG_Horizon_2526.pdf)**
 
-```bash
-git clone [https://github.com/fransanchezzdl/Horizon.git](https://github.com/fransanchezzdl/Horizon.git)
-cd Horizon
-# Automáticamente estarás en la rama 'developer' o 'master'. 
-# Asegúrate de descargar todas las referencias:
-git fetch --all
+## Características
+
+- **Predicción de activos:** modelos XGBoost (con calibración de probabilidades y umbrales congelados) para acciones, criptomonedas y materias primas.
+- **IA explicable:** explicaciones SHAP (waterfall y evolución temporal) con narrativa en lenguaje natural.
+- **Asesor IA:** chat financiero basado en Google Gemini con contexto del usuario y del activo.
+- **Portfolios:** creación y análisis de carteras, con optimización y rebalanceo.
+- **Análisis de activos:** precios, variaciones, noticias y sentimiento por ticker.
+- **Academia y reflexión del día:** contenido formativo para nuevos inversores.
+- **Cuentas de usuario:** autenticación con Supabase Auth, perfil y avatar, tema claro/oscuro.
+
+## Stack
+
+| Capa | Tecnología |
+|---|---|
+| Frontend | HTML, CSS y JavaScript sin framework |
+| Backend | Python, FastAPI, Uvicorn |
+| Datos y autenticación | Supabase (PostgreSQL + Auth + Storage) |
+| Machine Learning | XGBoost, PyTorch, scikit-learn, SHAP |
+| Datos de mercado | yfinance, Finnhub, Alpha Vantage |
+| IA generativa | Google Gemini |
+| Despliegue | Docker Compose + nginx |
+| Calidad | pytest, pylint, pre-commit |
+
+## Estructura
+
+```text
+backend/    API FastAPI (daos, dtos, services, routes) y modelos de ML
+frontend/   Páginas HTML, estilos y JavaScript
+docs/       Arquitectura, autenticación, asesor IA y esquema de base de datos
+infra/      Dockerfile, docker-compose y configuración de nginx
+tests/      Tests unitarios, de integración, linting y scripts de entrenamiento
 ```
 
-### Opción B: Ya tienes el código pero no está conectado a Git
-Si ya tienes la carpeta Horizon con archivos en tu disco duro:
+La arquitectura por capas está descrita en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
-```bash
-cd "D:\Visual Studio\Proyectos\Horizon"
-git init
-git branch -M master
-git remote add origin [https://github.com/fransanchezzdl/Horizon.git](https://github.com/fransanchezzdl/Horizon.git)
+## Puesta en marcha
 
-# Bajamos la información del servidor sin borrar tus archivos locales
-git fetch --all
+### Requisitos
 
-# Conectamos tu rama local con la del servidor
-git branch --set-upstream-to=origin/master master
-```
-## 🔄 2. Rutina Diaria (Antes de trabajar)
-⚠️ REGLA DE ORO: Nunca empieces a escribir código sin actualizar tu repositorio. Si no lo haces, crearás conflictos difíciles de arreglar.
+- Python 3.11+
+- Un proyecto de [Supabase](https://supabase.com) con el esquema de [`docs/bbdd.sql`](docs/bbdd.sql)
+- Claves de API de Gemini, Finnhub y Alpha Vantage (todas tienen plan gratuito)
 
-Actualizar referencias:
-```bash
-git fetch --all
-Descargar cambios en tu rama:
-Sitúate en la rama de desarrollo e integra lo nuevo:
-```
-```bash
-git checkout developer
-git pull origin developer
+### 1. Configurar variables de entorno
+
+Copia `backend/.env_example` a `backend/.env` y rellena los valores:
+
+```env
+SUPABASE_URL=...
+SUPABASE_KEY=...                 # clave anon
+SUPABASE_SERVICE_ROLE_KEY=...    # clave secreta, solo en el backend
+GEMINI_API_KEY=...
+ALPHA_VANTAGE_API_KEY=...
+FINNHUB_API_KEY=...
 ```
 
-## 🌊 3. Metodología GitFlow (Nuestras Ramas)
-Para mantener el orden, usamos una estructura estricta de ramas. ¡No trabajes directamente en master!
+> Nunca subas `backend/.env` al repositorio ni expongas la `service_role` key en el frontend.
 
-📌 Mapa de Ramas
-| Rama | Descripción | Reglas y Permisos |
-| :--- | :--- | :--- |
-| **master** | Código de Producción. Versión final, estable y probada. | 🔒 **SOLO LECTURA.** Nadie hace push directo aquí. |
-| **developer** | Rama de Integración. Aquí se une todo el trabajo del equipo. | ✅ Se aceptan **Pull Requests (PR)**. |
-
-## 🔨 Flujo de Trabajo (Paso a Paso)
-Cada vez que tengas una tarea nueva (ej: "Crear pantalla de Login"), sigue este ciclo:
-
-### 1. Crear la rama (Feature)
-Siempre nace desde developer:
+### 2. Backend
 
 ```bash
-git checkout developer
-git pull origin developer  # Asegúrate de estar actualizado
+python -m venv backend/venv
+. backend/venv/Scripts/activate      # Linux/macOS: source backend/venv/bin/activate
+pip install -r requirements.txt
+uvicorn backend.main:app --reload
 ```
 
-### 2. Programar y Guardar (Commit)
-Haz cambios pequeños y frecuentes. Usa mensajes claros:
+La API queda en `http://localhost:8000` (documentación interactiva en `/docs`).
+
+### 3. Frontend
+
 ```bash
-git add .
-git commit -m "x.x.x - <mensaje commit>"
-Tipos de commit: 1.x.x - Version en produccion, x.1.x - Funcionalidad nueva, x.x.1 - Parches y pequeños cambios.
+cd frontend
+python -m http.server 5000
 ```
 
-### 3. Subir cambios (Push)
-Sube tus actualizaciones al servidor para guardarla:
+Abre `http://localhost:5000/login.html`.
+
+### Con Docker
+
 ```bash
-git push -u origin developer
+docker compose -f infra/compose/docker-compose.yml up --build
 ```
 
----
-Horizon Project - Guía interna 2026
+Más detalles en [`infra/README.md`](infra/README.md).
+
+## Tests
+
+```bash
+pytest tests/unit
+```
+
+## Autores
+
+Trabajo de Fin de Grado, curso 2025/26:
+
+- Vasil Georgiev Kyuchukov
+- David Ramos de Lucas
+- Francisco José Sánchez de León Acevedo
+- Sergio Vinagre Martínez
+
+## Licencia
+
+Distribuido bajo licencia [MIT](LICENSE).

@@ -129,10 +129,18 @@ class TickerNewsService:
                 "from_cache": False,
             }
 
-        # ⚠️ Fallback: si API falla/rate-limit, devolver ultimas noticias guardadas en BD.
+        # ⚠️ Fallback: si no hay noticias nuevas, devolver ultimas noticias guardadas en BD.
         if cached_items:
-            print(f"   ⚠️ API falló (status={fetch_status}), usando cache stale para {ticker_normalized}")
-            logger.info("Usando cache persistente de noticias para %s (status=%s)", ticker_normalized, fetch_status)
+            if fetch_status == "ok":
+                print(f"   ℹ️ API sin noticias recientes para {ticker_normalized}, usando cache stale")
+                logger.info(
+                    "Sin noticias recientes para %s; usando cache persistente (status=%s)",
+                    ticker_normalized,
+                    fetch_status,
+                )
+            else:
+                print(f"   ⚠️ API falló (status={fetch_status}), usando cache stale para {ticker_normalized}")
+                logger.info("Usando cache persistente de noticias para %s (status=%s)", ticker_normalized, fetch_status)
             return {
                 "ticker": ticker_normalized,
                 "noticias": cached_items[:safe_limit],
@@ -177,6 +185,16 @@ class TickerNewsService:
             if "Note" in payload:
                 logger.warning("Alpha Vantage limit/note para %s: %s", ticker, payload.get("Note"))
                 return [], "rate_limited"
+
+            # Alpha Vantage también usa 'Information' para avisos de cuota/limitaciones.
+            info_msg = payload.get("Information")
+            if info_msg:
+                info_lower = str(info_msg).lower()
+                if "rate limit" in info_lower or "25 requests per day" in info_lower or "free api requests" in info_lower:
+                    logger.warning("Alpha Vantage limit/information para %s: %s", ticker, info_msg)
+                    return [], "rate_limited"
+                logger.info("Alpha Vantage information para %s: %s", ticker, info_msg)
+                return [], "api_info"
 
             feed = payload.get("feed", [])
             if not isinstance(feed, list):

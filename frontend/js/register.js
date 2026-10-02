@@ -81,7 +81,7 @@ function setupProfilePhotoSelector() {
             // Mostrar preview mientras se carga
             const reader = new FileReader();
             reader.onload = (event) => {
-                // Remover selección anterior
+                // Quitar selección anterior
                 photoOptions.forEach(opt => opt.classList.remove('selected'));
                 // Marcar upload como seleccionado
                 uploadOption.classList.add('selected');
@@ -159,7 +159,7 @@ async function handleRegister(e) {
                 apellidos: apellidos || null,
                 email: email, 
                 password: password,
-                // Solo enviamos URL de default si aplica. La personalizada va por endpoint aparte.
+                // Solo enviar URL de default si aplica. La personalizada va por endpoint aparte.
                 foto_perfil: selectedCustomAvatarFile ? null : (fotoPerfil || null)
             })
         });

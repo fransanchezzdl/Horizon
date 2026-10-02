@@ -9,10 +9,11 @@ Responsabilidades:
 """
 
 from typing import Optional, Dict, List
+from datetime import datetime
 import numpy as np
 import json
 import math
-from ..daos import ActivoDAO, HistoricoActivoDAO
+from ..daos import ActivoDAO
 
 
 class ActivoUpdateService:
@@ -151,23 +152,6 @@ class ActivoUpdateService:
         except Exception as e:
             print(f"Error determinando señal: {e}")
             return "LATERAL"
-    
-    @staticmethod
-    def extraer_ultimo_precio(ticker: str, dias: int = 30) -> Optional[float]:
-        """
-        Extrae el último precio disponible del histórico.
-        """
-        try:
-            historicos = HistoricoActivoDAO.obtener_ultimos_dias(ticker, dias)
-            
-            if historicos and len(historicos) > 0:
-                return float(historicos[0].precio_cierre)
-            
-            return None
-        
-        except Exception as e:
-            print(f"Error extrayendo último precio de {ticker}: {e}")
-            return None
     
     @staticmethod
     def extraer_precision_del_modelo(

@@ -6,7 +6,7 @@
 const API_BASE = window.API_BASE;
 
 async function initDashboardPage() {
-    // ✅ VALIDAR AUTENTICACIÓN CENTRALIZADA
+    // VALIDAR AUTENTICACIÓN CENTRALIZADA
     const result = await window.validateAuthToken();
     
     if (!result.valid) {
@@ -16,7 +16,7 @@ async function initDashboardPage() {
         return;
     }
     
-    // ✅ TOKEN VÁLIDO, usar datos del usuario
+    // TOKEN VÁLIDO, usar datos del usuario
     window.setCurrentUserData(result.user);
     
     const nombreMostrar = window.getUserDisplayName(result.user, 'Inversor');
@@ -38,7 +38,7 @@ if (document.readyState === 'loading') {
 
 async function cargarReflexion() {
     try {
-        // ✅ Usar fetchWithAuth para obtener token y manejar 401
+        // VALIDAR AUTENTICACIÓN CENTRALIZADA
         const response = await window.fetchWithAuth(`${API_BASE}/reflexion/aleatoria`);
 
         if (!response.ok) return; // fallback: mantiene la cita hardcoded
