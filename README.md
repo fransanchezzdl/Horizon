@@ -4,6 +4,12 @@ Plataforma web de análisis financiero con **predicciones de mercado explicables
 
 > ⚠️ **Aviso:** Horizon es un proyecto académico. Nada de lo que muestra constituye asesoramiento financiero ni una recomendación de inversión.
 
+## Memoria del TFG
+
+La memoria completa del Trabajo de Fin de Grado está disponible en PDF:
+
+📄 **[`docs/Memoria_TFG_Horizon_2526.pdf`](docs/Memoria_TFG_Horizon_2526.pdf)**
+
 ## Características
 
 - **Predicción de activos:** modelos XGBoost (con calibración de probabilidades y umbrales congelados) para acciones, criptomonedas y materias primas.
@@ -95,6 +101,15 @@ Más detalles en [`infra/README.md`](infra/README.md).
 ```bash
 pytest tests/unit
 ```
+
+## Autores
+
+Trabajo de Fin de Grado, curso 2025/26:
+
+- Vasil Georgiev Kyuchukov
+- David Ramos de Lucas
+- Francisco José Sánchez de León Acevedo
+- Sergio Vinagre Martínez
 
 ## Licencia
 
